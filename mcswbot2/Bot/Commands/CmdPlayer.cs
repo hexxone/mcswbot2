@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Drawing.Imaging;
 using System.IO;
 using Telegram.Bot.Types;
@@ -27,7 +26,7 @@ namespace mcswbot2.Bot.Commands
                 if (!item.Bind_ServerOnline) msg += "Offline";
                 else msg += item.Bind_OnlinePlayers + " / " + item.Bind_MaxPlayers;
 
-                if(plotFile) plots.Add(item.GetPlottableData());
+                if (plotFile) plots.Add(item.GetPlottableData());
 
                 // add player names if any
                 if (item.Bind_PlayerList.Count <= 0) continue;
@@ -42,9 +41,9 @@ namespace mcswbot2.Bot.Commands
                 msg += "\r\nNames: <code>" + n + "</code>";
             }
 
-            if(plotFile && plots.Count > 0)
+            if (plotFile && plots.Count > 0)
             {
-                using(var bm = Utils.PlotData(plots.ToArray()))
+                using (var bm = Utils.PlotData(plots.ToArray()))
                 {
                     using (var ms = new MemoryStream())
                     {
