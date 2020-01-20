@@ -44,15 +44,17 @@ namespace mcswbot2.Bot.Commands
 
             if(plotFile && plots.Count > 0)
             {
-                var bm = Utils.PlotData(plots.ToArray());
-                using (MemoryStream ms = new MemoryStream())
+                using(var bm = Utils.PlotData(plots.ToArray()))
                 {
-                    bm.Save(ms, ImageFormat.Png);
-                    ms.Position = 0;
-                    var iof = new Telegram.Bot.Types.InputFiles.InputOnlineFile(ms);
-                    TgBot.Client.SendPhotoAsync(m.Chat.Id, iof, msg, ParseMode.Html);
+                    using (var ms = new MemoryStream())
+                    {
+                        bm.Save(ms, ImageFormat.Png);
+                        bm.Dispose();
+                        ms.Position = 0;
+                        var iof = new Telegram.Bot.Types.InputFiles.InputOnlineFile(ms);
+                        TgBot.Client.SendPhotoAsync(m.Chat.Id, iof, msg, ParseMode.Html).Wait();
+                    }
                 }
-
             }
             else
             {
