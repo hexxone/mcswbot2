@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29230.47
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "mcswbot2", "mcswbot2\mcswbot2.csproj", "{E71AF76D-EBAC-4774-8989-3209F1B61272}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ScottPlot", "ScottPlot\ScottPlot.csproj", "{368E7183-7005-4C82-B7D3-A2F6B0D06221}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{E71AF76D-EBAC-4774-8989-3209F1B61272}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E71AF76D-EBAC-4774-8989-3209F1B61272}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E71AF76D-EBAC-4774-8989-3209F1B61272}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E71AF76D-EBAC-4774-8989-3209F1B61272}.Release|Any CPU.Build.0 = Release|Any CPU
+		{368E7183-7005-4C82-B7D3-A2F6B0D06221}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{368E7183-7005-4C82-B7D3-A2F6B0D06221}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{368E7183-7005-4C82-B7D3-A2F6B0D06221}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{368E7183-7005-4C82-B7D3-A2F6B0D06221}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {892489CE-8FC6-4F78-B201-02BB88BED026}
+	EndGlobalSection
+EndGlobal
