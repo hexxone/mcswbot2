@@ -13,7 +13,7 @@ namespace mcswbot2.Bot.Commands
         {
             try
             {
-                TgBot.Client.SendTextMessageAsync(cid, txt, pm);
+                TgBot.Client.SendTextMessageAsync(cid, txt, pm).Wait();
             }
             catch (Exception ex)
             {

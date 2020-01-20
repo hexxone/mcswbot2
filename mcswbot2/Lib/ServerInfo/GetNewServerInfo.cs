@@ -52,46 +52,48 @@ namespace mcswbot2.Lib.ServerInfo
 
                     var offset = 0;
                     var buffer = new byte[32769];
-                    var stream = tcp.GetStream();
 
-                    stream.Read(buffer, 0, buffer.Length);
-
-                    // first read the packet length and check it to be > 0
-                    // then read the packet it and check it to be 0 == ping response
-                    if (ReadVarInt(buffer, ref offset) <= 0 || ReadVarInt(buffer, ref offset) != 0x00)
-                        throw new Exception("Server sent an invalid response.");
-
-                    var jsonLength = ReadVarInt(buffer, ref offset);
-
-                    //Console.WriteLine("Json length: " + jsonLength);
-
-                    var json = ReadString(buffer, ref offset, jsonLength);
-
-                    // description is an object? use alternate payload
-                    // @TODO find better approach than this
-
-                    //Console.WriteLine("\r\n\r\n" + json + "\r\n\r\n");
-
-                    if (json.Contains("\"description\":{\""))
+                    using (var stream = tcp.GetStream())
                     {
-                        try
-                        {
-                            var ping = JsonConvert.DeserializeObject<PingPayLoad2>(json);
+                        stream.Read(buffer, 0, buffer.Length);
 
-                            sw.Stop();
-                            return new ServerInfoBase(now, sw.Elapsed, ping.Description.ToSimpleString(),
-                                ping.Players.Max, ping.Players.Online, ping.Version.Name, ping.Players.Sample);
-                        }
-                        catch (JsonException jex)
+                        // first read the packet length and check it to be > 0
+                        // then read the packet it and check it to be 0 == ping response
+                        if (ReadVarInt(buffer, ref offset) <= 0 || ReadVarInt(buffer, ref offset) != 0x00)
+                            throw new Exception("Server sent an invalid response.");
+
+                        var jsonLength = ReadVarInt(buffer, ref offset);
+
+                        //Console.WriteLine("Json length: " + jsonLength);
+
+                        var json = ReadString(buffer, ref offset, jsonLength);
+
+                        // description is an object? use alternate payload
+                        // @TODO find better approach than this
+
+                        //Console.WriteLine("\r\n\r\n" + json + "\r\n\r\n");
+
+                        if (json.Contains("\"description\":{\""))
                         {
-                            Console.WriteLine("Error json parsing: " + jex.ToString());
+                            try
+                            {
+                                var ping = JsonConvert.DeserializeObject<PingPayLoad2>(json);
+
+                                sw.Stop();
+                                return new ServerInfoBase(now, sw.Elapsed, ping.Description.ToSimpleString(),
+                                    ping.Players.Max, ping.Players.Online, ping.Version.Name, ping.Players.Sample);
+                            }
+                            catch (JsonException jex)
+                            {
+                                Console.WriteLine("Error json parsing: " + jex.ToString());
+                            }
                         }
+
+                        var ping2 = JsonConvert.DeserializeObject<PingPayLoad>(json);
+                        sw.Stop();
+                        return new ServerInfoBase(now, sw.Elapsed, ping2.Motd, ping2.Players.Max,
+                            ping2.Players.Online, ping2.Version.Name, ping2.Players.Sample);
                     }
-
-                    var ping2 = JsonConvert.DeserializeObject<PingPayLoad>(json);
-                    sw.Stop();
-                    return new ServerInfoBase(now, sw.Elapsed, ping2.Motd, ping2.Players.Max,
-                        ping2.Players.Online, ping2.Version.Name, ping2.Players.Sample);
                 }
             }
             catch (Exception ex)
