@@ -22,7 +22,7 @@ namespace mcswbot2.Lib
 
         private const int RefreshInterval = 30000;
         private static readonly TimeSpan ClearSpan = new TimeSpan(0, 10, 0);
-        private static readonly TimeSpan TimeOut = TimeSpan.FromSeconds(5);
+        private static readonly TimeSpan TimeOut = TimeSpan.FromSeconds(10);
 
         // TODO visualize
         // will contain the received Server-Infos.
@@ -148,10 +148,9 @@ namespace mcswbot2.Lib
             {
                 while (!_killFlag)
                 {
-                    ClearMem();
-
+                    Program.WriteLine("Pinging server '" + Bind_Host + ":" + Bind_Port + "'...");
+                    // event-queue
                     var events = new List<EventBase>();
-
                     // current server-info object
                     ServerInfoBase current = null;
                     for (var i = 0; i < 3; i++)
@@ -170,8 +169,9 @@ namespace mcswbot2.Lib
                     // if first info, or last success was different from this (either went online or went offline) => invoke
                     if (Bind_ServerNotify && (isFirst || last.HadSuccess != current.HadSuccess))
                     {
+                        Program.WriteLine("Server '" + Bind_Host + ":" + Bind_Port + "' status change: " + current.HadSuccess);
                         var errMsg = current.LastError != null ? current.LastError.ToString() : "";
-                        if(errMsg.Contains(" at "))
+                        if (errMsg.Contains(" at "))
                             errMsg = errMsg.Split(new[] { " at " }, StringSplitOptions.None)[0];
                         events.Add(new OnlineStatusEvent(current.HadSuccess, current.HadSuccess ? current.ServerMotd : errMsg));
                     }
@@ -182,7 +182,11 @@ namespace mcswbot2.Lib
                         var diff = isFirst
                             ? current.CurrentPlayerCount
                             : current.CurrentPlayerCount - last.CurrentPlayerCount;
-                        if (diff != 0) events.Add(new PlayerChangeEvent(diff));
+                        if (diff != 0)
+                        {
+                            Program.WriteLine("Server '" + Bind_Host + ":" + Bind_Port + "' count change: " + diff);
+                            events.Add(new PlayerChangeEvent(diff));
+                        }
                     }
 
                     // check current list for new players 
@@ -211,7 +215,7 @@ namespace mcswbot2.Lib
                         {
                             userStates[k] = false;
                             // create payload
-                            var p = new PlayerPayLoad {Id = k, Name = userNames[k]};
+                            var p = new PlayerPayLoad { Id = k, Name = userNames[k] };
                             // notify => invoke
                             if (Bind_PlayerNotify)
                                 events.Add(new PlayerStateEvent(p, false));
@@ -220,6 +224,8 @@ namespace mcswbot2.Lib
                     if (ServerChangeEvent != null && events.Count > 0)
                         ServerChangeEvent.Invoke(this, current, events.ToArray());
 
+                    // cleanup, sleep, repeat
+                    ClearMem();
                     Thread.Sleep(RefreshInterval);
                 }
             }
@@ -240,7 +246,15 @@ namespace mcswbot2.Lib
             for (var i = 0; i < tries; i++)
             {
                 res = GetTimeout(m);
-                if (res != null && res.HadSuccess) break;
+                if (res != null && res.HadSuccess)
+                {
+                    Program.WriteLine("Server '" + Bind_Host + ":" + Bind_Port + "' ping Success! Method: " + m + " Try: " + i);
+                    break;
+                }
+                else if (res != null)
+                {
+                    Console.WriteLine("Error: " + res.LastError);
+                }
                 Thread.Sleep(500);
             }
 

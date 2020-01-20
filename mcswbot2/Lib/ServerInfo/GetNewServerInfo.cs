@@ -1,12 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Dynamic;
 using System.IO;
-using System.Linq.Expressions;
+using System.Linq;
 using System.Net.Sockets;
 using System.Text;
 using mcswbot2.Lib.Payload;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
+using Newtonsoft.Json.Linq;
 
 namespace mcswbot2.Lib.ServerInfo
 {
@@ -32,13 +35,14 @@ namespace mcswbot2.Lib.ServerInfo
             {
                 using (var tcp = new TcpClient(ip, port))
                 {
-                    tcp.ReceiveBufferSize = 2048 * 2048;
+                    tcp.ReceiveBufferSize = 512 * 1024;
+                    tcp.ReceiveTimeout = 5000;
 
                     var packetId = GetVarInt(0);
                     var protocolVersion = GetVarInt(Proto);
                     var serverAddressVal = Encoding.UTF8.GetBytes(ip);
                     var serverAddressLen = GetVarInt(serverAddressVal.Length);
-                    var serverPort = BitConverter.GetBytes((ushort) port);
+                    var serverPort = BitConverter.GetBytes((ushort)port);
                     Array.Reverse(serverPort);
                     var nextState = GetVarInt(1);
                     var packet = ConcatBytes(packetId, protocolVersion, serverAddressLen, serverAddressVal, serverPort,
@@ -51,7 +55,7 @@ namespace mcswbot2.Lib.ServerInfo
                     tcp.Client.Send(requestPacket, SocketFlags.None);
 
                     var offset = 0;
-                    var buffer = new byte[32769];
+                    var buffer = new byte[tcp.ReceiveBufferSize];
 
                     using (var stream = tcp.GetStream())
                     {
@@ -64,41 +68,98 @@ namespace mcswbot2.Lib.ServerInfo
 
                         var jsonLength = ReadVarInt(buffer, ref offset);
 
-                        //Console.WriteLine("Json length: " + jsonLength);
-
                         var json = ReadString(buffer, ref offset, jsonLength);
 
-                        // description is an object? use alternate payload
-                        // @TODO find better approach than this
+                        //Console.WriteLine("\r\n\r\nJSON: " + json + "\r\n\r\n");
 
-                        //Console.WriteLine("\r\n\r\n" + json + "\r\n\r\n");
+                        // get our dynamic object
+                        dynamic pingDat = JsonConvert.DeserializeObject(json);
+                        object pingData = pingDat;
 
-                        if (json.Contains("\"description\":{\""))
+                        sw.Stop();
+
+                        bool HasValue(object basis, string field) => basis.GetType().GetProperties().Any(p => p.Name == field);
+                        object GetValue(object basis, string field) => basis != null && HasValue(basis, field) ? basis.GetType().GetProperties().First(p => p.Name == field).GetValue(basis, null) : null;
+
+                        // convert our given types
+                        var pingDataPlayers = GetValue(pingData, "players");
+                        var pingDataVersion = GetValue(pingData, "version");
+                        var pingDataDesc = GetValue(pingData, "description");
+
+                        if (pingDataPlayers == null || pingDataVersion == null || pingDataDesc == null)
+                            throw new Exception("Could not parse important information.");
+
+                        var pingDataSample = GetValue(pingDataPlayers, "sample");
+                        var max = (int)GetValue(pingDataPlayers, "max");
+                        var onl = (int)GetValue(pingDataPlayers, "online");
+                        var ver = (string)GetValue(pingDataVersion, "name");
+
+                        var desc = "";
+                        var plrs = new List<PlayerPayLoad>();
+                        // parse description object instead of string
+                        if (pingDataDesc != null)
                         {
                             try
                             {
-                                var ping = JsonConvert.DeserializeObject<PingPayLoad2>(json);
+                                var txt = GetValue(pingDataDesc, "text");
+                                var ext = GetValue(pingDataDesc, "extra");
 
-                                sw.Stop();
-                                return new ServerInfoBase(now, sw.Elapsed, ping.Description.ToSimpleString(),
-                                    ping.Players.Max, ping.Players.Online, ping.Version.Name, ping.Players.Sample);
+                                if (txt != null) desc = (string)txt;
+                                if (ext != null)
+                                {
+                                    foreach (object key in (Array)ext)
+                                    {
+                                        var txt2 = GetValue(key, "text");
+                                        if (txt2 != null) desc += (string)txt2;
+                                    }
+                                }
                             }
-                            catch (JsonException jex)
+                            catch (Exception jex)
                             {
-                                Console.WriteLine("Error json parsing: " + jex.ToString());
+                                Program.WriteLine("\r\n\addr: " + ip + ":" + port + "\r\nError: " + jex.ToString() + "\r\n\r\njson: " + json + "\r\n");
+                                try
+                                {
+                                    desc = (string)pingDataDesc;
+                                }
+                                catch { }
+                            }
+                            finally
+                            {
+                                if (string.IsNullOrEmpty(desc)) throw new Exception("Description is null.");
                             }
                         }
 
-                        var ping2 = JsonConvert.DeserializeObject<PingPayLoad>(json);
-                        sw.Stop();
-                        return new ServerInfoBase(now, sw.Elapsed, ping2.Motd, ping2.Players.Max,
-                            ping2.Players.Online, ping2.Version.Name, ping2.Players.Sample);
+                        // get players from dynamic object
+                        if (pingDataSample != null)
+                        {
+                            try
+                            {
+                                foreach (object key in (Array)pingDataSample)
+                                {
+                                    var kid = GetValue(key, "id");
+                                    var kna = GetValue(key, "name");
+                                    if (kid != null && kna != null)
+                                    {
+                                        var plr = new PlayerPayLoad() { Id = (string)kid, Name = (string)kna };
+                                        Console.WriteLine("Add Player: " + plr.Name);
+                                        plrs.Add(plr);
+                                    }
+                                }
+                            }
+                            catch (Exception sex)
+                            {
+                                Console.WriteLine("Error iterating samples... " + sex.ToString());
+                            }
+                        }
+
+                        // we done boi
+                        return new ServerInfoBase(now, sw.Elapsed, desc, max, onl, ver, plrs);
                     }
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine("another Error: " + ex.ToString());
+                Program.WriteLine("\r\n\addr: " + ip + ":" + port + "\r\nanother Error: " + ex.ToString() + "\r\n");
                 return new ServerInfoBase(ex);
             }
         }
@@ -118,15 +179,14 @@ namespace mcswbot2.Lib.ServerInfo
             var bytes = new List<byte>();
             while ((paramInt & -128) != 0)
             {
-                bytes.Add((byte) ((paramInt & 127) | 128));
-                paramInt = (int) ((uint) paramInt >> 7);
+                bytes.Add((byte)((paramInt & 127) | 128));
+                paramInt = (int)((uint)paramInt >> 7);
             }
-            bytes.Add((byte) paramInt);
+            bytes.Add((byte)paramInt);
             return bytes.ToArray();
         }
 
         #endregion
-
 
         #region buffer read methods
 

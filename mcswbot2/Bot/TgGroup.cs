@@ -68,7 +68,7 @@ namespace mcswbot2.Bot
         /// <param name="p"></param>
         public void AddServer(string l, string adr, int p)
         {
-            var news = new ServerStatus {Bind_Label = l, Bind_Host = adr, Bind_Port = p};
+            var news = new ServerStatus { Bind_Label = l, Bind_Host = adr, Bind_Port = p };
             news.ServerChangeEvent += OnServerChangeEvent;
             news.Bind_ServerNotify = true;
             news.Bind_CountNotify = true;
@@ -105,7 +105,7 @@ namespace mcswbot2.Bot
             }
             catch (Exception ex)
             {
-                TgBot.WriteLine("Send Exception: " + ex + "\r\nGroup: " + Base.Id + "\r\nMsg: " + m + "\r\nStack: " +
+                Program.WriteLine("Send Exception: " + ex + "\r\nGroup: " + Base.Id + "\r\nMsg: " + m + "\r\nStack: " +
                                   ex.StackTrace);
                 return null;
             }
