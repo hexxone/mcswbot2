@@ -17,7 +17,7 @@ namespace mcswbot2.Bot.Commands
             }
             catch (Exception ex)
             {
-                TgBot.WriteLine("Response Error: " + ex + "\r\nStack: " + ex.StackTrace);
+                Program.WriteLine("Response Error: " + ex + "\r\nStack: " + ex.StackTrace);
             }
         }
 

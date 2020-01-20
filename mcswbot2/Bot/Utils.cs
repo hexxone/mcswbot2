@@ -82,7 +82,7 @@ namespace mcswbot2.Bot
                 TgBot.TgGroups.ForEach(e => e.RegisterOnce());
             }
 
-            TgBot.WriteLine($"Loaded data. [{TgBot.TgUsers.Count} Users, {TgBot.TgGroups.Count} Groups]");
+            Program.WriteLine($"Loaded data. [{TgBot.TgUsers.Count} Users, {TgBot.TgGroups.Count} Groups]");
         }
 
         /// <summary>
@@ -96,7 +96,7 @@ namespace mcswbot2.Bot
             var str2 = JsonConvert.SerializeObject(TgBot.TgGroups);
             File.WriteAllText("groups.json", str2);
 
-            TgBot.WriteLine("Saved data.");
+            Program.WriteLine("Saved data.");
         }
 
         /// <summary>

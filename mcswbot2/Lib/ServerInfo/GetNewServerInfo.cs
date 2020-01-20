@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Dynamic;
 using System.IO;
-using System.Linq.Expressions;
 using System.Net.Sockets;
 using System.Text;
 using mcswbot2.Lib.Payload;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 
 namespace mcswbot2.Lib.ServerInfo
 {
@@ -32,13 +33,14 @@ namespace mcswbot2.Lib.ServerInfo
             {
                 using (var tcp = new TcpClient(ip, port))
                 {
-                    tcp.ReceiveBufferSize = 2048 * 2048;
+                    tcp.ReceiveBufferSize = 512 * 1024;
+                    tcp.ReceiveTimeout = 5000;
 
                     var packetId = GetVarInt(0);
                     var protocolVersion = GetVarInt(Proto);
                     var serverAddressVal = Encoding.UTF8.GetBytes(ip);
                     var serverAddressLen = GetVarInt(serverAddressVal.Length);
-                    var serverPort = BitConverter.GetBytes((ushort) port);
+                    var serverPort = BitConverter.GetBytes((ushort)port);
                     Array.Reverse(serverPort);
                     var nextState = GetVarInt(1);
                     var packet = ConcatBytes(packetId, protocolVersion, serverAddressLen, serverAddressVal, serverPort,
@@ -51,7 +53,7 @@ namespace mcswbot2.Lib.ServerInfo
                     tcp.Client.Send(requestPacket, SocketFlags.None);
 
                     var offset = 0;
-                    var buffer = new byte[32769];
+                    var buffer = new byte[tcp.ReceiveBufferSize];
 
                     using (var stream = tcp.GetStream())
                     {
@@ -64,44 +66,94 @@ namespace mcswbot2.Lib.ServerInfo
 
                         var jsonLength = ReadVarInt(buffer, ref offset);
 
-                        //Console.WriteLine("Json length: " + jsonLength);
+                        //Program.WriteLine("Json length: " + jsonLength);
 
                         var json = ReadString(buffer, ref offset, jsonLength);
 
-                        // description is an object? use alternate payload
-                        // @TODO find better approach than this
+                        // TODO TEST why pixelmon server causes TimeoutException
+                        json = json.Replace("\\n", " test ");
 
-                        //Console.WriteLine("\r\n\r\n" + json + "\r\n\r\n");
+                        //Console.WriteLine("\r\n\r\nJSON: " + json + "\r\n\r\n");
 
+                        // get our dynamic object
+                        var converter = new ExpandoObjectConverter();
+                        dynamic pingDat = JsonConvert.DeserializeObject<ExpandoObject>(json, converter);
+
+                        sw.Stop();
+
+                        // convert our given types
+                        string desc = "";
+                        int max = (int)pingDat.players.max;
+                        int onl = (int)pingDat.players.online;
+                        string ver = (string)pingDat.version.name;
+                        var plrs = new List<PlayerPayLoad>();
+
+                        // get players from dynamic object
+                        if (DoesPropertyExist(pingDat.players, "sample"))
+                        {
+                            try
+                            {
+                                foreach (dynamic key in pingDat.players.sample)
+                                {
+                                    if (DoesPropertyExist(key, "id") && DoesPropertyExist(key, "name"))
+                                    {
+                                        var plr = new PlayerPayLoad() { Id = key.id, Name = key.name };
+                                        Console.WriteLine("Add Player: " + plr.Name);
+                                        plrs.Add(plr);
+                                    }
+                                }
+                            }
+                            catch (Exception sex)
+                            {
+                                Console.WriteLine("Error iterating samples... " + sex.ToString());
+                            }
+                        }
+
+                        // parse description object instead of string
                         if (json.Contains("\"description\":{\""))
                         {
                             try
                             {
-                                var ping = JsonConvert.DeserializeObject<PingPayLoad2>(json);
-
-                                sw.Stop();
-                                return new ServerInfoBase(now, sw.Elapsed, ping.Description.ToSimpleString(),
-                                    ping.Players.Max, ping.Players.Online, ping.Version.Name, ping.Players.Sample);
+                                desc = ToSimpleString(pingDat.description);
                             }
-                            catch (JsonException jex)
+                            catch (Exception jex)
                             {
-                                Console.WriteLine("Error json parsing: " + jex.ToString());
+                                Program.WriteLine("\r\n\addr: " + ip + ":" + port + "\r\nError: " + jex.ToString() + "\r\n\r\njson: " + json + "\r\n");
+                                desc = (string)pingDat.description;
                             }
                         }
 
-                        var ping2 = JsonConvert.DeserializeObject<PingPayLoad>(json);
-                        sw.Stop();
-                        return new ServerInfoBase(now, sw.Elapsed, ping2.Motd, ping2.Players.Max,
-                            ping2.Players.Online, ping2.Version.Name, ping2.Players.Sample);
+                        // we done boi
+                        return new ServerInfoBase(now, sw.Elapsed, desc, max, onl, ver, plrs);
                     }
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine("another Error: " + ex.ToString());
+                Program.WriteLine("\r\n\addr: " + ip + ":" + port + "\r\nanother Error: " + ex.ToString() + "\r\n");
                 return new ServerInfoBase(ex);
             }
         }
+
+        private static string ToSimpleString(dynamic Description)
+        {
+            if (!DoesPropertyExist(Description, "text")) return "";
+            string str = Description.text;
+            if (!DoesPropertyExist(Description, "extra")) return str;
+            foreach (dynamic pl in Description.extra)
+                if (pl != null && DoesPropertyExist(pl, "text"))
+                    str += (string)pl.text;
+            return str;
+        }
+
+        private static bool DoesPropertyExist(dynamic settings, string name)
+        {
+            if (settings is ExpandoObject)
+                return ((IDictionary<string, object>)settings).ContainsKey(name);
+
+            return settings.GetType().GetProperty(name) != null;
+        }
+
 
         #region request building methods
 
@@ -118,15 +170,14 @@ namespace mcswbot2.Lib.ServerInfo
             var bytes = new List<byte>();
             while ((paramInt & -128) != 0)
             {
-                bytes.Add((byte) ((paramInt & 127) | 128));
-                paramInt = (int) ((uint) paramInt >> 7);
+                bytes.Add((byte)((paramInt & 127) | 128));
+                paramInt = (int)((uint)paramInt >> 7);
             }
-            bytes.Add((byte) paramInt);
+            bytes.Add((byte)paramInt);
             return bytes.ToArray();
         }
 
         #endregion
-
 
         #region buffer read methods
 

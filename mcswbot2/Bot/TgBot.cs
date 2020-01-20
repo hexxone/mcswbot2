@@ -21,8 +21,8 @@ namespace mcswbot2.Bot
 
         public static void Start()
         {
-            WriteLine("MineCraftServerWatch Bot 4 Telegram made by @hexxon");
-            WriteLine("starting...");
+            Program.WriteLine("MineCraftServerWatchBotV2 for Telegram made by @hexxon");
+            Program.WriteLine("starting...");
 
             // Add Bot commands
             Commands.Add(new CmdAdd());
@@ -32,9 +32,6 @@ namespace mcswbot2.Bot
             Commands.Add(new CmdRemove());
             Commands.Add(new CmdStart());
             Commands.Add(new CmdStats());
-
-            // Load users, groups & settings
-            Utils.Load();
 
             // Start the bot async
             _ = RunBotAsync();
@@ -48,15 +45,6 @@ namespace mcswbot2.Bot
         }
 
         /// <summary>
-        ///     DateTime Wrapper for Console WriteLine
-        /// </summary>
-        /// <param name="l"></param>
-        public static void WriteLine(string l)
-        {
-            Console.WriteLine("[" + DateTime.Now.ToString("yyyy-MM-ss HH:mm:ss") + "] " + l);
-        }
-
-        /// <summary>
         ///     Start receiving message updates on the Telegram Bot
         /// </summary>
         /// <returns></returns>
@@ -64,8 +52,13 @@ namespace mcswbot2.Bot
         {
             Client = new TelegramBotClient(Config.ApiKey);
             TgBotUser = await Client.GetMeAsync();
-            WriteLine("I am Bot: " + new TgUser(TgBotUser));
+            Program.WriteLine("I am Bot: " + new TgUser(TgBotUser));
             Client.OnMessage += Client_OnMessage;
+
+            // Load users, groups & settings
+            Utils.Load();
+
+            // start taking requests
             Client.StartReceiving();
         }
 
@@ -84,7 +77,7 @@ namespace mcswbot2.Bot
             }
             catch (Exception ex)
             {
-                WriteLine(ex.ToString());
+                Program.WriteLine(ex.ToString());
             }
         }
 
@@ -130,7 +123,7 @@ namespace mcswbot2.Bot
             foreach (var cmd in Commands)
                 if (cmd.Command() == ct)
                 {
-                    WriteLine("Command: " + cmd + " by " + user);
+                    Program.WriteLine("Command: " + cmd + " by " + user);
                     cmd.Call(msg, group, user, args, isDev);
                 }
         }
