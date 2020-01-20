@@ -65,7 +65,7 @@ namespace mcswbot2.Bot
             Client = new TelegramBotClient(Config.ApiKey);
             TgBotUser = await Client.GetMeAsync();
             WriteLine("I am Bot: " + new TgUser(TgBotUser));
-            Client.OnMessage += Client_OnMessage; ;
+            Client.OnMessage += Client_OnMessage;
             Client.StartReceiving();
         }
 
@@ -79,6 +79,8 @@ namespace mcswbot2.Bot
             try
             {
                 HandleMessage(e.Message);
+                // manually cleanup unreferenced objects
+                GC.Collect();
             }
             catch (Exception ex)
             {
@@ -103,7 +105,7 @@ namespace mcswbot2.Bot
             {
                 Client.SendTextMessageAsync(msg.Chat.Id,
                     "This bot is intended for group use only.\r\n<a href=\"https://t.me/" + TgBotUser.Username +
-                    "\">Add me</a>");
+                    "\">Add me</a>").Wait();
                 return;
             }
 
