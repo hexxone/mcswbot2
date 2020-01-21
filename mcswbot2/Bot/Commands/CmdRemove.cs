@@ -7,10 +7,7 @@ namespace mcswbot2.Bot.Commands
 {
     internal class CmdRemove : ICommand
     {
-        public override string Command()
-        {
-            return "remove";
-        }
+        public override string Command() => "remove";
 
         public override void Call(Message m, TgGroup g, TgUser u, string[] args, bool dev)
         {

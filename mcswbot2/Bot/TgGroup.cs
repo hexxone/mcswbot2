@@ -27,25 +27,22 @@ namespace mcswbot2.Bot
         /// <summary>
         ///     Register & Start updating all the servers in this group after deserializing
         /// </summary>
-        public void RegisterOnce()
+        public void PingAll()
         {
-            foreach (var srv in Servers)
+            Parallel.ForEach(Servers, srv =>
             {
-                srv.ServerChangeEvent += OnServerChangeEvent;
-                srv.Start();
-            }
+                var res = srv.PingUpdate();
+                if (res.Length > 0)
+                {
+                    var updateMsg = $"[<code>{srv.Bind_Label}</code>]";
+
+                    foreach (var @event in res)
+                        updateMsg += "\r\n" + @event.GetEventString(Types.Formatting.Html);
+
+                    SendMsg(updateMsg);
+                }
+            });
         }
-
-        private void OnServerChangeEvent(ServerStatus self, ServerInfoBase newInfo, EventBase[] events)
-        {
-            var updateMsg = $"[<code>{self.Bind_Label}</code>]";
-
-            foreach (var @event in events)
-                updateMsg += "\r\n" + @event.GetEventString(Types.Formatting.Html);
-
-            _ = SendMsg(updateMsg);
-        }
-
 
         /// <summary>
         ///     Tries to find & return the server with defined label, if not found returns null
@@ -69,11 +66,9 @@ namespace mcswbot2.Bot
         public void AddServer(string l, string adr, int p)
         {
             var news = new ServerStatus { Bind_Label = l, Bind_Host = adr, Bind_Port = p };
-            news.ServerChangeEvent += OnServerChangeEvent;
             news.Bind_ServerNotify = true;
             news.Bind_CountNotify = true;
             news.Bind_PlayerNotify = true;
-            news.Start();
             Servers.Add(news);
         }
 
@@ -86,8 +81,6 @@ namespace mcswbot2.Bot
         {
             var stat = GetServer(l);
             if (stat == null) return false;
-            stat.ServerChangeEvent -= OnServerChangeEvent;
-            stat.Stop();
             Servers.Remove(stat);
             return true;
         }
@@ -97,17 +90,15 @@ namespace mcswbot2.Bot
         /// </summary>
         /// <param name="m"></param>
         /// <returns></returns>
-        private async Task<Message> SendMsg(string m)
+        private void SendMsg(string m)
         {
             try
             {
-                return await TgBot.Client.SendTextMessageAsync(Base.Id, m, ParseMode.Html);
+                TgBot.Client.SendTextMessageAsync(Base.Id, m, ParseMode.Html).Wait();
             }
             catch (Exception ex)
             {
-                Program.WriteLine("Send Exception: " + ex + "\r\nGroup: " + Base.Id + "\r\nMsg: " + m + "\r\nStack: " +
-                                  ex.StackTrace);
-                return null;
+                Program.WriteLine("Send Exception: " + ex + "\r\nGroup: " + Base.Id + "\r\nMsg: " + m + "\r\nStack: " + ex.StackTrace);
             }
         }
     }

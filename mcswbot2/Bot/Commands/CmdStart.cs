@@ -4,10 +4,7 @@ namespace mcswbot2.Bot.Commands
 {
     internal class CmdStart : ICommand
     {
-        public override string Command()
-        {
-            return "start";
-        }
+        public override string Command() => "start";
 
         public override void Call(Message m, TgGroup g, TgUser u, string[] args, bool dev)
         {

@@ -6,14 +6,11 @@ namespace mcswbot2.Bot.Commands
 {
     internal class CmdStats : ICommand
     {
-        public override string Command()
-        {
-            return "stats";
-        }
+        public override string Command() => "stats";
 
         public override void Call(Message m, TgGroup g, TgUser u, string[] args, bool dev)
         {
-            var msg = "Bot stats:";
+            var msg = "Global Bot stats:";
             msg += "\r\n  known users:<code> " + TgBot.TgUsers.Count;
             msg += "</code>\r\n  known groups:<code> " + TgBot.TgGroups.Count;
             var serverCount = 0;
@@ -29,7 +26,7 @@ namespace mcswbot2.Bot.Commands
             msg += "</code>\r\n  online MC users:<code> " + userCount;
 
             double totalSize = Process.GetCurrentProcess().WorkingSet64 / 1024 / 1024;
-            msg += $"</code>\r\n  memory usage:<code> {totalSize:0.00} MB";
+            msg +=$"</code>\r\n  live ram usage:<code> {totalSize:0.00} MB";
 
             Respond(m.Chat.Id, msg + "</code>", ParseMode.Html);
         }

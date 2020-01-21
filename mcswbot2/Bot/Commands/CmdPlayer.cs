@@ -9,10 +9,7 @@ namespace mcswbot2.Bot.Commands
 {
     internal class CmdPlayer : ICommand
     {
-        public override string Command()
-        {
-            return "player";
-        }
+        public override string Command() => "player";
 
         public override void Call(Message m, TgGroup g, TgUser u, string[] args, bool dev)
         {
@@ -26,7 +23,7 @@ namespace mcswbot2.Bot.Commands
                 if (!item.Bind_ServerOnline) msg += "Offline";
                 else msg += item.Bind_OnlinePlayers + " / " + item.Bind_MaxPlayers;
 
-                if (plotFile) plots.Add(item.GetPlottableData());
+                if (plotFile) plots.Add(item.GetUserData());
 
                 // add player names if any
                 if (item.Bind_PlayerList.Count <= 0) continue;
@@ -43,7 +40,7 @@ namespace mcswbot2.Bot.Commands
 
             if (plotFile && plots.Count > 0)
             {
-                using (var bm = Utils.PlotData(plots.ToArray()))
+                using (var bm = Utils.PlotData(plots.ToArray(), "Minutes Ago", "Player Online"))
                 {
                     using (var ms = new MemoryStream())
                     {
@@ -52,6 +49,7 @@ namespace mcswbot2.Bot.Commands
                         ms.Position = 0;
                         var iof = new Telegram.Bot.Types.InputFiles.InputOnlineFile(ms);
                         TgBot.Client.SendPhotoAsync(m.Chat.Id, iof, msg, ParseMode.Html).Wait();
+                        ms.Close();
                     }
                 }
             }
