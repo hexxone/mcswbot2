@@ -1,15 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Dynamic;
 using System.IO;
-using System.Linq;
 using System.Net.Sockets;
 using System.Text;
 using mcswbot2.Lib.Payload;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
-using Newtonsoft.Json.Linq;
 
 namespace mcswbot2.Lib.ServerInfo
 {
@@ -18,6 +14,8 @@ namespace mcswbot2.Lib.ServerInfo
         // your "client" protocol version to tell the server 
         // doesn't really matter, server will return its own version independently
         private const int Proto = 51;
+        private const int BufferSize = 512 * 1024;
+        private const int TimeoutAfter = 500;
 
         /// <summary>
         ///     Connect to the Server and print information, then return Protocol version
@@ -27,16 +25,15 @@ namespace mcswbot2.Lib.ServerInfo
         /// <returns><see cref="ServerInfoBase" />result</returns>
         public static ServerInfoBase Get(string ip, int port = 25565)
         {
-            var now = DateTime.Now;
             var sw = new Stopwatch();
             sw.Start();
-
+            var now = DateTime.Now;
             try
             {
                 using (var tcp = new TcpClient(ip, port))
                 {
-                    tcp.ReceiveBufferSize = 512 * 1024;
-                    tcp.ReceiveTimeout = 5000;
+                    tcp.ReceiveBufferSize = BufferSize;
+                    tcp.ReceiveTimeout = TimeoutAfter;
 
                     var packetId = GetVarInt(0);
                     var protocolVersion = GetVarInt(Proto);
@@ -55,11 +52,13 @@ namespace mcswbot2.Lib.ServerInfo
                     tcp.Client.Send(requestPacket, SocketFlags.None);
 
                     var offset = 0;
-                    var buffer = new byte[tcp.ReceiveBufferSize];
+                    var buffer = new byte[BufferSize];
 
                     using (var stream = tcp.GetStream())
                     {
-                        stream.Read(buffer, 0, buffer.Length);
+                        stream.Read(buffer, 0, BufferSize);
+                        stream.Close();
+                        tcp.Close();
 
                         // first read the packet length and check it to be > 0
                         // then read the packet it and check it to be 0 == ping response
@@ -70,97 +69,55 @@ namespace mcswbot2.Lib.ServerInfo
 
                         var json = ReadString(buffer, ref offset, jsonLength);
 
-                        //Console.WriteLine("\r\n\r\nJSON: " + json + "\r\n\r\n");
+                        dynamic ping = JsonConvert.DeserializeObject(json);
 
-                        // get our dynamic object
-                        dynamic pingDat = JsonConvert.DeserializeObject(json);
-                        object pingData = pingDat;
+                        var sample = new List<PlayerPayLoad>();
+                        if(json.Contains("\"sample\":["))
+                        {
+                            try
+                            {
+                                foreach (dynamic key in ping.players.sample)
+                                {
+                                    if (key.id != null && key.name != null)
+                                    {
+                                        var plr = new PlayerPayLoad() { Id = key.id, Name = key.name };
+                                        Console.WriteLine("Add Player: " + plr.Name);
+                                        sample.Add(plr);
+                                    }
+                                }
+                            }
+                            catch (Exception e)
+                            {
+                                Console.WriteLine("Error when sample processing " + e.ToString());
+                            }
 
-                        sw.Stop();
-
-                        bool HasValue(object basis, string field) => basis.GetType().GetProperties().Any(p => p.Name == field);
-                        object GetValue(object basis, string field) => basis != null && HasValue(basis, field) ? basis.GetType().GetProperties().First(p => p.Name == field).GetValue(basis, null) : null;
-
-                        // convert our given types
-                        var pingDataPlayers = GetValue(pingData, "players");
-                        var pingDataVersion = GetValue(pingData, "version");
-                        var pingDataDesc = GetValue(pingData, "description");
-
-                        if (pingDataPlayers == null || pingDataVersion == null || pingDataDesc == null)
-                            throw new Exception("Could not parse important information.");
-
-                        var pingDataSample = GetValue(pingDataPlayers, "sample");
-                        var max = (int)GetValue(pingDataPlayers, "max");
-                        var onl = (int)GetValue(pingDataPlayers, "online");
-                        var ver = (string)GetValue(pingDataVersion, "name");
+                        }
 
                         var desc = "";
-                        var plrs = new List<PlayerPayLoad>();
-                        // parse description object instead of string
-                        if (pingDataDesc != null)
+                        if (json.Contains("\"description\":{\""))
                         {
                             try
                             {
-                                var txt = GetValue(pingDataDesc, "text");
-                                var ext = GetValue(pingDataDesc, "extra");
-
-                                if (txt != null) desc = (string)txt;
-                                if (ext != null)
-                                {
-                                    foreach (object key in (Array)ext)
-                                    {
-                                        var txt2 = GetValue(key, "text");
-                                        if (txt2 != null) desc += (string)txt2;
-                                    }
-                                }
+                                desc = (string)ping.description.text;
                             }
-                            catch (Exception jex)
+                            catch (Exception e)
                             {
-                                Program.WriteLine("\r\n\addr: " + ip + ":" + port + "\r\nError: " + jex.ToString() + "\r\n\r\njson: " + json + "\r\n");
-                                try
-                                {
-                                    desc = (string)pingDataDesc;
-                                }
-                                catch { }
-                            }
-                            finally
-                            {
-                                if (string.IsNullOrEmpty(desc)) throw new Exception("Description is null.");
+                                Console.WriteLine("Error description: " + e.ToString());
                             }
                         }
 
-                        // get players from dynamic object
-                        if (pingDataSample != null)
-                        {
-                            try
-                            {
-                                foreach (object key in (Array)pingDataSample)
-                                {
-                                    var kid = GetValue(key, "id");
-                                    var kna = GetValue(key, "name");
-                                    if (kid != null && kna != null)
-                                    {
-                                        var plr = new PlayerPayLoad() { Id = (string)kid, Name = (string)kna };
-                                        Console.WriteLine("Add Player: " + plr.Name);
-                                        plrs.Add(plr);
-                                    }
-                                }
-                            }
-                            catch (Exception sex)
-                            {
-                                Console.WriteLine("Error iterating samples... " + sex.ToString());
-                            }
-                        }
+                        if(string.IsNullOrEmpty(desc))
+                            desc = (string)ping.description;
 
-                        // we done boi
-                        return new ServerInfoBase(now, sw.Elapsed, desc, max, onl, ver, plrs);
+                        sw.Stop();
+                        return new ServerInfoBase(now, sw.ElapsedMilliseconds, desc, (int)ping.players.max, (int)ping.players.online, (string)ping.version.name, sample);
                     }
                 }
             }
-            catch (Exception ex)
+            catch (Exception e)
             {
-                Program.WriteLine("\r\n\addr: " + ip + ":" + port + "\r\nanother Error: " + ex.ToString() + "\r\n");
-                return new ServerInfoBase(ex);
+                Console.WriteLine("another Error: " + e.ToString());
+                return new ServerInfoBase(e);
             }
         }
 

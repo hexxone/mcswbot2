@@ -1,5 +1,4 @@
 ﻿using Newtonsoft.Json;
-using System;
 using System.Drawing;
 using Telegram.Bot.Types;
 using static mcswbot2.Lib.Types;
@@ -9,6 +8,7 @@ namespace mcswbot2.Bot
 {
     public class Utils
     {
+
         /// <summary>
         ///     removes Minecraft Chat Syle informations
         /// </summary>
@@ -27,7 +27,6 @@ namespace mcswbot2.Bot
             foreach (var t in l) s = s.Replace(t, "");
             return s;
         }
-
 
         /// <summary>
         ///     Find or Add user
@@ -79,7 +78,6 @@ namespace mcswbot2.Bot
             {
                 var json = File.ReadAllText("groups.json");
                 TgBot.TgGroups.AddRange(JsonConvert.DeserializeObject<TgGroup[]>(json));
-                TgBot.TgGroups.ForEach(e => e.RegisterOnce());
             }
 
             Program.WriteLine($"Loaded data. [{TgBot.TgUsers.Count} Users, {TgBot.TgGroups.Count} Groups]");
@@ -103,11 +101,11 @@ namespace mcswbot2.Bot
         ///     Will Plot and save Data to a file
         /// </summary>
         /// <param name="dat"></param>
-        public static Bitmap PlotData(PlottableData[] dat)
+        public static Bitmap PlotData(PlottableData[] dat, string xLab, string yLab)
         {
             var plt = new ScottPlot.Plot(345, 210);
-            plt.XLabel("Minutes Ago");
-            plt.YLabel("Player Online");
+            plt.XLabel(xLab);
+            plt.YLabel(yLab);
             plt.Legend(true);
             foreach (var da in dat)
                 plt.PlotScatter(da.dataX, da.dataY, null, 1D, 5D, da.Label);

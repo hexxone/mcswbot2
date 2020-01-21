@@ -5,10 +5,7 @@ namespace mcswbot2.Bot.Commands
 {
     internal class CmdList : ICommand
     {
-        public override string Command()
-        {
-            return "list";
-        }
+        public override string Command() => "list";
 
         public override void Call(Message m, TgGroup g, TgUser u, string[] args, bool dev)
         {

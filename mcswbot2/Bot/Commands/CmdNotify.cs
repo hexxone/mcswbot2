@@ -6,10 +6,7 @@ namespace mcswbot2.Bot.Commands
 {
     internal class CmdNotify : ICommand
     {
-        public override string Command()
-        {
-            return "notify";
-        }
+        public override string Command() => "notify";
 
         public override void Call(Message m, TgGroup g, TgUser u, string[] args, bool dev)
         {
