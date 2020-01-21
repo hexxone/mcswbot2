@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 using mcswbot2.Lib.Event;
-using mcswbot2.Lib.Payload;
 using mcswbot2.Lib.ServerInfo;
 using static mcswbot2.Lib.Types;
 
