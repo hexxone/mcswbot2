@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text.RegularExpressions;
-using mcswbot2.Lib.Payload;
-using mcswbot2.Lib;
+using mcswbot2.Lib.Event;
 
 namespace mcswbot2.Lib.ServerInfo
 {
@@ -102,7 +100,7 @@ namespace mcswbot2.Lib.ServerInfo
         /// <summary>
         ///     Gets the server's MOTD as Text
         /// </summary>
-        public string ServerMotd => Motd();
+        public string ServerMotd => Utils.FixMcChat(RawMotd);
 
         /// <summary>
         ///     Gets the server's max player count
@@ -134,21 +132,5 @@ namespace mcswbot2.Lib.ServerInfo
                 $"Success:{HadSuccess},LasError:{LastError},Motd:{ServerMotd},MaxPlayers:{MaxPlayerCount},CurrentPlayers:{CurrentPlayerCount},MCVersion:{MinecraftVersion};");
         }
 
-        /// <summary>
-        ///     Gets the server's MOTD formatted as HTML
-        /// </summary>
-        /// <returns>HTML-formatted MOTD</returns>
-        private string Motd()
-        {
-            var regex = new Regex("§([k-oK-O])(.*?)(§[0-9a-fA-Fk-oK-OrR]|$)");
-            var s = RawMotd;
-            while (regex.IsMatch(s))
-                s = regex.Replace(s, m => m.Groups[2].Value + m.Groups[3].Value);
-
-            regex = new Regex("§([0-9a-fA-F])(.*?)(§[0-9a-fA-FrR]|$)");
-            while (regex.IsMatch(s))
-                s = regex.Replace(s, m => m.Groups[2].Value + m.Groups[3].Value);
-            return s;
-        }
     }
 }

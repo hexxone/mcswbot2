@@ -1,14 +1,14 @@
-﻿using Newtonsoft.Json;
+﻿using mcswbot2.Bot;
+using Newtonsoft.Json;
 using System.Drawing;
 using Telegram.Bot.Types;
 using static mcswbot2.Lib.Types;
 using File = System.IO.File;
 
-namespace mcswbot2.Bot
+namespace mcswbot2
 {
     public class Utils
     {
-
         /// <summary>
         ///     removes Minecraft Chat Syle informations
         /// </summary>
