@@ -18,10 +18,10 @@ namespace mcswbot2.Lib.ServerInfo
         /// <returns>A <see cref="ServerInfoBase" /> instance with retrieved data</returns>
         public static ServerInfoBase Get(string ip, int port = 25565)
         {
-            var now = DateTime.Now;
             var sw = new Stopwatch();
-            var players = new List<PlayerPayLoad>();
             sw.Start();
+            var now = DateTime.Now;
+            var players = new List<PlayerPayLoad>();
             try
             {
                 string[] packetData = null;
@@ -29,7 +29,7 @@ namespace mcswbot2.Lib.ServerInfo
                 {
                     using (var ns = client.GetStream())
                     {
-                        ns.Write(new byte[] {0xFE, 0x01}, 0, 2);
+                        ns.Write(new byte[] { 0xFE, 0x01 }, 0, 2);
                         var buffer = new byte[2048];
                         var br = ns.Read(buffer, 0, buffer.Length);
                         if (buffer[0] != 0xFF)
@@ -45,7 +45,7 @@ namespace mcswbot2.Lib.ServerInfo
                 }
 
                 sw.Stop();
-                return new ServerInfoBase(now, sw.Elapsed, packetData[3], int.Parse(packetData[5]),
+                return new ServerInfoBase(now, sw.ElapsedMilliseconds, packetData[3], int.Parse(packetData[5]),
                     int.Parse(packetData[4]), packetData[2], players);
             }
             catch (Exception ex)

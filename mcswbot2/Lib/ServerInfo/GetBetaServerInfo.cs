@@ -31,7 +31,7 @@ namespace mcswbot2.Lib.ServerInfo
                 {
                     using (var ns = client.GetStream())
                     {
-                        ns.Write(new byte[] {0xFE}, 0, 1);
+                        ns.Write(new byte[] { 0xFE }, 0, 1);
                         var buff = new byte[2048];
                         var br = ns.Read(buff, 0, buff.Length);
                         if (buff[0] != 0xFF)
@@ -47,7 +47,7 @@ namespace mcswbot2.Lib.ServerInfo
                 }
 
                 sw.Stop();
-                return new ServerInfoBase(now, sw.Elapsed, packetData[3], int.Parse(packetData[5]),
+                return new ServerInfoBase(now, sw.ElapsedMilliseconds, packetData[3], int.Parse(packetData[5]),
                     int.Parse(packetData[4]), packetData[2], players);
             }
             catch (Exception ex)

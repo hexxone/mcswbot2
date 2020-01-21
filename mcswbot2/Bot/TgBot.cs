@@ -13,10 +13,12 @@ namespace mcswbot2.Bot
     {
         private static readonly List<ICommand> Commands = new List<ICommand>();
 
-
         public static List<TgUser> TgUsers = new List<TgUser>();
+
         public static List<TgGroup> TgGroups = new List<TgGroup>();
+
         public static TelegramBotClient Client { get; private set; }
+
         public static User TgBotUser { get; private set; }
 
         public static void Start()
@@ -28,6 +30,7 @@ namespace mcswbot2.Bot
             Commands.Add(new CmdAdd());
             Commands.Add(new CmdList());
             Commands.Add(new CmdNotify());
+            Commands.Add(new CmdPing());
             Commands.Add(new CmdPlayer());
             Commands.Add(new CmdRemove());
             Commands.Add(new CmdStart());
@@ -36,12 +39,27 @@ namespace mcswbot2.Bot
             // Start the bot async
             _ = RunBotAsync();
 
-            // save the settings every Minute
+            // Load users, groups & settings
+            Utils.Load();
+
+            // main ping loop
             while (true)
             {
-                System.Threading.Thread.Sleep(60000);
+                Parallel.ForEach(TgGroups, tgg => tgg.PingAll());
+
+                PutTaskDelay().Wait();
+
                 Utils.Save();
             }
+        }
+
+        /// <summary>
+        ///     Non-blocking way of waiting
+        /// </summary>
+        /// <returns></returns>
+        private static async Task PutTaskDelay()
+        {
+            await Task.Delay(30000);
         }
 
         /// <summary>
@@ -54,9 +72,6 @@ namespace mcswbot2.Bot
             TgBotUser = await Client.GetMeAsync();
             Program.WriteLine("I am Bot: " + new TgUser(TgBotUser));
             Client.OnMessage += Client_OnMessage;
-
-            // Load users, groups & settings
-            Utils.Load();
 
             // start taking requests
             Client.StartReceiving();

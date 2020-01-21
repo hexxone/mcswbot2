@@ -7,10 +7,7 @@ namespace mcswbot2.Bot.Commands
 {
     internal class CmdAdd : ICommand
     {
-        public override string Command()
-        {
-            return "add";
-        }
+        public override string Command() => "add";
 
         public override void Call(Message m, TgGroup g, TgUser u, string[] args, bool dev)
         {

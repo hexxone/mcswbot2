@@ -15,7 +15,7 @@ namespace mcswbot2.Lib
 
             public PlottableData(string lbl, double[] x, double[] y)
             {
-                Label = lbl;  dataX = x; dataY = y;
+                Label = lbl; dataX = x; dataY = y;
             }
         }
 

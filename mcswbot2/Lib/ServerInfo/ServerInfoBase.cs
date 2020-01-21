@@ -47,7 +47,7 @@ namespace mcswbot2.Lib.ServerInfo
         /// <param name="playerCount">Server's current player count</param>
         /// <param name="version">Server's Minecraft version</param>
         /// <param name="players">Server's online players</param>
-        public ServerInfoBase(DateTime dt, TimeSpan sp, string motd, int maxPlayers, int playerCount, string version,
+        public ServerInfoBase(DateTime dt, long sp, string motd, int maxPlayers, int playerCount, string version,
             List<PlayerPayLoad> players)
         {
             RequestDate = dt;
@@ -68,7 +68,7 @@ namespace mcswbot2.Lib.ServerInfo
         public ServerInfoBase(Exception ex)
         {
             RequestDate = DateTime.Now;
-            RequestTime = TimeSpan.FromMilliseconds(500);
+            RequestTime = 0;
             HadSuccess = false;
             LastError = ex;
             MinecraftVersion = "0.0.0";
@@ -80,9 +80,9 @@ namespace mcswbot2.Lib.ServerInfo
         public DateTime RequestDate { get; }
 
         /// <summary>
-        ///     How long did the request take to complete?
+        ///     How long did the request take to complete in MS?
         /// </summary>
-        public TimeSpan RequestTime { get; }
+        public long RequestTime { get; }
 
         /// <summary>
         ///     Determines if the request was successfull
@@ -103,11 +103,6 @@ namespace mcswbot2.Lib.ServerInfo
         ///     Gets the server's MOTD as Text
         /// </summary>
         public string ServerMotd => Motd();
-
-        /// <summary>
-        ///     Gets the server's MOTD converted into HTML style code
-        /// </summary>
-        public string ServerMotdHtml => Motd(true);
 
         /// <summary>
         ///     Gets the server's max player count
@@ -143,27 +138,16 @@ namespace mcswbot2.Lib.ServerInfo
         ///     Gets the server's MOTD formatted as HTML
         /// </summary>
         /// <returns>HTML-formatted MOTD</returns>
-        private string Motd(bool useHtml = false)
+        private string Motd()
         {
             var regex = new Regex("§([k-oK-O])(.*?)(§[0-9a-fA-Fk-oK-OrR]|$)");
             var s = RawMotd;
             while (regex.IsMatch(s))
-                s = regex.Replace(s, m =>
-                {
-                    if (!useHtml) return m.Groups[2].Value + m.Groups[3].Value;
-                    var ast = "text-decoration:" + Types.MinecraftStyles[m.Groups[1].Value[0]];
-                    var html = "<span style=\"" + ast + "\">" + m.Groups[2].Value + "</span>" + m.Groups[3].Value;
-                    return html;
-                });
+                s = regex.Replace(s, m => m.Groups[2].Value + m.Groups[3].Value);
+
             regex = new Regex("§([0-9a-fA-F])(.*?)(§[0-9a-fA-FrR]|$)");
             while (regex.IsMatch(s))
-                s = regex.Replace(s, m =>
-                {
-                    if (!useHtml) return m.Groups[2].Value + m.Groups[3].Value;
-                    var ast = "color:" + Types.MinecraftColors[m.Groups[1].Value[0]];
-                    var html = "<span style=\"" + ast + "\">" + m.Groups[2].Value + "</span>" + m.Groups[3].Value;
-                    return html;
-                });
+                s = regex.Replace(s, m => m.Groups[2].Value + m.Groups[3].Value);
             return s;
         }
     }
