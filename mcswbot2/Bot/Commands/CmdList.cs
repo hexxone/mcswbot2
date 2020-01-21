@@ -19,7 +19,7 @@ namespace mcswbot2.Bot.Commands
                 {
                     msg += "Online 🌐";
                     msg += "\r\n  Version:<code> " + s.Bind_Version;
-                    msg += "</code>\r\n  MOTD:<code> " + Utils.FixMcChat(s.Bind_MOTD);
+                    msg += "</code>\r\n  MOTD:<code> " + s.Bind_MOTD;
                     msg += "</code>\r\n  Player:<code> " + s.Bind_OnlinePlayers + " / " + s.Bind_MaxPlayers + "</code>";
                 }
                 else

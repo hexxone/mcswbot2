@@ -1,10 +1,10 @@
-﻿using System;
+﻿using mcswbot2.Lib.Event;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Net.Sockets;
 using System.Text;
-using mcswbot2.Lib.Payload;
 
 namespace mcswbot2.Lib.ServerInfo
 {

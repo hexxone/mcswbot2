@@ -1,4 +1,4 @@
-﻿namespace mcswbot2.Lib.Payload
+﻿namespace mcswbot2.Lib.Event
 {
     public sealed class PlayerPayLoad
     {
