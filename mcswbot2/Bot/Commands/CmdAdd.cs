@@ -13,49 +13,30 @@ namespace mcswbot2.Bot.Commands
         public override void Call(Message m, TgGroup g, TgUser u, string[] args, bool dev)
         {
             var use = "Usage: /add [label] [address] (port default 25565)";
-            if (g.Servers.Count > 2 && m.From.Id != Config.DeveloperId)
+            try
             {
-                Respond(m.Chat.Id, "Sorry - in order to avoid abuse, only up to 3 servers are allowed.");
-                return;
-            }
-            if (args.Length < 3 || args.Length > 4)
-            {
-                Respond(m.Chat.Id, use);
-                return;
-            }
-            if (g.GetServer(args[1]) != null)
-            {
-                Respond(m.Chat.Id, "Label name already taken.");
-                return;
-            }
-            var addr = args[2];
-            var port = 25565;
-            if (args.Length == 4)
-            {
-                if (!int.TryParse(args[3], out port))
-                {
-                    Respond(m.Chat.Id, "Port is not a number.\r\n" + use);
-                    return;
-                }
-            }
+                if (g.Servers.Count > 2 && !dev) throw new Exception("Only up to 3 servers are allowed per group.");
+                if (args.Length < 3 || args.Length > 4) throw new Exception("Invalid arguments.");
+                Utils.VerifyLabel(args[1]);
+                if (g.GetServer(args[1]) != null) throw new Exception("Label name already in use.");
 
-            // bypass ip check if user is developer
-            if (true || m.From.Id != Config.DeveloperId)
-            {
-                try
-                {
-                    Utils.VerifyAddress(addr, port);
-                }
-                catch (Exception ex)
-                {
-                    Respond(m.Chat.Id, "Error adding server: " + ex.Message + "\r\n" + use);
-                    return;
-                }
-            }
+                var addr = args[2];
+                var port = 25565;
+                // try to parse port if given
+                if (args.Length == 4 && !int.TryParse(args[3], out port))
+                    throw new Exception("Port is not a number.");
 
-            g.AddServer(args[1], addr, port);
-            Respond(m.Chat.Id, "Server added to watchlist: [" + EventBase.Wrap(Types.Formatting.Html, args[1]) + "]",
-                ParseMode.Html);
+                // bypass ip check if user is developer
+                if (!dev) Utils.VerifyAddress(addr, port);
+                // add & respond
+                g.AddServer(args[1], addr, port);
+                Respond(m.Chat.Id, "Server added to watchlist: [" + EventBase.Wrap(Types.Formatting.Html, args[1]) + "]",
+                    ParseMode.Html);
+            }
+            catch (Exception ex)
+            {
+                Respond(m.Chat.Id, "Error adding server: " + ex.Message + "\r\n" + use);
+            }
         }
     }
 }

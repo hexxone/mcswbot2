@@ -99,11 +99,8 @@ namespace mcswbot2.Lib.Factory
         }
 
         /// <summary>
-        ///     Will
+        ///     Will compare the last status with the current one and return event updates.
         /// </summary>
-        /// <param name="notifyStatus"></param>
-        /// <param name="notifyCount"></param>
-        /// <param name="notifyNames"></param>
         /// <returns></returns>
         public EventBase[] Update()
         {
