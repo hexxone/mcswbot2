@@ -1,7 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace mcswbot2.Lib.Factory
@@ -38,7 +36,7 @@ namespace mcswbot2.Lib.Factory
             var found = serverStatusBases.FirstOrDefault(s => s.Address.ToLower() == atl && s.Port == port);
             if (found == null) serverStatusBases.Add(found = new ServerStatusBase() { Address = addr, Port = port });
             // Make & add new status
-            var state = new ServerStatus() { Label = label, Base = found};
+            var state = new ServerStatus() { Label = label, Base = found };
             serverStates.Add(state);
             return state;
         }
