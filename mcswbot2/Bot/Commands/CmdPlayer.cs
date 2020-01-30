@@ -15,7 +15,7 @@ namespace mcswbot2.Bot.Commands
         {
             var plotFile = true;
 
-            var msg = "Online Player:";
+            var msg = "Player Online:";
             var plots = new List<PlottableData>();
             foreach (var item in g.Servers)
             {
@@ -34,7 +34,6 @@ namespace mcswbot2.Bot.Commands
                     if (!string.IsNullOrEmpty(n)) n += ", ";
                     n += Utils.FixMcChat(plr.Name);
                 }
-
                 msg += "\r\nNames: <code>" + n + "</code>";
             }
 

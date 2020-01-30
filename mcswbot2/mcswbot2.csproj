@@ -13,11 +13,8 @@
 
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
-    <PackageReference Include="Telegram.Bot" Version="15.2.0" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\ScottPlot\ScottPlot.csproj" />
+    <PackageReference Include="ScottPlot" Version="4.0.15" />
+    <PackageReference Include="Telegram.Bot" Version="15.2.1" />
   </ItemGroup>
 
 </Project>

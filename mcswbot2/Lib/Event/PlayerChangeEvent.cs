@@ -1,5 +1,4 @@
 ﻿using System;
-using mcswbot2.Lib;
 
 namespace mcswbot2.Lib.Event
 {

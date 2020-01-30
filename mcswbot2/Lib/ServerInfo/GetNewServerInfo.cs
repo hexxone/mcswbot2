@@ -14,6 +14,7 @@ namespace mcswbot2.Lib.ServerInfo
     {
         // your "client" protocol version to tell the server 
         // doesn't really matter, server will return its own version independently
+        // for detailed protocol version codes see here: https://wiki.vg/Protocol_version_numbers
         private const int Proto = 47;
         private const int BufferSize = Int16.MaxValue;
 

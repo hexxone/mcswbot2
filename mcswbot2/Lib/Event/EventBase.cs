@@ -1,6 +1,4 @@
-﻿using mcswbot2.Lib;
-
-namespace mcswbot2.Lib.Event
+﻿namespace mcswbot2.Lib.Event
 {
     public abstract class EventBase
     {

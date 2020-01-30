@@ -1,7 +1,4 @@
-﻿using System;
-using mcswbot2.Lib;
-
-namespace mcswbot2.Lib.Event
+﻿namespace mcswbot2.Lib.Event
 {
     internal class OnlineStatusEvent : EventBase
     {

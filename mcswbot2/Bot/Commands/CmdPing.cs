@@ -1,10 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Drawing.Imaging;
 using System.IO;
-using System.Text;
 using Telegram.Bot.Types;
-using Telegram.Bot.Types.Enums;
 using static mcswbot2.Lib.Types;
 
 namespace mcswbot2.Bot.Commands
@@ -23,7 +20,7 @@ namespace mcswbot2.Bot.Commands
 
             if (plots.Count > 0)
             {
-                using (var bm = Utils.PlotData(plots.ToArray(), "Minutes Ago", "Reponse time (ms)"))
+                using (var bm = Utils.PlotData(plots.ToArray(), "Minutes Ago", "Response time (ms)"))
                 {
                     using (var ms = new MemoryStream())
                     {
