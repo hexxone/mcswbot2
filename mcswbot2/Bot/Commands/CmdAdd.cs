@@ -34,13 +34,13 @@ namespace mcswbot2.Bot.Commands
             {
                 if (!int.TryParse(args[3], out port))
                 {
-                    Respond(m.Chat.Id, "Port is not a number.\r\n"+use);
+                    Respond(m.Chat.Id, "Port is not a number.\r\n" + use);
                     return;
                 }
             }
 
             // bypass ip check if user is developer
-            if(true || m.From.Id != Config.DeveloperId)
+            if (true || m.From.Id != Config.DeveloperId)
             {
                 try
                 {
