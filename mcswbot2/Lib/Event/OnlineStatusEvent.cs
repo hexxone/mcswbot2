@@ -25,7 +25,7 @@ namespace mcswbot2.Lib.Event
         {
             return "Server status: "
                    + (ServerStatus ? "online 🌐" : "offline ❌")
-                   + (ServerStatus ? "\r\nMOTD:\r\n" : "\r\nReason: ")
+                   + (ServerStatus ? "\r\nMOTD:\r\n" : "\r\nReason:\r\n")
                    + Wrap(format, StatusText);
         }
     }

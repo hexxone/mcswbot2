@@ -9,11 +9,11 @@ namespace mcswbot2.Bot.Commands
         public abstract string Command();
         public abstract void Call(Message m, TgGroup g, TgUser u, string[] args, bool dev);
 
-        protected void Respond(ChatId cid, string txt, ParseMode pm = ParseMode.Default)
+        protected void Respond(ChatId cid, string txt, ParseMode pm = ParseMode.Default, int replyMsg = 0)
         {
             try
             {
-                TgBot.Client.SendTextMessageAsync(cid, txt, pm).Wait();
+                TgBot.Client.SendTextMessageAsync(cid, txt, pm, false, false, replyMsg).Wait();
             }
             catch (Exception ex)
             {

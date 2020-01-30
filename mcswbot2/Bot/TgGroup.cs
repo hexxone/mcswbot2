@@ -2,8 +2,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using mcswbot2.Lib;
-using mcswbot2.Lib.Event;
-using mcswbot2.Lib.ServerInfo;
+using mcswbot2.Lib.Factory;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 
@@ -11,30 +10,22 @@ namespace mcswbot2.Bot
 {
     public class TgGroup
     {
+        // Identity
+
         public List<ServerStatus> Servers = new List<ServerStatus>();
-
-        /// <summary>
-        ///     An object representing a telegram group
-        /// </summary>
-        /// <param name="basis"></param>
-        public TgGroup(Chat basis)
-        {
-            Base = basis;
-        }
-
         public Chat Base { get; set; }
 
         /// <summary>
         ///     Register & Start updating all the servers in this group after deserializing
         /// </summary>
-        public void PingAll()
+        public void UpdateAll()
         {
             Parallel.ForEach(Servers, srv =>
             {
-                var res = srv.PingUpdate();
+                var res = srv.Update();
                 if (res.Length > 0)
                 {
-                    var updateMsg = $"[<code>{srv.Bind_Label}</code>]";
+                    var updateMsg = $"[<code>{srv.Label}</code>]";
 
                     foreach (var @event in res)
                         updateMsg += "\r\n" + @event.GetEventString(Types.Formatting.Html);
@@ -52,7 +43,7 @@ namespace mcswbot2.Bot
         public ServerStatus GetServer(string l)
         {
             foreach (var item in Servers)
-                if (item.Bind_Label == l)
+                if (item.Label == l)
                     return item;
             return null;
         }
@@ -65,10 +56,7 @@ namespace mcswbot2.Bot
         /// <param name="p"></param>
         public void AddServer(string l, string adr, int p)
         {
-            var news = new ServerStatus { Bind_Label = l, Bind_Host = adr, Bind_Port = p };
-            news.Bind_ServerNotify = true;
-            news.Bind_CountNotify = true;
-            news.Bind_PlayerNotify = true;
+            var news = ServerStatusFactory.Get().Make(l, adr, p);
             Servers.Add(news);
         }
 
@@ -82,7 +70,7 @@ namespace mcswbot2.Bot
             var stat = GetServer(l);
             if (stat == null) return false;
             Servers.Remove(stat);
-            return true;
+            return ServerStatusFactory.Get().Destroy(stat);
         }
 
         /// <summary>
