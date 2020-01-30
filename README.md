@@ -19,8 +19,12 @@ For newer versions, the Server List info may also contain a sample list of onlin
 
 I have done a lot of research on the minecraft-server protocol so most of the code is actually self-written. I have however taken some inspiration from [this gist](https://gist.github.com/csh/2480d14fbbb33b4bbae3) for example.
 
-This Bot is using [swharden/ScottPlot](https://github.com/swharden/ScottPlot) for plotting User Data over time.
-See `/player` and `/ping` command.
-
 For detailed info on minecraft protocol versions go here: https://wiki.vg/Protocol_version_numbers
+
+### Libraries:
+- [.NET Core 2.1](https://dotnet.microsoft.com/)
+- [ScottPlot](https://github.com/swharden/ScottPlot) for plotting Data over time (See `/player` and `/ping` command).
+- [Newtonsoft.JSON](https://github.com/JamesNK/Newtonsoft.Json) for (de-)serializing the server info and settings
+- [Telegram.Bot](https://github.com/TelegramBots/telegram.bot) for the actual Bot part
+
 
