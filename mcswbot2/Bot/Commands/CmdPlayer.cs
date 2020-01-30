@@ -19,17 +19,17 @@ namespace mcswbot2.Bot.Commands
             var plots = new List<PlottableData>();
             foreach (var item in g.Servers)
             {
-                msg += "\r\n[<code>" + item.Bind_Label + "</code>] ";
-                if (!item.Bind_ServerOnline) msg += "Offline";
-                else msg += item.Bind_OnlinePlayers + " / " + item.Bind_MaxPlayers;
+                msg += "\r\n[<code>" + item.Label + "</code>] ";
+                if (!item.IsOnline) msg += "Offline";
+                else msg += item.PlayerCount + " / " + item.MaxPlayerCount;
 
                 if (plotFile) plots.Add(item.GetUserData());
 
                 // add player names if any
-                if (item.Bind_PlayerList.Count <= 0) continue;
+                if (item.PlayerList.Count <= 0) continue;
 
                 var n = "";
-                foreach (var plr in item.Bind_PlayerList)
+                foreach (var plr in item.PlayerList)
                 {
                     if (!string.IsNullOrEmpty(n)) n += ", ";
                     n += Utils.FixMcChat(plr.Name);

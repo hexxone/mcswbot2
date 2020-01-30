@@ -48,9 +48,9 @@ namespace mcswbot2.Lib.ServerInfo
         public ServerInfoBase(DateTime dt, long sp, string motd, int maxPlayers, int playerCount, string version,
             List<PlayerPayLoad> players)
         {
+            HadSuccess = true;
             RequestDate = dt;
             RequestTime = sp;
-            HadSuccess = true;
             RawMotd = motd;
             MaxPlayerCount = maxPlayers;
             CurrentPlayerCount = playerCount;
@@ -63,11 +63,11 @@ namespace mcswbot2.Lib.ServerInfo
         ///     => failed request
         /// </summary>
         /// <param name="ex">the Last occured Exception when determining Server status</param>
-        public ServerInfoBase(Exception ex)
+        public ServerInfoBase(DateTime dt, long sp, Exception ex)
         {
-            RequestDate = DateTime.Now;
-            RequestTime = 0;
             HadSuccess = false;
+            RequestDate = dt;
+            RequestTime = sp;
             LastError = ex;
             MinecraftVersion = "0.0.0";
         }

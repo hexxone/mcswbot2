@@ -1,11 +1,19 @@
 ﻿using mcswbot2.Bot.Commands;
+using mcswbot2.Lib.Factory;
 using System;
 using System.Collections.Generic;
-using System.Text;
+using System.Diagnostics;
 using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
+
+/** @TODO:
+ * - if not owner, check for invalid ip range with resolve before adding
+ * - ping same servers with same address in different groups only once? => softlink?
+ * - 
+ * 
+ */
 
 namespace mcswbot2.Bot
 {
@@ -35,6 +43,7 @@ namespace mcswbot2.Bot
             Commands.Add(new CmdRemove());
             Commands.Add(new CmdStart());
             Commands.Add(new CmdStats());
+            Commands.Add(new CmdSven());
 
             // Start the bot async
             _ = RunBotAsync();
@@ -43,12 +52,22 @@ namespace mcswbot2.Bot
             Utils.Load();
 
             // main ping loop
+            var sw = new Stopwatch();
+            var avgWait = 60000;
             while (true)
             {
-                Parallel.ForEach(TgGroups, tgg => tgg.PingAll());
+                sw.Reset();
+                sw.Start();
+                ServerStatusFactory.Get().PingAll();
+                Parallel.ForEach(TgGroups, tgg => tgg.UpdateAll());
+                sw.Stop();
 
-                PutTaskDelay().Wait();
+                // calculate average wait time
+                var waitme = 60000 - Convert.ToInt32(sw.ElapsedMilliseconds);
+                avgWait = (avgWait + waitme) / 2;
+                PutTaskDelay(Math.Max(1000, avgWait)).Wait();
 
+                // save data
                 Utils.Save();
             }
         }
@@ -57,9 +76,9 @@ namespace mcswbot2.Bot
         ///     Non-blocking way of waiting
         /// </summary>
         /// <returns></returns>
-        private static async Task PutTaskDelay()
+        private static async Task PutTaskDelay(int ms)
         {
-            await Task.Delay(30000);
+            await Task.Delay(ms);
         }
 
         /// <summary>
@@ -129,14 +148,22 @@ namespace mcswbot2.Bot
             if (text.Contains(" "))
                 args = text.Split(' ');
 
-            // Process command
+            // Process commands only
             if (!args[0].StartsWith('/')) return;
 
-            var ct = args[0].Substring(1).ToLower();
-            if (ct.Contains("@")) ct = ct.Split('@')[0];
-            // check all registered command modules for a matching name
+            var usrCmd = args[0].Substring(1).ToLower();
+            if (usrCmd.Contains("@"))
+            {
+                var spl = usrCmd.Split('@');
+                // this command is malformatted or meant for another bot
+                if (spl.Length != 2 || spl[1] != TgBotUser.Username.ToLower()) return;
+                // dont include botname in command
+                usrCmd = spl[0];
+            }
+
+            // check all registered command modules for a matching command
             foreach (var cmd in Commands)
-                if (cmd.Command() == ct)
+                if (usrCmd == cmd.Command().ToLower())
                 {
                     Program.WriteLine("Command: " + cmd + " by " + user);
                     cmd.Call(msg, group, user, args, isDev);

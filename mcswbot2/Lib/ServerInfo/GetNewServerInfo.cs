@@ -14,9 +14,8 @@ namespace mcswbot2.Lib.ServerInfo
     {
         // your "client" protocol version to tell the server 
         // doesn't really matter, server will return its own version independently
-        private const int Proto = 51;
+        private const int Proto = 47;
         private const int BufferSize = Int16.MaxValue;
-        private const int TimeoutAfter = 500;
 
         /// <summary>
         ///     Connect to the Server and print information, then return Protocol version
@@ -26,13 +25,12 @@ namespace mcswbot2.Lib.ServerInfo
         /// <returns><see cref="ServerInfoBase" />result</returns>
         public static ServerInfoBase Get(string ip, int port = 25565)
         {
+            var now = DateTime.Now;
             var sw = new Stopwatch();
             sw.Start();
-            var now = DateTime.Now;
             try
             {
                 var json = "";
-
                 using (var client = new TcpClient())
                 {
                     var task = client.ConnectAsync(ip, port);
@@ -41,70 +39,42 @@ namespace mcswbot2.Lib.ServerInfo
 #if DEBUG
                         Debug.WriteLine("Connecting..");
 #endif
-                        Thread.Sleep(100);
+                        Thread.Sleep(20);
                     }
 
                     if (!client.Connected)
-                        return new ServerInfoBase(new Exception("Unable to connect..."));
+                        throw new EndOfStreamException();
 
                     var _offset = 0;
                     using (var stream = client.GetStream())
                     {
+                        stream.ReadTimeout = 10000;
                         var writeBuffer = new List<byte>();
 
-                        WriteVarInt(writeBuffer, 47);
+                        WriteVarInt(writeBuffer, Proto);
                         WriteString(writeBuffer, ip);
                         WriteShort(writeBuffer, Convert.ToInt16(port));
                         WriteVarInt(writeBuffer, 1);
                         Flush(writeBuffer, stream, 0);
-
+                        // yep, twice.
                         Flush(writeBuffer, stream, 0);
 
-                        /*
-                        byte[] readBuffer;
-                        byte[] data = new byte[1024];
-                        using (MemoryStream ms = new MemoryStream())
-                        {
-                            int numBytesRead;
-                            while ((numBytesRead = stream.Read(data, 0, data.Length)) > 0)
-                            {
-                                ms.Write(data, 0, numBytesRead);
-                            }
-                            readBuffer = ms.ToArray();
-                            ms.Close();
-                        }
+                        var readBuffer = new byte[BufferSize];
+                        stream.Read(readBuffer, 0, readBuffer.Length);
+                        // done
                         stream.Close();
                         client.Close();
-                        */
-
-                        var readBuffer = new byte[Int16.MaxValue];
-                        stream.Read(readBuffer, 0, readBuffer.Length);
-
-                        try
-                        {
-                            var length = ReadVarInt(ref _offset, readBuffer);
-                            var packet = ReadVarInt(ref _offset, readBuffer);
-                            var jsonLength = ReadVarInt(ref _offset, readBuffer);
-
-                            json = ReadString(ref _offset, readBuffer, jsonLength);
-                        }
-                        catch (IOException ex)
-                        {
-                            Console.WriteLine("Unable to read packet length from server,");
-                            Console.WriteLine("are you sure it's a Minecraft server?");
-#if DEBUG
-                            Console.WriteLine("Here are the details:");
-                            Console.WriteLine(ex.ToString());
-#endif
-                            return new ServerInfoBase(ex);
-                        }
+                        // IF an IOException arises here, thie server is probably not a minecraft-one
+                        var length = ReadVarInt(ref _offset, readBuffer);
+                        var packet = ReadVarInt(ref _offset, readBuffer);
+                        var jsonLength = ReadVarInt(ref _offset, readBuffer);
+                        json = ReadString(ref _offset, readBuffer, jsonLength);
                     }
-
                 }
 
                 sw.Stop();
 
-                dynamic ping = JsonConvert.DeserializeObject(json.Replace("\n",""));
+                dynamic ping = JsonConvert.DeserializeObject(json);
 
                 var sample = new List<PlayerPayLoad>();
                 if (json.Contains("\"sample\":["))
@@ -113,19 +83,18 @@ namespace mcswbot2.Lib.ServerInfo
                     {
                         foreach (dynamic key in ping.players.sample)
                         {
-                            if (key.id != null && key.name != null)
-                            {
-                                var plr = new PlayerPayLoad() { Id = key.id, Name = key.name };
-                                Console.WriteLine("Add Player: " + plr.Name);
-                                sample.Add(plr);
-                            }
+                            if (key.id == null || key.name == null) continue;
+                            var plr = new PlayerPayLoad() { Id = key.id, Name = key.name };
+#if DEBUG
+                            Debug.WriteLine("Add Player: " + plr.Name);
+#endif
+                            sample.Add(plr);
                         }
                     }
                     catch (Exception e)
                     {
-                        Console.WriteLine("Error when sample processing " + e.ToString());
+                        Program.WriteLine("Error when sample processing: " + e.ToString());
                     }
-
                 }
 
                 var desc = "";
@@ -137,20 +106,30 @@ namespace mcswbot2.Lib.ServerInfo
                     }
                     catch (Exception e)
                     {
-                        Console.WriteLine("Error description: " + e.ToString());
+                        Program.WriteLine("Error description text: " + e.ToString());
+                    }
+                }
+                if (string.IsNullOrEmpty(desc))
+                {
+                    try
+                    {
+                        desc = (string)ping.description;
+                    }
+                    catch (Exception ex)
+                    {
+                        Program.WriteLine("Error description text: " + ex.ToString());
                     }
                 }
 
                 if (string.IsNullOrEmpty(desc))
-                    desc = (string)ping.description;
+                    throw new FormatException("Empty description!");
 
                 return new ServerInfoBase(now, sw.ElapsedMilliseconds, desc, (int)ping.players.max, (int)ping.players.online, (string)ping.version.name, sample);
-
             }
             catch (Exception e)
             {
-                Console.WriteLine("another Error: " + e.ToString());
-                return new ServerInfoBase(e);
+                Program.WriteLine("Update Get Error: " + e.ToString());
+                return new ServerInfoBase(now, sw.ElapsedMilliseconds, e);
             }
         }
 

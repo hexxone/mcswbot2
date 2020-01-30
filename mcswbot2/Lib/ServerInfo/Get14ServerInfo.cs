@@ -18,9 +18,9 @@ namespace mcswbot2.Lib.ServerInfo
         /// <returns>A <see cref="ServerInfoBase" /> instance with retrieved data</returns>
         public static ServerInfoBase Get(string ip, int port = 25565)
         {
+            var now = DateTime.Now;
             var sw = new Stopwatch();
             sw.Start();
-            var now = DateTime.Now;
             var players = new List<PlayerPayLoad>();
             try
             {
@@ -33,10 +33,10 @@ namespace mcswbot2.Lib.ServerInfo
                         var buffer = new byte[2048];
                         var br = ns.Read(buffer, 0, buffer.Length);
                         if (buffer[0] != 0xFF)
-                            return new ServerInfoBase(new InvalidDataException("Received invalid packet"));
+                            return new ServerInfoBase(now, sw.ElapsedMilliseconds, new InvalidDataException("Received invalid packet"));
                         var packet = Encoding.BigEndianUnicode.GetString(buffer, 3, br - 3);
                         if (!packet.StartsWith("§"))
-                            return new ServerInfoBase(new InvalidDataException("Received invalid data"));
+                            return new ServerInfoBase(now, sw.ElapsedMilliseconds, new InvalidDataException("Received invalid data"));
                         packetData = packet.Split('\u0000');
                         ns.Close();
                     }
@@ -50,7 +50,7 @@ namespace mcswbot2.Lib.ServerInfo
             }
             catch (Exception ex)
             {
-                return new ServerInfoBase(ex);
+                return new ServerInfoBase(now, sw.ElapsedMilliseconds, ex);
             }
         }
     }
