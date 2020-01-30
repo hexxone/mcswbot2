@@ -6,9 +6,29 @@ namespace mcswbot2.Bot.Commands
 {
     internal abstract class ICommand
     {
+        /// <summary>
+        ///     Needs to be overwritten and return a low-cased string for representing when to call the command.
+        /// </summary>
+        /// <returns></returns>
         public abstract string Command();
+
+        /// <summary>
+        ///     Needs to be overwritten by the command-sepcific logic
+        /// </summary>
+        /// <param name="m">Message which contained the calling command</param>
+        /// <param name="g">Group where the message was sent in</param>
+        /// <param name="u">Bot-user equivalent of the command sender</param>
+        /// <param name="args">command arguments splitted by space</param>
+        /// <param name="dev">message was sent by developer</param>
         public abstract void Call(Message m, TgGroup g, TgUser u, string[] args, bool dev);
 
+        /// <summary>
+        ///     Short-wrapper for responding in current context
+        /// </summary>
+        /// <param name="cid"></param>
+        /// <param name="txt"></param>
+        /// <param name="pm"></param>
+        /// <param name="replyMsg"></param>
         protected void Respond(ChatId cid, string txt, ParseMode pm = ParseMode.Default, int replyMsg = 0)
         {
             try
@@ -21,9 +41,13 @@ namespace mcswbot2.Bot.Commands
             }
         }
 
+        /// <summary>
+        ///     toString override
+        /// </summary>
+        /// <returns></returns>
         public override string ToString()
         {
-            return $"[ICMD: {Command()}]";
+            return $"[ICommand: {Command()}]";
         }
     }
 }
