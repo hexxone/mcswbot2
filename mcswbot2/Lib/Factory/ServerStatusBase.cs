@@ -52,8 +52,9 @@ namespace mcswbot2.Lib.Factory
         }
 
         /// <summary>
+        ///     Returns the latest (successfull) ServerInfo
         /// </summary>
-        /// <param name="successful"></param>
+        /// <param name="successful">filter for the last successfull</param>
         /// <returns></returns>
         public ServerInfoBase GetLatestServerInfo(bool successful = false)
         {
@@ -63,8 +64,6 @@ namespace mcswbot2.Lib.Factory
                 ? tmpList.OrderByDescending(ob => ob.RequestDate.AddMilliseconds(ob.RequestTime)).First()
                 : null;
         }
-
-        #region Internal
 
         /// <summary>
         ///     This method will request the server infos for the given version/method.
@@ -85,14 +84,13 @@ namespace mcswbot2.Lib.Factory
             }
         }
 
-
-        // RUN GC
+        /// <summary>
+        ///     Remove all objects of which the Timestamp exceeds the Clearspan and run GC.
+        /// </summary>
         private void ClearMem()
         {
             _ = History.RemoveAll(o => o.RequestDate < DateTime.Now.Subtract(ClearSpan));
             GC.Collect();
         }
-
-        #endregion
     }
 }
