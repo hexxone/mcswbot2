@@ -19,7 +19,7 @@ namespace mcswbot2.Bot.Commands
             {
                 serverCount += gr.Servers.Count;
                 foreach (var sr in gr.Servers)
-                    userCount += sr.Bind_OnlinePlayers;
+                    userCount += sr.PlayerCount;
             }
 
             msg += "</code>\r\n  watched servers:<code> " + serverCount;

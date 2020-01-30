@@ -1,4 +1,4 @@
-﻿using mcswbot2.Lib;
+﻿using mcswbot2.Lib.Factory;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 
@@ -34,13 +34,13 @@ namespace mcswbot2.Bot.Commands
                         switch (args[2].ToLower())
                         {
                             case "state":
-                                srv2.Bind_ServerNotify = argl;
+                                srv2.NotifyServer = argl;
                                 break;
                             case "count":
-                                srv2.Bind_CountNotify = argl;
+                                srv2.NotifyCount = argl;
                                 break;
                             case "name":
-                                srv2.Bind_PlayerNotify = argl;
+                                srv2.NotifyNames = argl;
                                 break;
                             default:
                                 Respond(m.Chat.Id, "Unknown setting.\r\n\r\n" + usage);
@@ -55,10 +55,10 @@ namespace mcswbot2.Bot.Commands
 
         private static string GetSrvNotifications(ServerStatus srv)
         {
-            var msg = "[" + srv.Bind_Label + "] Notifications:";
-            msg += "\r\nState change:<code> " + srv.Bind_ServerNotify;
-            msg += "</code>\r\nCount change:<code> " + srv.Bind_CountNotify;
-            msg += "</code>\r\nPlayer change:<code> " + srv.Bind_PlayerNotify;
+            var msg = "[" + srv.Label + "] Notifications:";
+            msg += "\r\nState change:<code> " + srv.NotifyServer;
+            msg += "</code>\r\nCount change:<code> " + srv.NotifyCount;
+            msg += "</code>\r\nPlayer change:<code> " + srv.NotifyNames;
             return msg + "</code>";
         }
     }

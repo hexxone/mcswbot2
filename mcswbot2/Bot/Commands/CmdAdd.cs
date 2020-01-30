@@ -2,6 +2,7 @@
 using mcswbot2.Lib;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
+using System;
 
 namespace mcswbot2.Bot.Commands
 {
@@ -11,14 +12,15 @@ namespace mcswbot2.Bot.Commands
 
         public override void Call(Message m, TgGroup g, TgUser u, string[] args, bool dev)
         {
-            if (g.Servers.Count > 2 && u.Base.Id != Config.DeveloperId)
+            var use = "Usage: /add [label] [address] (port default 25565)";
+            if (g.Servers.Count > 2 && m.From.Id != Config.DeveloperId)
             {
                 Respond(m.Chat.Id, "Sorry - in order to avoid abuse, only up to 3 servers are allowed.");
                 return;
             }
-            if (args.Length != 3)
+            if (args.Length < 3 || args.Length > 4)
             {
-                Respond(m.Chat.Id, "Usage: /add [label] [address:port]");
+                Respond(m.Chat.Id, use);
                 return;
             }
             if (g.GetServer(args[1]) != null)
@@ -28,11 +30,27 @@ namespace mcswbot2.Bot.Commands
             }
             var addr = args[2];
             var port = 25565;
-            if (addr.Contains(":"))
+            if (args.Length == 4)
             {
-                var spl = addr.Split(':');
-                addr = spl[0];
-                port = int.Parse(spl[1]);
+                if (!int.TryParse(args[3], out port))
+                {
+                    Respond(m.Chat.Id, "Port is not a number.\r\n"+use);
+                    return;
+                }
+            }
+
+            // bypass ip check if user is developer
+            if(true || m.From.Id != Config.DeveloperId)
+            {
+                try
+                {
+                    Utils.VerifyAddress(addr, port);
+                }
+                catch (Exception ex)
+                {
+                    Respond(m.Chat.Id, "Error adding server: " + ex.Message + "\r\n" + use);
+                    return;
+                }
             }
 
             g.AddServer(args[1], addr, port);

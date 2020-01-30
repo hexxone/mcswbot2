@@ -22,8 +22,8 @@ namespace mcswbot2.Lib.ServerInfo
         {
             var now = DateTime.Now;
             var sw = new Stopwatch();
-            var players = new List<PlayerPayLoad>();
             sw.Start();
+            var players = new List<PlayerPayLoad>();
             try
             {
                 string[] packetData;
@@ -35,10 +35,10 @@ namespace mcswbot2.Lib.ServerInfo
                         var buff = new byte[2048];
                         var br = ns.Read(buff, 0, buff.Length);
                         if (buff[0] != 0xFF)
-                            return new ServerInfoBase(new InvalidDataException("Received invalid packet"));
+                            return new ServerInfoBase(now, sw.ElapsedMilliseconds, new InvalidDataException("Received invalid packet"));
                         var packet = Encoding.BigEndianUnicode.GetString(buff, 3, br - 3);
                         if (!packet.StartsWith("§"))
-                            return new ServerInfoBase(new InvalidDataException("Received invalid data"));
+                            return new ServerInfoBase(now, sw.ElapsedMilliseconds, new InvalidDataException("Received invalid data"));
                         packetData = packet.Split('\u0000');
                         ns.Close();
                     }
@@ -52,7 +52,7 @@ namespace mcswbot2.Lib.ServerInfo
             }
             catch (Exception ex)
             {
-                return new ServerInfoBase(ex);
+                return new ServerInfoBase(now, sw.ElapsedMilliseconds, ex);
             }
         }
     }
