@@ -2,7 +2,7 @@
 
 namespace mcswbot2.Bot
 {
-    public class TgUser
+    internal class TgUser
     {
         /// <summary>
         ///     An object representing a Telegram user

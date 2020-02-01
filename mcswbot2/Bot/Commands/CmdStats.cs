@@ -11,8 +11,8 @@ namespace mcswbot2.Bot.Commands
         public override void Call(Message m, TgGroup g, TgUser u, string[] args, bool dev)
         {
             var msg = "Global Bot stats:";
-            msg += "\r\n  known users:<code> " + TgBot.TgUsers.Count;
-            msg += "</code>\r\n  known groups:<code> " + TgBot.TgGroups.Count;
+            msg += "\r\n  known users:<code> " + TgBot.TgUsers.Length;
+            msg += "</code>\r\n  known groups:<code> " + TgBot.TgGroups.Length;
             var serverCount = 0;
             var userCount = 0;
             foreach (var gr in TgBot.TgGroups)

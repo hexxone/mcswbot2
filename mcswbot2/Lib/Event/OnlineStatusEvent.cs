@@ -17,7 +17,6 @@
 
         public string StatusText { get; }
 
-
         public override string GetEventString(Types.Formatting format)
         {
             return "Server status: "

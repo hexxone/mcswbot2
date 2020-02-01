@@ -8,7 +8,7 @@ using Telegram.Bot.Types.Enums;
 
 namespace mcswbot2.Bot
 {
-    public class TgGroup
+    internal class TgGroup
     {
         // Identity
 

@@ -8,7 +8,7 @@ using System.Text;
 
 namespace mcswbot2.Lib.ServerInfo
 {
-    public static class Get14ServerInfo
+    internal static class Get14ServerInfo
     {
         /// <summary>
         ///     Gets the information from specified server
