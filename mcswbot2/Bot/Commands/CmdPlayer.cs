@@ -32,7 +32,7 @@ namespace mcswbot2.Bot.Commands
                 foreach (var plr in item.PlayerList)
                 {
                     if (!string.IsNullOrEmpty(n)) n += ", ";
-                    n += Utils.FixMcChat(plr.Name);
+                    n += plr.Name;
                 }
                 msg += "\r\nNames: <code>" + n + "</code>";
             }

@@ -1,8 +1,9 @@
 ﻿namespace mcswbot2.Lib.Event
 {
-    public sealed class PlayerPayLoad
+    internal class PlayerPayLoad
     {
-        public string Name { get; set; }
+        public string Name => Types.FixMcChat(Name);
+        public string RawName { get; set; }
         public string Id { get; set; }
     }
 }

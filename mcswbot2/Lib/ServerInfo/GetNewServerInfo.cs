@@ -16,7 +16,7 @@ namespace mcswbot2.Lib.ServerInfo
         // doesn't really matter, server will return its own version independently
         // for detailed protocol version codes see here: https://wiki.vg/Protocol_version_numbers
         private const int Proto = 47;
-        private const int BufferSize = Int16.MaxValue;
+        private const int BufferSize = short.MaxValue;
 
         /// <summary>
         ///     Connect to the Server and print information, then return Protocol version
@@ -85,10 +85,7 @@ namespace mcswbot2.Lib.ServerInfo
                         foreach (dynamic key in ping.players.sample)
                         {
                             if (key.id == null || key.name == null) continue;
-                            var plr = new PlayerPayLoad() { Id = key.id, Name = key.name };
-#if DEBUG
-                            Debug.WriteLine("Add Player: " + plr.Name);
-#endif
+                            var plr = new PlayerPayLoad() { Id = key.id, RawName = key.name };
                             sample.Add(plr);
                         }
                     }

@@ -4,7 +4,7 @@ using mcswbot2.Lib.Event;
 
 namespace mcswbot2.Lib.ServerInfo
 {
-    public class ServerInfoBase
+    internal class ServerInfoBase
     {
         /// <summary>
         ///     Creates a new instance of <see cref="ServerInfoBase" /> with specified values
@@ -17,7 +17,7 @@ namespace mcswbot2.Lib.ServerInfo
         /// <param name="playerCount">Server's current player count</param>
         /// <param name="version">Server's Minecraft version</param>
         /// <param name="players">Server's online players</param>
-        public ServerInfoBase(DateTime dt, long sp, string motd, int maxPlayers, int playerCount, string version,
+        internal ServerInfoBase(DateTime dt, long sp, string motd, int maxPlayers, int playerCount, string version,
             List<PlayerPayLoad> players)
         {
             HadSuccess = true;
@@ -72,7 +72,7 @@ namespace mcswbot2.Lib.ServerInfo
         /// <summary>
         ///     Gets the server's MOTD as Text
         /// </summary>
-        public string ServerMotd => Utils.FixMcChat(RawMotd);
+        public string ServerMotd => Types.FixMcChat(RawMotd);
 
         /// <summary>
         ///     Gets the server's max player count

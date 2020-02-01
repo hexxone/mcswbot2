@@ -1,133 +1,26 @@
-﻿using mcswbot2.Bot;
-using Newtonsoft.Json;
-using System;
-using System.Diagnostics;
+﻿using System;
 using System.Drawing;
 using System.Linq;
 using System.Net;
 using System.Text.RegularExpressions;
-using Telegram.Bot.Types;
 using static mcswbot2.Lib.Types;
-using File = System.IO.File;
 
-namespace mcswbot2
+namespace mcswbot2.Bot
 {
-    public class Utils
+    internal class Utils
     {
-        /// <summary>
-        ///     removes Minecraft Chat Syle informations
-        /// </summary>
-        /// <param name="s"></param>
-        /// <returns></returns>
-        public static string FixMcChat(string s)
-        {
-            var l = new[]
-            {
-                "§4", "§c", "§6", "§e",
-                "§2", "§a", "§b", "§3",
-                "§1", "§9", "§d", "§5",
-                "§f", "§7", "§8", "§0",
-                "§l", "§m", "§n", "§o", "§r"
-            };
-            foreach (var t in l) s = s.Replace(t, "");
-            return s;
-        }
-
-        /// <summary>
-        ///     Find or Add user
-        /// </summary>
-        /// <param name="u"></param>
-        /// <returns></returns>
-        public static TgUser GetUser(User u)
-        {
-            foreach (var usr in TgBot.TgUsers)
-                if (usr.Base.Id == u.Id)
-                {
-                    usr.Base = u;
-                    return usr;
-                }
-
-            var newU = new TgUser(u);
-            TgBot.TgUsers.Add(newU);
-            return newU;
-        }
-
-        /// <summary>
-        ///     Find or Add Group
-        /// </summary>
-        /// <param name="c"></param>
-        /// <returns></returns>
-        public static TgGroup GetGroup(Chat c)
-        {
-            foreach (var cc in TgBot.TgGroups)
-                if (cc.Base.Id == c.Id)
-                    return cc;
-
-            var newC = new TgGroup() { Base = c };
-            TgBot.TgGroups.Add(newC);
-            return newC;
-        }
-
-        /// <summary>
-        ///     Load & Json Decode the user & group settings
-        /// </summary>
-        public static void Load()
-        {
-            // load users simply
-            if (File.Exists("users.json"))
-            {
-                var json = File.ReadAllText("users.json");
-                TgBot.TgUsers.AddRange(JsonConvert.DeserializeObject<TgUser[]>(json));
-            }
-
-            // load group objects
-            if (File.Exists("groups.json"))
-            {
-                var json = File.ReadAllText("groups.json");
-                var des = JsonConvert.DeserializeObject<TgGroup[]>(json);
-                // post-processing
-                foreach (var grp in des)
-                {
-                    // get deserialized servers & clear the originals
-                    var arr = grp.Servers.ToArray();
-                    grp.Servers.Clear();
-                    // add all servers back using the factory
-                    foreach (var srv in arr)
-                        grp.AddServer(srv.Label, srv.Base.Address, srv.Base.Port);
-                }
-                // add objects after deserializing & initializing
-                TgBot.TgGroups.AddRange(des);
-            }
-
-            Program.WriteLine($"Loaded data. [{TgBot.TgUsers.Count} Users, {TgBot.TgGroups.Count} Groups]");
-        }
-
-        /// <summary>
-        ///     Json encode & save the user & group settings
-        /// </summary>
-        public static void Save()
-        {
-            var str1 = JsonConvert.SerializeObject(TgBot.TgUsers);
-            File.WriteAllText("users.json", str1);
-
-            var str2 = JsonConvert.SerializeObject(TgBot.TgGroups);
-            File.WriteAllText("groups.json", str2);
-
-            Program.WriteLine("Saved data.");
-        }
-
         /// <summary>
         ///     Will Plot and save Data to a file
         /// </summary>
         /// <param name="dat"></param>
         public static Bitmap PlotData(PlottableData[] dat, string xLab, string yLab)
         {
-            var plt = new ScottPlot.Plot(345, 210);
+            var plt = new ScottPlot.Plot(355, 200);
             plt.XLabel(xLab);
             plt.YLabel(yLab);
             plt.Legend(true);
             foreach (var da in dat)
-                plt.PlotScatter(da.dataX, da.dataY, null, 1D, 5D, da.Label);
+                plt.PlotScatter(da.DataX, da.DataY, null, 1D, 5D, da.Label);
             return plt.GetBitmap();
         }
 
