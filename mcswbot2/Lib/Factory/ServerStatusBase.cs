@@ -6,7 +6,7 @@ using Newtonsoft.Json;
 
 namespace mcswbot2.Lib.Factory
 {
-    public class ServerStatusBase
+    internal class ServerStatusBase
     {
         // the time over which server infos are held in memory...
         private static readonly TimeSpan ClearSpan = new TimeSpan(0, 10, 0);

@@ -1,4 +1,5 @@
 ﻿using Telegram.Bot.Types;
+using Telegram.Bot.Types.Enums;
 
 namespace mcswbot2.Bot.Commands
 {
@@ -8,7 +9,7 @@ namespace mcswbot2.Bot.Commands
 
         public override void Call(Message m, TgGroup g, TgUser u, string[] args, bool dev)
         {
-            Respond(m.Chat.Id, "stinkt", Telegram.Bot.Types.Enums.ParseMode.Default, m.MessageId);
+            Respond(m.Chat.Id, "stinkt", ParseMode.Default, m.MessageId);
         }
     }
 }

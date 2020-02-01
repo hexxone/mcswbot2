@@ -1,6 +1,6 @@
 ﻿namespace mcswbot2.Lib.Event
 {
-    public abstract class EventBase
+    internal abstract class EventBase
     {
         /// <summary>
         ///     This function needs to be overwritten to return the event-specific message

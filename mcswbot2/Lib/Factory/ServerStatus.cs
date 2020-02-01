@@ -8,7 +8,7 @@ using static mcswbot2.Lib.Types;
 
 namespace mcswbot2.Lib.Factory
 {
-    public class ServerStatus
+    internal class ServerStatus
     {
         public ServerStatus()
         {
@@ -155,7 +155,7 @@ namespace mcswbot2.Lib.Factory
                 // if user state still true, but he is not in online list => went offline
                 userStates[k] = false;
                 // create payload
-                var p = new PlayerPayLoad { Id = k, Name = userNames[k] };
+                var p = new PlayerPayLoad { Id = k, RawName = userNames[k] };
                 // notify => invoke
                 if (NotifyNames)
                     events.Add(new PlayerStateEvent(p, false));
