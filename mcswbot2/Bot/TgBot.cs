@@ -49,11 +49,11 @@ namespace mcswbot2.Bot
             Commands.Add(new CmdStats());
             Commands.Add(new CmdSven());
 
-            // Start the bot async
-            _ = RunBotAsync();
-
             // Load users, groups & settings
             Load();
+
+            // Start the bot async
+            _ = RunBotAsync();
 
             // main ping loop
             var sw = new Stopwatch();
@@ -68,21 +68,13 @@ namespace mcswbot2.Bot
 
                 // calculate average wait time
                 var waitme = 60000 - Convert.ToInt32(sw.ElapsedMilliseconds);
-                avgWait = (avgWait + waitme) / 2;
-                PutTaskDelay(Math.Max(1000, avgWait)).Wait();
+                avgWait = Math.Max(1000, (avgWait + waitme) / 2);
+                Program.WriteLine($"Sleeping {avgWait} MS...");
+                Task.Delay(avgWait).Wait();
 
                 // save data
                 Save();
             }
-        }
-
-        /// <summary>
-        ///     Non-blocking way of waiting
-        /// </summary>
-        /// <returns></returns>
-        private static async Task PutTaskDelay(int ms)
-        {
-            await Task.Delay(ms);
         }
 
         /// <summary>

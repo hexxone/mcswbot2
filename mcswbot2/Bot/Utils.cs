@@ -20,7 +20,8 @@ namespace mcswbot2.Bot
             plt.YLabel(yLab);
             plt.Legend(true);
             foreach (var da in dat)
-                plt.PlotScatter(da.DataX, da.DataY, null, 1D, 5D, da.Label);
+                if(da.DataX.Length > 0)
+                    plt.PlotScatter(da.DataX, da.DataY, null, 1D, 5D, da.Label);
             return plt.GetBitmap();
         }
 

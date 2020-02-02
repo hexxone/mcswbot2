@@ -1,5 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace mcswbot2.Lib.Factory
@@ -20,16 +22,30 @@ namespace mcswbot2.Lib.Factory
 
         private ServerStatusFactory() { }
 
-        private List<ServerStatusBase> serverStatusBases = new List<ServerStatusBase>();
+        private readonly List<ServerStatusBase> serverStatusBases = new List<ServerStatusBase>();
 
-        private List<ServerStatus> serverStates = new List<ServerStatus>();
+        private readonly List<ServerStatus> serverStates = new List<ServerStatus>();
 
         /// <summary>
         ///     Ping & update all the servers and groups
         /// </summary>
         public void PingAll()
         {
-            Parallel.ForEach(serverStatusBases, srv => srv.Ping());
+            Parallel.ForEach(serverStatusBases, new ParallelOptions { MaxDegreeOfParallelism = 10 }, srv =>
+            {
+                try
+                {
+                    var tokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+                    var token = tokenSource.Token;
+
+                    var task = Task.Run(() => srv.Ping(token), token);
+                    task.Wait(token);
+                }
+                catch(Exception e)
+                {
+                    srv.RegisterTimeout();
+                }
+            });
         }
 
         /// <summary>
