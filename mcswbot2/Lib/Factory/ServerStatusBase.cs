@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using mcswbot2.Lib.ServerInfo;
 using Newtonsoft.Json;
 
@@ -23,32 +24,42 @@ namespace mcswbot2.Lib.Factory
         ///     This method will repeatedly ping the server to request infos.
         ///     It will then trigger given events.
         /// </summary>
-        public void Ping()
+        public void Ping(CancellationToken ct)
         {
-            Program.WriteLine("Pinging server '" + Address + ":" + Port + "'...");
+            var srv = "[" + Address + ":" + Port + "]";
+            Program.WriteLine("Pinging server " + srv);
             // safety-wrapper
             try
             {
                 // current server-info object
                 ServerInfoBase current = null;
-                for (var i = 0; i < 3; i++)
-                    if ((current = GetMethod(i)).HadSuccess)
+                for (var i = 0; i < 2; i++)
+                    if ((current = GetMethod(i, ct)).HadSuccess || ct.IsCancellationRequested)
                         break;
 
-                // get last result
-                var last = GetLatestServerInfo();
-                // first Info we got?
-                var isFirst = last == null;
                 // if the result is null, nothing to do here
                 if (current != null)
+                {
+                    Program.WriteLine("Ping result " + srv + " is " + current.HadSuccess);
                     History.Add(current);
+                }
+                else Program.WriteLine("Ping result null " + srv);
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Fatal Error when Pinging... " + ex.ToString());
+                Program.WriteLine("Fatal Error when Pinging... " + ex.ToString());
             }
             // cleanup, done
             ClearMem();
+        }
+
+        /// <summary>
+        ///     Manually register a Timeout from out of scope...
+        /// </summary>
+        public void RegisterTimeout()
+        {
+            Program.WriteLine("Ping Timeout? [" + Address + ":" + Port + "]");
+            History.Add(new ServerInfoBase(DateTime.Now.Subtract(TimeSpan.FromSeconds(30)), 30000, new TimeoutException()));
         }
 
         /// <summary>
@@ -71,16 +82,14 @@ namespace mcswbot2.Lib.Factory
         /// </summary>
         /// <param name="method"></param>
         /// <returns></returns>
-        private ServerInfoBase GetMethod(int method)
+        private ServerInfoBase GetMethod(int method, CancellationToken ct)
         {
             switch (method)
             {
                 case 1:
-                    return Get14ServerInfo.Get(Address, Port);
-                case 2:
-                    return GetBetaServerInfo.Get(Address, Port);
+                    return new GetServerInfoOld(Address, Port).DoAsync(ct).Result;
                 default:
-                    return GetNewServerInfo.Get(Address, Port);
+                    return new GetServerInfoNew(Address, Port).DoAsync(ct).Result;
             }
         }
 

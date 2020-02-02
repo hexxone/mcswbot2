@@ -1,4 +1,6 @@
-﻿namespace mcswbot2.Lib
+﻿using System;
+
+namespace mcswbot2.Lib
 {
     internal static class Types
     {
@@ -13,6 +15,7 @@
 
             public PlottableData(string lbl, double[] x, double[] y)
             {
+                if (x == null || y == null || x.Length != y.Length) throw new Exception("Invalid data arguments!");
                 Label = lbl; DataX = x; DataY = y;
             }
         }

@@ -13,8 +13,6 @@ namespace mcswbot2.Bot.Commands
 
         public override void Call(Message m, TgGroup g, TgUser u, string[] args, bool dev)
         {
-            var plotFile = true;
-
             var msg = "Player Online:";
             var plots = new List<PlottableData>();
             foreach (var item in g.Servers)
@@ -23,7 +21,8 @@ namespace mcswbot2.Bot.Commands
                 if (!item.IsOnline) msg += "Offline";
                 else msg += item.PlayerCount + " / " + item.MaxPlayerCount;
 
-                if (plotFile) plots.Add(item.GetUserData());
+                if (TgBot.Conf.DrawPlots)
+                    plots.Add(item.GetUserData());
 
                 // add player names if any
                 if (item.PlayerList.Count <= 0) continue;
@@ -37,7 +36,7 @@ namespace mcswbot2.Bot.Commands
                 msg += "\r\nNames: <code>" + n + "</code>";
             }
 
-            if (plotFile && plots.Count > 0)
+            if (TgBot.Conf.DrawPlots && plots.Count > 0)
             {
                 using (var bm = Utils.PlotData(plots.ToArray(), "Minutes Ago", "Player Online"))
                 {
