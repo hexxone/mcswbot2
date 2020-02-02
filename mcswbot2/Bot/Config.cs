@@ -11,5 +11,11 @@
         ///     Bot Admin Telegram ID
         /// </summary>
         public int DeveloperId = 87654321;
+
+        /// <summary>
+        ///     Draw & send visual time graphs?
+        ///     (For Ping & Player Command)
+        /// </summary>
+        public bool DrawPlots = true;
     }
 }

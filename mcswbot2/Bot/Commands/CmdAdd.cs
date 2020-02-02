@@ -26,8 +26,17 @@ namespace mcswbot2.Bot.Commands
                 if (args.Length == 4 && !int.TryParse(args[3], out port))
                     throw new Exception("Port is not a number.");
 
-                // bypass ip check if user is developer
-                if (!dev) Utils.VerifyAddress(addr, port);
+                try
+                {
+                    Utils.VerifyAddress(addr, port);
+                }
+                catch(Exception e)
+                {
+                    // bypass ip check if user is developer
+                    if (dev) Respond(m.Chat.Id, "Verify Warning: " + e.Message);
+                    else throw e;
+                }
+
                 // add & respond
                 g.AddServer(args[1], addr, port);
                 Respond(m.Chat.Id, "Server added to watchlist: [" + EventBase.Wrap(Types.Formatting.Html, args[1]) + "]",
