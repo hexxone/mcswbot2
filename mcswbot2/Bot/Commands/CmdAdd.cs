@@ -17,8 +17,9 @@ namespace mcswbot2.Bot.Commands
             {
                 if (g.Servers.Count > 2 && !dev) throw new Exception("Only up to 3 servers are allowed per group.");
                 if (args.Length < 3 || args.Length > 4) throw new Exception("Invalid arguments.");
-                Utils.VerifyLabel(args[1]);
-                if (g.GetServer(args[1]) != null) throw new Exception("Label name already in use.");
+                var lbl = args[1];
+                Utils.VerifyLabel(lbl);
+                if (g.GetServer(lbl) != null) throw new Exception("Label name already in use.");
 
                 var addr = args[2];
                 var port = 25565;
@@ -38,8 +39,8 @@ namespace mcswbot2.Bot.Commands
                 }
 
                 // add & respond
-                g.AddServer(args[1], addr, port);
-                Respond(m.Chat.Id, "Server added to watchlist: [" + EventBase.Wrap(Types.Formatting.Html, args[1]) + "]",
+                g.AddServer(lbl, addr, port);
+                Respond(m.Chat.Id, "Server added to watchlist: [" + EventBase.Wrap(Types.Formatting.Html, lbl) + "]",
                     ParseMode.Html);
             }
             catch (Exception ex)
