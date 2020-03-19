@@ -15,14 +15,22 @@ For newer versions, the Server List info may also contain a sample list of onlin
 - set the `/notify` settings to your preference
 - Play with friends
 
-### Credits:
+### Develop:
 
-I have done a lot of research on the minecraft-server protocol so most of the code is actually self-written. I have however taken some inspiration from [this gist](https://gist.github.com/csh/2480d14fbbb33b4bbae3) for example.
+- Clone the repo
+- Restore Nuget Packages
+- Add missing references from `./Include/`
 
-For detailed info on minecraft protocol versions go here: https://wiki.vg/Protocol_version_numbers
+### Deploy:
 
-### Libraries:
+- For windows first build, then copy all binaries from `./Include/` to your publish folder that are missing
+
+- For Linux, do the same excpet for `libwebp.dll` 
+- Install the package system-wide instead by using: `apt-get install libwebp-dev -y`
+
+### Dependencies:
 - [.NET Core 2.1](https://dotnet.microsoft.com/)
+- [mcswlib](https://github.com/Hexxonite/mcswlib) my own library for minecraft-server pinging
 - [ScottPlot](https://github.com/swharden/ScottPlot) for plotting Data over time (See `/player` and `/ping` command).
 - [Newtonsoft.JSON](https://github.com/JamesNK/Newtonsoft.Json) for (de-)serializing the server info and settings
 - [Telegram.Bot](https://github.com/TelegramBots/telegram.bot) for the actual Bot part

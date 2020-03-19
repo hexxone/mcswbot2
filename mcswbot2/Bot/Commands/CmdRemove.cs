@@ -1,5 +1,5 @@
-﻿using mcswbot2.Lib.Event;
-using mcswbot2.Lib;
+﻿using mcswbot2.Bot.Objects;
+using System;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 
@@ -7,21 +7,25 @@ namespace mcswbot2.Bot.Commands
 {
     internal class CmdRemove : ICommand
     {
-        public override string Command() => "remove";
+        internal override string Command() => "remove";
 
-        public override void Call(Message m, TgGroup g, TgUser u, string[] args, bool dev)
+        internal override void Call(Message m, TgGroup g, TgUser u, string[] args, bool dev)
         {
-            if (args.Length != 2)
+            var usage = "Usage: /remove [label]";
+            try
             {
-                Respond(m.Chat.Id, "Usage: /remove [label]");
-                return;
-            }
+                if (args.Length != 2) throw new Exception("Invalid arguments.");
+                var lbl = args[1];
+                Utils.VerifyLabel(lbl);
 
-            var res = g.RemoveServer(args[1]);
-            var msg = res
-                ? "Server removed from watchlist: [" + EventBase.Wrap(Types.Formatting.Html, args[1]) + "]"
-                : "Label not found.";
-            Respond(m.Chat.Id, msg, ParseMode.Html);
+                if (!g.RemoveServer(lbl)) throw new Exception("Label not found.");
+
+                g.SendMsg("Server removed from watchlist: [<code>" + lbl + "</code>]", null, ParseMode.Html);
+            }
+            catch (Exception ex)
+            {
+                g.SendMsg("Error removing server: " + ex.Message + "\r\n" + usage);
+            }
         }
     }
 }

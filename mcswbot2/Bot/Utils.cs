@@ -1,35 +1,26 @@
 ﻿using System;
-using System.Drawing;
 using System.Linq;
 using System.Net;
 using System.Text.RegularExpressions;
-using static mcswbot2.Lib.Types;
 
 namespace mcswbot2.Bot
 {
     internal class Utils
     {
         /// <summary>
-        ///     Will Plot and save Data to a file
+        ///     Removes previously applied Telegram Html style tags
         /// </summary>
-        /// <param name="dat"></param>
-        public static Bitmap PlotData(PlottableData[] dat, string xLab, string yLab)
+        /// <returns></returns>
+        internal static string NoHtml(string input)
         {
-            var plt = new ScottPlot.Plot(355, 200);
-            plt.XLabel(xLab);
-            plt.YLabel(yLab);
-            plt.Legend(true);
-            foreach (var da in dat)
-                if(da.DataX.Length > 0)
-                    plt.PlotScatter(da.DataX, da.DataY, null, 1D, 5D, da.Label);
-            return plt.GetBitmap();
+            return input.Replace("<code>", "").Replace("</code>", "");
         }
 
         /// <summary>
         ///     Will verify a given server label string
         /// </summary>
         /// <param name="txt"></param>
-        public static void VerifyLabel(string txt)
+        internal static void VerifyLabel(string txt)
         {
             if (txt.Contains('.')) throw new Exception("Label should not contain Dots! ('.')");
             if (txt.Length > 12) throw new Exception("Label should be 12 characters at max!");
@@ -43,7 +34,7 @@ namespace mcswbot2.Bot
         /// <param name="addr">server address ip or domain</param>
         /// <param name="port">mc server port</param>
         /// <returns></returns>
-        public static void VerifyAddress(string addr, int port)
+        internal static void VerifyAddress(string addr, int port)
         {
             // dont 
             if (addr.Length > 256) throw new Exception("The address length should not exceed 256 characters!");
@@ -59,7 +50,7 @@ namespace mcswbot2.Bot
                 if (Dns.GetHostName().ToLower() == addr.ToLower() ||
                     Uri.CheckHostName(addr) == UriHostNameType.Unknown ||
                     !addr.Contains('.'))
-                        throw new Exception("Invalid hostname!");
+                    throw new Exception("Invalid hostname!");
                 // resolve
                 var host = Dns.GetHostEntry(addr);
                 if (host == null || host.AddressList == null || host.AddressList.Length == 0) throw new Exception("No hostname address entries!");
@@ -68,7 +59,8 @@ namespace mcswbot2.Bot
                 {
                     resolved = host.AddressList.First(h => h.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork).ToString();
                 }
-                catch {
+                catch
+                {
                     try
                     {
                         resolved = host.AddressList.First(h => h.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6).ToString();

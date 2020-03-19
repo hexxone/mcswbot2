@@ -1,16 +1,15 @@
-﻿using mcswbot2.Lib.Event;
-using mcswbot2.Lib;
-using Telegram.Bot.Types;
+﻿using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 using System;
+using mcswbot2.Bot.Objects;
 
 namespace mcswbot2.Bot.Commands
 {
     internal class CmdAdd : ICommand
     {
-        public override string Command() => "add";
+        internal override string Command() => "add";
 
-        public override void Call(Message m, TgGroup g, TgUser u, string[] args, bool dev)
+        internal override void Call(Message m, TgGroup g, TgUser u, string[] args, bool dev)
         {
             var use = "Usage: /add [label] [address] (port default 25565)";
             try
@@ -31,21 +30,20 @@ namespace mcswbot2.Bot.Commands
                 {
                     Utils.VerifyAddress(addr, port);
                 }
-                catch(Exception e)
+                catch (Exception e)
                 {
                     // bypass ip check if user is developer
-                    if (dev) Respond(m.Chat.Id, "Verify Warning: " + e.Message);
+                    if (dev) g.SendMsg("Verify Warning: " + e.Message);
                     else throw e;
                 }
 
                 // add & respond
                 g.AddServer(lbl, addr, port);
-                Respond(m.Chat.Id, "Server added to watchlist: [" + EventBase.Wrap(Types.Formatting.Html, lbl) + "]",
-                    ParseMode.Html);
+                g.SendMsg("Server added to watchlist: [<code>" + lbl + "</code>]", null, ParseMode.Html);
             }
             catch (Exception ex)
             {
-                Respond(m.Chat.Id, "Error adding server: " + ex.Message + "\r\n" + use);
+                g.SendMsg("Error adding server: " + ex.Message + "\r\n" + use);
             }
         }
     }
