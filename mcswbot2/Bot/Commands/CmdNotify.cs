@@ -1,4 +1,5 @@
-﻿using mcswbot2.Lib.Factory;
+﻿using mcswbot2.Bot.Objects;
+using mcswlib.ServerStatus;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 
@@ -6,25 +7,26 @@ namespace mcswbot2.Bot.Commands
 {
     internal class CmdNotify : ICommand
     {
-        public override string Command() => "notify";
+        internal override string Command() => "notify";
 
-        public override void Call(Message m, TgGroup g, TgUser u, string[] args, bool dev)
+        internal override void Call(Message m, TgGroup g, TgUser u, string[] args, bool dev)
         {
             var usage = "Usage: /notify <label> (<option> [true|false])";
             usage += "\r\nOptions:";
             usage += "\r\n- state (server online status)";
             usage += "\r\n- count (server user count)";
             usage += "\r\n- name (player name samples)";
+            usage += "\r\n- sticker (send sticker)";
 
             switch (args.Length)
             {
                 default:
-                    Respond(m.Chat.Id, usage);
+                    g.SendMsg(usage);
                     break;
                 case 2:
                     var srv = g.GetServer(args[1]);
-                    if (srv != null) Respond(m.Chat.Id, GetSrvNotifications(srv), ParseMode.Html);
-                    else Respond(m.Chat.Id, "Server label not found.\r\n\r\n" + usage);
+                    if (srv != null) g.SendMsg(GetSrvNotifications(srv), null, ParseMode.Html);
+                    else g.SendMsg("Server label not found.\r\n\r\n" + usage);
                     break;
                 case 4:
                     var srv2 = g.GetServer(args[1]);
@@ -34,31 +36,36 @@ namespace mcswbot2.Bot.Commands
                         switch (args[2].ToLower())
                         {
                             case "state":
-                                srv2.NotifyServer = argl;
+                                srv2.Wrapped.NotifyServer = argl;
                                 break;
                             case "count":
-                                srv2.NotifyCount = argl;
+                                srv2.Wrapped.NotifyCount = argl;
                                 break;
                             case "name":
-                                srv2.NotifyNames = argl;
+                                srv2.Wrapped.NotifyNames = argl;
+                                break;
+                            case "sticker":
+                                srv2.Sticker = argl;
                                 break;
                             default:
-                                Respond(m.Chat.Id, "Unknown setting.\r\n\r\n" + usage);
+                                g.SendMsg("Unknown setting.\r\n\r\n" + usage);
                                 return;
                         }
-                        Respond(m.Chat.Id, GetSrvNotifications(srv2), ParseMode.Html);
+                        g.SendMsg(GetSrvNotifications(srv2), null, ParseMode.Html);
                     }
-                    else Respond(m.Chat.Id, "Server label not found.\r\n\r\n" + usage);
+                    else g.SendMsg("Server label not found.\r\n\r\n" + usage);
                     break;
             }
         }
 
-        private static string GetSrvNotifications(ServerStatus srv)
+        private static string GetSrvNotifications(ServerStatusWrapped wra)
         {
+            var srv = wra.Wrapped;
             var msg = "[" + srv.Label + "] Notifications:";
             msg += "\r\nState change:<code> " + srv.NotifyServer;
             msg += "</code>\r\nCount change:<code> " + srv.NotifyCount;
             msg += "</code>\r\nPlayer change:<code> " + srv.NotifyNames;
+            msg += "</code>\r\nSend Sticker:<code> " + wra.Sticker;
             return msg + "</code>";
         }
     }

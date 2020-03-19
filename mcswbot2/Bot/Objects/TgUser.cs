@@ -1,8 +1,8 @@
 ﻿using Telegram.Bot.Types;
 
-namespace mcswbot2.Bot
+namespace mcswbot2.Bot.Objects
 {
-    internal class TgUser
+    public class TgUser
     {
         /// <summary>
         ///     An object representing a Telegram user
