@@ -1,5 +1,8 @@
 ﻿using mcswbot2.Bot.Commands;
-using mcswbot2.Lib.Factory;
+using mcswbot2.Bot.Objects;
+using mcswlib.ServerStatus;
+using mcswlib.ServerStatus.Event;
+using ZufallSatz;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -19,24 +22,41 @@ namespace mcswbot2.Bot
         private static readonly List<TgGroup> _tgGroups = new List<TgGroup>();
 
 
-        public static TgUser[] TgUsers => _tgUsers.ToArray();
-        public static TgGroup[] TgGroups => _tgGroups.ToArray();
+        internal static TgUser[] TgUsers => _tgUsers.ToArray();
+        internal static TgGroup[] TgGroups => _tgGroups.ToArray();
 
 
-        public static Config Conf { get; private set; }
-        public static TelegramBotClient Client { get; private set; }
-        public static User TgBotUser { get; private set; }
+        internal static Config Conf { get; private set; }
+        internal static ServerStatusFactory Factory { get; private set; }
+        internal static TelegramBotClient Client { get; private set; }
+        internal static User TgBotUser { get; private set; }
 
         /// <summary>
         ///     Setup the bot command, load the settings and start
         /// </summary>
-        public static void Start()
+        internal static void Start()
         {
             Program.WriteLine("MineCraftServerWatchBotV2 for Telegram made by @hexxon");
             Program.WriteLine("starting...");
 
+            Generator.PreInit();
+
             // default config
             Conf = new Config();
+
+            // custom event messages
+            var messages = new EventMessages
+            {
+                NameJoin = "+ <code><name></code>",
+                NameLeave = "- <code><name></code>",
+                CountJoin = "<code><count></code> <player> joined.",
+                CountLeave = "<code><count></code> <player> left.",
+                ServerOnline = "Server status: <code>online</code> :)\r\nMOTD:\r\n<code><text></code>",
+                ServerOffline = "Server status: <code>offline</code> :("
+            };
+
+            // server status & updater factory
+            Factory = new ServerStatusFactory(messages);
 
             // Add Bot commands
             Commands.Add(new CmdAdd());
@@ -57,18 +77,18 @@ namespace mcswbot2.Bot
 
             // main ping loop
             var sw = new Stopwatch();
-            var avgWait = 60000;
+            var avgWait = 120000;
             while (true)
             {
                 sw.Reset();
                 sw.Start();
-                ServerStatusFactory.Get().PingAll();
+                Factory.PingAll();
                 Parallel.ForEach(_tgGroups, tgg => tgg.UpdateAll());
                 sw.Stop();
 
                 // calculate average wait time
-                var waitme = 60000 - Convert.ToInt32(sw.ElapsedMilliseconds);
-                avgWait = Math.Max(1000, (avgWait + waitme) / 2);
+                var waitme = 120000 - Convert.ToInt32(sw.ElapsedMilliseconds);
+                avgWait = Math.Max(10000, (avgWait + waitme) / 2);
                 Program.WriteLine($"Sleeping {avgWait} MS...");
                 Task.Delay(avgWait).Wait();
 
@@ -173,7 +193,7 @@ namespace mcswbot2.Bot
         /// </summary>
         /// <param name="u"></param>
         /// <returns></returns>
-        public static TgUser GetUser(User u)
+        internal static TgUser GetUser(User u)
         {
             foreach (var usr in _tgUsers)
                 if (usr.Base.Id == u.Id)
@@ -192,7 +212,7 @@ namespace mcswbot2.Bot
         /// </summary>
         /// <param name="c"></param>
         /// <returns></returns>
-        public static TgGroup GetGroup(Chat c)
+        internal static TgGroup GetGroup(Chat c)
         {
             foreach (var cc in _tgGroups)
                 if (cc.Base.Id == c.Id)
@@ -239,17 +259,13 @@ namespace mcswbot2.Bot
                 {
                     var json = System.IO.File.ReadAllText("groups.json");
                     var des = JsonConvert.DeserializeObject<TgGroup[]>(json);
-                    // post-processing
-                    foreach (var grp in des)
+                    foreach (var g in des)
                     {
-                        // get deserialized servers & clear the originals
-                        var arr = grp.Servers.ToArray();
-                        grp.Servers.Clear();
-                        // add all servers back using the factory
-                        foreach (var srv in arr)
-                            grp.AddServer(srv.Label, srv.Base.Address, srv.Base.Port);
+                        var asd = g.Servers.ToArray();
+                        g.Servers.Clear();
+                        foreach (var pair in asd)
+                            g.AddServer(pair.Label, pair.Address, pair.Port);
                     }
-                    // add objects after deserializing & initializing
                     _tgGroups.AddRange(des);
                 }
                 // done

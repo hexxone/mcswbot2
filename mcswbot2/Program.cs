@@ -1,5 +1,7 @@
 ﻿using mcswbot2.Bot;
 using System;
+using System.Diagnostics;
+using System.Drawing;
 
 namespace mcswbot2
 {
@@ -14,7 +16,7 @@ namespace mcswbot2
         ///     DateTime Wrapper for Console WriteLine
         /// </summary>
         /// <param name="l"></param>
-        public static void WriteLine(string l)
+        internal static void WriteLine(string l)
         {
             Console.WriteLine("[" + DateTime.Now.ToString("yyyy-MM-ss HH:mm:ss") + "] " + l);
         }

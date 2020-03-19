@@ -1,6 +1,6 @@
-﻿namespace mcswbot2.Bot
+﻿namespace mcswbot2.Bot.Objects
 {
-    internal class Config
+    public class Config
     {
         /// <summary>
         ///     Telegram BOT Api Key
