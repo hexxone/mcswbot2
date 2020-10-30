@@ -83,5 +83,15 @@ namespace mcswbot2.Bot
             // all ok
         }
 
+        /// <summary>
+        ///     Wrap Link Html Tag
+        /// </summary>
+        /// <param name="l"></param>
+        /// <param name="t"></param>
+        /// <returns></returns>
+        internal static string WrapLink(string l, string t)
+        {
+            return $"<a href='{l}'>{t}</a>";
+        }
     }
 }

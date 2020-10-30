@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Text;
-using System.IO;
 
 namespace mcswbot2.Bot
 {
@@ -151,33 +150,6 @@ namespace mcswbot2.Bot
                 GraphicsUnit.Pixel);
             // done
             return scaledBitmap;
-        }
-
-        /// <summary>
-        /// ...
-        /// </summary>
-        /// <param name="recurseTry"></param>
-        /// <param name="recurseTries"></param>
-        /// <returns></returns>
-        internal static Bitmap TheThingWeDontTalkAbout(int recurseTry = 0, int recurseTries = 5)
-        {
-            try
-            {
-                var booru = new BooruSharp.Booru.Gelbooru();
-                var result = booru.GetRandomImage(new[] { "" }).Result;
-                if (result.fileUrl == null) throw new ArgumentNullException("No result!");
-                var request = System.Net.WebRequest.Create(result.fileUrl);
-                var response = request.GetResponse();
-                var responseStream = response.GetResponseStream();
-                return new Bitmap(responseStream);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("Imaging-Exception: " + ex);
-                if (recurseTry < recurseTries)
-                    return TheThingWeDontTalkAbout(recurseTry + 1);
-            }
-            return null;
         }
     }
 }
