@@ -3,6 +3,11 @@
     public class Config
     {
         /// <summary>
+        ///     Time for one Ping
+        /// </summary>
+        public int SleepTime = 60000;
+
+        /// <summary>
         ///     Telegram BOT Api Key
         /// </summary>
         public string ApiKey = "123456:XXXXXX";
