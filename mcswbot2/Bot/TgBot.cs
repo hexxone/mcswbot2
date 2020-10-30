@@ -77,7 +77,7 @@ namespace mcswbot2.Bot
 
             // main ping loop
             var sw = new Stopwatch();
-            var avgWait = 120000;
+            var avgWait = Conf.SleepTime;
             while (true)
             {
                 sw.Reset();
@@ -87,7 +87,7 @@ namespace mcswbot2.Bot
                 sw.Stop();
 
                 // calculate average wait time
-                var waitme = 120000 - Convert.ToInt32(sw.ElapsedMilliseconds);
+                var waitme = Conf.SleepTime - Convert.ToInt32(sw.ElapsedMilliseconds);
                 avgWait = Math.Max(10000, (avgWait + waitme) / 2);
                 Program.WriteLine($"Sleeping {avgWait} MS...");
                 Task.Delay(avgWait).Wait();
@@ -128,6 +128,9 @@ namespace mcswbot2.Bot
             catch (Exception ex)
             {
                 Program.WriteLine(ex.ToString());
+#if DEBUG
+                throw ex;
+#endif
             }
         }
 
@@ -222,6 +225,12 @@ namespace mcswbot2.Bot
             return newC;
         }
 
+        internal static void DestroyGroup(TgGroup tgg)
+        {
+            tgg.Destroy();
+            _tgGroups.Remove(tgg);
+        }
+
         #endregion
 
 
@@ -243,7 +252,7 @@ namespace mcswbot2.Bot
                 else
                 {
                     Save();
-                    Console.WriteLine("\r\n\r\n\tWARNING: CONFIG JUST GOT CREATED. PLEASE MODIFY IT BEFORE STARTING AGAIN.\r\n");
+                    Program.WriteLine("\r\n\r\n\tWARNING: CONFIG JUST GOT CREATED. PLEASE MODIFY IT BEFORE STARTING AGAIN.\r\n");
                     Environment.Exit(0);
                 }
 

@@ -1,4 +1,5 @@
 ﻿using Imazen.WebP;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -12,11 +13,17 @@ namespace mcswbot2.Bot.Objects
 {
     public class TgGroup
     {
+        // the time over which server infos are held in memory...
+        [JsonIgnore]
+        public static TimeSpan ClearSpan = new TimeSpan(3, 0, 0, 0);
+
         // Identity
         public List<ServerStatusWrapped> Servers = new List<ServerStatusWrapped>();
         public Chat Base { get; set; }
 
-        public bool Thanos = false;
+        public bool Tahnos = false;
+
+        public List<TahnosInfo> ImagingData = new List<TahnosInfo>();
 
         /// <summary>
         ///     Register & Start updating all the servers in this group after deserializing
@@ -32,30 +39,55 @@ namespace mcswbot2.Bot.Objects
                     foreach (var evt in res)
                         updateMsg += "\r\n" + evt;
 
-                    // get any successfull result for server image
-                    var lastSuccess = srv.Wrapped.Updater.GetLatestServerInfo(true);
                     // get & scale server image or use empty
+                    var sent = false;
                     if (srv.Sticker)
                     {
                         // todo soome kind of color formatting maybe?
-                        Bitmap t = null;
-                        if(Thanos && (t = Imaging.TheThingWeDontTalkAbout()) != null)
+                        TahnosInfo t = null;
+                        if (Tahnos && (t = TahnosInfo.Get()) != null)
                         {
-                            using (var txtBmp = Imaging.MakeSticker(t, updateMsg))
-                                SendMsg(null, txtBmp, ParseMode.Default, 0, true);
+                            using (var txtBmp = Imaging.MakeSticker(t.Bmap, updateMsg))
+                            {
+                                var msg = SendMsg(null, txtBmp, ParseMode.Default, 0, true);
+                                t.RelatedMsgID = msg.MessageId;
+                                t.Bmap.Dispose();
+                                t.Bmap = null;
+                                ImagingData.Add(t);
+                                sent = true;
+                            }
                         }
-                        else if(lastSuccess != null && lastSuccess.FavIcon != null)
+                        else if (srv.Wrapped. != null)
                         {
-                            using (var txtBmp = Imaging.MakeSticker(lastSuccess.FavIcon, updateMsg))
+                            using (var txtBmp = Imaging.MakeSticker(srv.Wrapped.FavIco, updateMsg))
                                 SendMsg(null, txtBmp, ParseMode.Default, 0, true);
+                            sent = true;
                         }
                     }
-                    else
-                    {
-                        SendMsg(updateMsg, null, ParseMode.Html, 0, true);
-                    }
+                    // send message if sticker disabled or failed
+                    if(!sent) SendMsg(updateMsg, null, ParseMode.Html, 0, false);
                 }
             });
+            // free resources
+            CleanData();
+        }
+
+        /// <summary>
+        ///     Clean-up ImagingData
+        /// </summary>
+        private void CleanData()
+        {
+            ImagingData.FindAll(id => id.Acquired < DateTime.Now.Subtract(ClearSpan)).ForEach(id =>
+            {
+                ImagingData.Remove(id);
+            });
+            while (ImagingData.Count > 30)
+            {
+                var idx = 0; // TODO TEST    || ImagingData.Count-1
+                var id = ImagingData[idx];
+                ImagingData.Remove(id);
+            }
+            GC.Collect();
         }
 
         /// <summary>
@@ -105,7 +137,7 @@ namespace mcswbot2.Bot.Objects
         /// <param name="pm"></param>
         /// <param name="replyMsg"></param>
         /// <param name="sticker"></param>
-        internal void SendMsg(string text = null, Bitmap bitmap = null, ParseMode pm = ParseMode.Default, int replyMsg = 0, bool sticker = false)
+        internal Message SendMsg(string text = null, Bitmap bitmap = null, ParseMode pm = ParseMode.Default, int replyMsg = 0, bool sticker = false)
         {
             if (bitmap != null)
             {
@@ -121,10 +153,13 @@ namespace mcswbot2.Bot.Objects
                         bitmap.Save(ms, ImageFormat.Png);
                     }
                     ms.Position = 0;
-                    SendMsgStream(text, ms, pm, replyMsg, sticker);
+                    return SendMsgStream(text, ms, pm, replyMsg, sticker);
                 }
             }
-            else SendMsgStream(text, null, pm, replyMsg, sticker);
+            else
+            {
+                return SendMsgStream(text, null, pm, replyMsg, sticker);
+            }
         }
 
         /// <summary>
@@ -135,8 +170,9 @@ namespace mcswbot2.Bot.Objects
         /// <param name="pm"></param>
         /// <param name="replyMsg"></param>
         /// <param name="sticker"></param>
-        internal void SendMsgStream(string text = null, Stream imgStream = null, ParseMode pm = ParseMode.Default, int replyMsg = 0, bool sticker = false)
+        internal Message SendMsgStream(string text = null, Stream imgStream = null, ParseMode pm = ParseMode.Default, int replyMsg = 0, bool sticker = false)
         {
+            Message lMsg = null;
             try
             {
                 var sendText = (text != null);
@@ -145,26 +181,29 @@ namespace mcswbot2.Bot.Objects
                     var iof = new Telegram.Bot.Types.InputFiles.InputOnlineFile(imgStream);
                     if (sticker)
                     {
-                        var msg = TgBot.Client.SendStickerAsync(Base.Id, iof, false, replyMsg).Result;
-                        replyMsg = msg.MessageId;
+                        lMsg = TgBot.Client.SendStickerAsync(Base.Id, iof, false, replyMsg).Result;
+                        replyMsg = lMsg.MessageId;
                     }
-                    else
-                    {
-                        TgBot.Client.SendPhotoAsync(Base.Id, iof, text, pm, false, replyMsg).Wait();
-                        // sending image with text did succeed, so we dont need to send text-only message.
-                        sendText = false;
-                    }
+                    else lMsg = TgBot.Client.SendPhotoAsync(Base.Id, iof, text, pm, false, replyMsg).Result;
                 }
                 else if (!sendText)
                     throw new Exception("Nothing to send!");
 
                 if (sendText)
-                    TgBot.Client.SendTextMessageAsync(Base.Id, text, pm, true, false, replyMsg).Wait();
+                    lMsg = TgBot.Client.SendTextMessageAsync(Base.Id, text, pm, true, false, replyMsg).Result;
             }
             catch (Exception ex)
             {
-                Program.WriteLine("Send Exception: " + ex + "\r\nGroup: " + Base.Id + "\r\nStack: " + ex.StackTrace);
+                if (ex.StackTrace.Contains("chat not found")) TgBot.DestroyGroup(this);
+                else Program.WriteLine("Send Exception: " + ex + "\r\nGroup: " + Base.Id + "\r\nStack: " + ex.StackTrace);
             }
+            return lMsg;
+        }
+
+        internal void Destroy()
+        {
+            foreach (var item in Servers)
+                TgBot.Factory.Destroy(item.Wrapped);
         }
     }
 }
