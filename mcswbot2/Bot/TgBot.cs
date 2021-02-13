@@ -18,15 +18,11 @@ namespace mcswbot2.Bot
     class TgBot
     {
         private static readonly List<ICommand> Commands = new List<ICommand>();
-        private static readonly List<TgUser> _tgUsers = new List<TgUser>();
-        private static readonly List<TgGroup> _tgGroups = new List<TgGroup>();
+        internal static readonly List<TgUser> TgUsers = new List<TgUser>();
+        internal static readonly List<TgGroup> TgGroups = new List<TgGroup>();
 
+        internal static Config Conf { get; set; }
 
-        internal static TgUser[] TgUsers => _tgUsers.ToArray();
-        internal static TgGroup[] TgGroups => _tgGroups.ToArray();
-
-
-        internal static Config Conf { get; private set; }
         internal static ServerStatusFactory Factory { get; private set; }
         internal static TelegramBotClient Client { get; private set; }
         internal static User TgBotUser { get; private set; }
@@ -43,23 +39,12 @@ namespace mcswbot2.Bot
 
             // default config
             Conf = new Config();
-
-            // custom event messages
-            var messages = new EventMessages
-            {
-                NameJoin = "+ <code><name></code>",
-                NameLeave = "- <code><name></code> (<time>)",
-                CountJoin = "<code><count></code> <player> joined.",
-                CountLeave = "<code><count></code> <player> left.",
-                ServerOnline = "Server status: <code>online</code> ++\r\nVersion: <code><version></code>\r\nMOTD:\r\n<code><text></code>",
-                ServerOffline = "Server status: <code>offline</code> --"
-            };
-
             // server status & updater factory
-            Factory = new ServerStatusFactory(messages);
+            Factory = new ServerStatusFactory();
 
             // Add Bot commands
             Commands.Add(new CmdAdd());
+            Commands.Add(new CmdInfo());
             Commands.Add(new CmdList());
             Commands.Add(new CmdNotify());
             Commands.Add(new CmdPing());
@@ -70,7 +55,7 @@ namespace mcswbot2.Bot
             Commands.Add(new CmdTahnos());
 
             // Load users, groups & settings
-            Load();
+            Storage.Load();
 
             // Start the bot async
             _ = RunBotAsync();
@@ -83,7 +68,7 @@ namespace mcswbot2.Bot
                 sw.Reset();
                 sw.Start();
                 Factory.PingAll();
-                Parallel.ForEach(_tgGroups, tgg => tgg.UpdateAll());
+                Parallel.ForEach(TgGroups, tgg => tgg.UpdateAll());
                 sw.Stop();
 
                 // calculate average wait time
@@ -93,7 +78,7 @@ namespace mcswbot2.Bot
                 Task.Delay(avgWait).Wait();
 
                 // save data
-                Save();
+                Storage.Save();
             }
         }
 
@@ -129,7 +114,7 @@ namespace mcswbot2.Bot
             {
                 Program.WriteLine(ex.ToString());
 #if DEBUG
-                throw ex;
+                throw;
 #endif
             }
         }
@@ -170,7 +155,7 @@ namespace mcswbot2.Bot
             // Process commands only
             if (!args[0].StartsWith('/')) return;
 
-            var usrCmd = args[0].Substring(1).ToLower();
+            var usrCmd = args[0][1..].ToLower();
             if (usrCmd.Contains("@"))
             {
                 var spl = usrCmd.Split('@');
@@ -196,16 +181,16 @@ namespace mcswbot2.Bot
         /// </summary>
         /// <param name="u"></param>
         /// <returns></returns>
-        internal static TgUser GetUser(User u)
+        private static TgUser GetUser(User u)
         {
-            foreach (var usr in _tgUsers)
+            foreach (var usr in TgUsers)
                 if (usr.Base.Id == u.Id)
                 {
                     usr.Base = u;
                     return usr;
                 }
             var newU = new TgUser(u);
-            _tgUsers.Add(newU);
+            TgUsers.Add(newU);
             return newU;
         }
 
@@ -215,109 +200,23 @@ namespace mcswbot2.Bot
         /// </summary>
         /// <param name="c"></param>
         /// <returns></returns>
-        internal static TgGroup GetGroup(Chat c)
+        private static TgGroup GetGroup(Chat c)
         {
-            foreach (var cc in _tgGroups)
+            foreach (var cc in TgGroups)
                 if (cc.Base.Id == c.Id)
                     return cc;
             var newC = new TgGroup() { Base = c };
-            _tgGroups.Add(newC);
+            TgGroups.Add(newC);
             return newC;
         }
 
         internal static void DestroyGroup(TgGroup tgg)
         {
             tgg.Destroy();
-            _tgGroups.Remove(tgg);
+            TgGroups.Remove(tgg);
         }
 
         #endregion
 
-
-        #region Storage
-
-        /// <summary>
-        ///     Load & Json Decode the user & group settings
-        /// </summary>
-        private static void Load()
-        {
-            try
-            {
-                // load config
-                if (System.IO.File.Exists("config.json"))
-                {
-                    var json = System.IO.File.ReadAllText("config.json");
-                    Conf = JsonConvert.DeserializeObject<Config>(json);
-                }
-                else
-                {
-                    Save();
-                    Program.WriteLine("\r\n\r\n\tWARNING: CONFIG JUST GOT CREATED. PLEASE MODIFY IT BEFORE STARTING AGAIN.\r\n");
-                    Environment.Exit(0);
-                }
-
-                // load users objects if file exists
-                if (System.IO.File.Exists("users.json"))
-                {
-                    var json = System.IO.File.ReadAllText("users.json");
-                    _tgUsers.AddRange(JsonConvert.DeserializeObject<TgUser[]>(json));
-                }
-
-                // load group objects if file exists
-                if (System.IO.File.Exists("groups.json"))
-                {
-                    var json = System.IO.File.ReadAllText("groups.json");
-                    var des = JsonConvert.DeserializeObject<TgGroup[]>(json);
-                    foreach (var g in des)
-                    {
-                        var asd = g.Servers.ToArray();
-                        g.Servers.Clear();
-                        foreach (var pair in asd)
-                            g.AddServer(pair.Label, pair.Address, pair.Port);
-                    }
-                    _tgGroups.AddRange(des);
-                }
-                // done
-                Program.WriteLine($"Loaded data. [{_tgUsers.Count} Users, {_tgGroups.Count} Groups]");
-            }
-            catch (Exception e)
-            {
-                Program.WriteLine("Error when loading data: " + e);
-            }
-        }
-
-        /// <summary>
-        ///     Json encode & save the user & group settings
-        /// </summary>
-        private static void Save()
-        {
-            try
-            {
-                // write config
-                var str = JsonConvert.SerializeObject(Conf);
-                str = JToken.Parse(str).ToString(Formatting.Indented);
-                System.IO.File.WriteAllText("config.json", str);
-                // write user if any
-                if (_tgUsers.Count > 0)
-                {
-                    str = JsonConvert.SerializeObject(_tgUsers);
-                    System.IO.File.WriteAllText("users.json", str);
-                }
-                // write groups if any
-                if (_tgGroups.Count > 0)
-                {
-                    str = JsonConvert.SerializeObject(_tgGroups);
-                    System.IO.File.WriteAllText("groups.json", str);
-                }
-                // done
-                Program.WriteLine($"Saved data. [{_tgUsers.Count} Users, {_tgGroups.Count} Groups]");
-            }
-            catch (Exception e)
-            {
-                Program.WriteLine("Error when saving data: " + e);
-            }
-        }
-
-        #endregion
     }
 }

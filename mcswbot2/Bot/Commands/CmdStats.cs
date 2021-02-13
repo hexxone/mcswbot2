@@ -17,12 +17,12 @@ namespace mcswbot2.Bot.Commands
             foreach (var gr in TgBot.TgGroups)
             {
                 serverCount += gr.Servers.Count;
-                userCount += gr.Servers.Sum(sr => sr.Wrapped.Last.CurrentPlayerCount);
+                userCount += gr.Servers.Sum(sr => sr.Wrapped.Last?.CurrentPlayerCount ?? 0);
             }
 
             var msg = "Global Bot stats:";
-            msg += $"\r\n  known users:<code> {TgBot.TgUsers.Length}</code>";
-            msg += $"\r\n  known groups:<code> {TgBot.TgGroups.Length}</code>";
+            msg += $"\r\n  known users:<code> {TgBot.TgUsers.Count}</code>";
+            msg += $"\r\n  known groups:<code> {TgBot.TgGroups.Count}</code>";
             msg += $"\r\n  watched servers:<code> {serverCount}</code>";
             msg += $"\r\n  online MC users:<code> {userCount}</code>";
             msg += $"\r\n  live ram usage:<code> {totalSize:0.00} MB</code>";

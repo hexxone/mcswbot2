@@ -36,27 +36,13 @@ namespace mcswbot2.Bot.Objects
                 if (res.Length <= 0) return;
 
                 var updateMsg = $"[<code>{srv.Label}</code>]";
+                var addMore = true;
                 foreach (var evt in res)
                 {
-                    updateMsg += "\r\n" + evt;
-                    if (!(evt is PlayerStateEvent)) continue;
-                    var pse = evt as PlayerStateEvent;
-                    var now = DateTime.Now;
-                    if (pse.Online)
-                    {
-                        srv.NameHistory[pse.Player.Id] = pse.Player.Name;
-                        srv.SeenTime[pse.Player.Id] = now;
-                    }
-                    else
-                    {
-                        var span = now - srv.SeenTime[pse.Player.Id];
-                        srv.SeenTime[pse.Player.Id] = now;
-
-                        if (!srv.PlayTime.ContainsKey(pse.Player.Id))
-                            srv.PlayTime[pse.Player.Name] = TimeSpan.Zero;
-
-                        srv.PlayTime[pse.Player.Id] += span;
-                    }
+                    var (txt, more) = ProcessEventMMessage(srv, evt);
+                    // stop adding further text after "online-status" event
+                    if (addMore) updateMsg += txt;
+                    addMore = addMore && more;
                 }
 
                 // get & scale server image or use empty
@@ -64,7 +50,13 @@ namespace mcswbot2.Bot.Objects
                 if (srv.Sticker)
                 {
                     TahnosInfo t = null;
-                    if (Tahnos && (t = TahnosInfo.Get()) != null)
+                    if (srv.Wrapped.Last.FavIcon != null)
+                    {
+                        using (var txtBmp = Imaging.MakeSticker(srv.Wrapped.Last.FavIcon, updateMsg))
+                            SendMsg(null, txtBmp, ParseMode.Default, 0, true);
+                        sent = true;
+                    }
+                    else if (Tahnos && (t = TahnosInfo.Get()) != null)
                     {
                         using var txtBmp = Imaging.MakeSticker(t.Bmap, updateMsg);
                         var msg = SendMsg(null, txtBmp, ParseMode.Default, 0, true);
@@ -74,18 +66,63 @@ namespace mcswbot2.Bot.Objects
                         ImagingData.Add(t);
                         sent = true;
                     }
-                    else if (srv.Wrapped.Last.FavIcon != null)
-                    {
-                        using (var txtBmp = Imaging.MakeSticker(srv.Wrapped.Last.FavIcon, updateMsg))
-                            SendMsg(null, txtBmp, ParseMode.Default, 0, true);
-                        sent = true;
-                    }
                 }
                 // send message if sticker disabled or failed
-                if(!sent) SendMsg(updateMsg, null, ParseMode.Html, 0, false);
+                if (!sent) SendMsg(updateMsg, null, ParseMode.Html, 0, false);
             });
             // free resources
             CleanData();
+        }
+
+        /// <summary>
+        ///     Processes EventBase and returns adequate message
+        /// </summary>
+        /// <param name="srv"></param>
+        /// <param name="evt"></param>
+        /// <returns>   string (message), bool (continue processing?)</returns>
+        private static Tuple<string, bool> ProcessEventMMessage(ServerStatusWrapped srv, EventBase evt)
+        {
+            switch (evt)
+            {
+                case OnlineStatusEvent ose:
+                    return new Tuple<string, bool>((ose.ServerStatus ? EventMessages.ServerOnline : EventMessages.ServerOffline)
+                        .Replace("<text>", ose.StatusText)
+                        .Replace("<version>", ose.Version)
+                        .Replace("<players>", $"{ose.CurrentPlayers} / {ose.MaxPlayers}"), false);
+
+                case PlayerChangeEvent pce:
+                    var abs = Math.Abs(pce.PlayerDiff);
+                    var msg2 = pce.PlayerDiff > 0 ? EventMessages.CountJoin : EventMessages.CountLeave;
+                    msg2 = msg2.Replace("<count>", abs.ToString());
+                    msg2 = msg2.Replace("<player>", "Player" + (abs > 1 ? "s" : ""));
+                    return new Tuple<string, bool>(msg2, true);
+
+                case PlayerStateEvent pse:
+                    // update player history / time etc..
+                    var now = DateTime.Now;
+                    // add null data
+                    if (!srv.PlayTime.ContainsKey(pse.Player.Id))
+                        srv.PlayTime[pse.Player.Id] = TimeSpan.Zero;
+
+                    var playSpan = TimeSpan.Zero;
+                    if (pse.Online)
+                    {
+                        srv.NameHistory[pse.Player.Id] = pse.Player.Name;
+                        srv.SeenTime[pse.Player.Id] = now;
+                    }
+                    else
+                    {
+                        playSpan = now - srv.SeenTime[pse.Player.Id];
+                        srv.SeenTime[pse.Player.Id] = now;
+                        srv.PlayTime[pse.Player.Id] += playSpan;
+                    }
+                    // build & return message
+                    var msg1 = (pse.Online ? EventMessages.NameJoin : EventMessages.NameLeave);
+                    msg1 = msg1.Replace("<name>", pse.Player.Name);
+                    msg1 = msg1.Replace("<time>", playSpan.TotalHours.ToString("0.00") + " h");
+                    return new Tuple<string, bool>(msg1, true);
+            }
+            return new Tuple<string, bool>("", false);
         }
 
         /// <summary>
@@ -100,9 +137,9 @@ namespace mcswbot2.Bot.Objects
             });
             // TODO TEST
             // clear old elements if count > 30
-            ImagingData.OrderBy(id => id.Acquired.Ticks).Where((a,i) => i > 30).ToList().ForEach(id =>
+            ImagingData.OrderBy(id => id.Acquired.Ticks).Where((a, i) => i > 30).ToList().ForEach(id =>
             {
-                ImagingData.Remove(id);
+                 ImagingData.Remove(id);
             });
             GC.Collect();
         }
@@ -155,7 +192,7 @@ namespace mcswbot2.Bot.Objects
         {
             if (bitmap != null)
             {
-                using var ms = bitmap.Encode(sticker ? SKEncodedImageFormat.Webp : SKEncodedImageFormat.Png, 100).AsStream();
+                var ms = bitmap.Encode(sticker ? SKEncodedImageFormat.Webp : SKEncodedImageFormat.Png, 100).AsStream();
                 ms.Position = 0;
                 return SendMsgStream(text, ms, pm, replyMsg, sticker);
             }
@@ -178,23 +215,31 @@ namespace mcswbot2.Bot.Objects
             Message lMsg = null;
             try
             {
-                var sendText = (text != null);
                 if (imgStream != null)
                 {
                     var iof = new Telegram.Bot.Types.InputFiles.InputOnlineFile(imgStream);
+                    // send sticker
                     if (sticker)
                     {
                         lMsg = TgBot.Client.SendStickerAsync(Base.Id, iof, false, replyMsg).Result;
-                        replyMsg = lMsg.MessageId;
+                        // send text in response immediately afterwards ?
+                        if (text != null)
+                        {
+                            replyMsg = lMsg.MessageId;
+                            lMsg = TgBot.Client.SendTextMessageAsync(Base.Id, text, pm, true, false, replyMsg).Result;
+                        }
                     }
+                    // send normal image
                     else
                     {
                         lMsg = TgBot.Client.SendPhotoAsync(Base.Id, iof, text, pm, false, replyMsg).Result;
-                        sendText = false;
                     }
+                    imgStream.Dispose();
                 }
-
-                if (sendText) lMsg = TgBot.Client.SendTextMessageAsync(Base.Id, text, pm, true, false, replyMsg).Result;
+                // send normal text
+                else if (text != null) lMsg = TgBot.Client.SendTextMessageAsync(Base.Id, text, pm, true, false, replyMsg).Result;
+                // uhoh?
+                else throw new Exception("Nothing to send!");
             }
             catch (Exception ex)
             {
