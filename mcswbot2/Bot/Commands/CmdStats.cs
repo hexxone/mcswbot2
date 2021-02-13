@@ -17,7 +17,7 @@ namespace mcswbot2.Bot.Commands
             foreach (var gr in TgBot.TgGroups)
             {
                 serverCount += gr.Servers.Count;
-                userCount += gr.Servers.Sum(sr => sr.Wrapped.PlayerCount);
+                userCount += gr.Servers.Sum(sr => sr.Wrapped.Last.CurrentPlayerCount);
             }
 
             var msg = "Global Bot stats:";

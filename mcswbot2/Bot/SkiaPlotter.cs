@@ -74,9 +74,9 @@ namespace mcswbot2.Bot
         {
             var dt = DateTime.Now;
             var res = new PlottableData(Status.Label);
-            foreach (var sib in Status.Updater.History)
+            foreach (var sib in Status.Parent.History)
             {
-                res.Add((dt - sib.RequestDate.AddMilliseconds(sib.RequestTime)).TotalMinutes, sib.CurrentPlayerCount);
+                res.Add((sib.RequestDate.AddMilliseconds(sib.RequestTime) - dt).TotalMinutes, sib.CurrentPlayerCount);
             }
             return res;
         }
@@ -89,9 +89,9 @@ namespace mcswbot2.Bot
         {
             var dt = DateTime.Now;
             var res = new PlottableData(Base.Label);
-            foreach (var sib in Base.Updater.History)
+            foreach (var sib in Base.Parent.History)
             {
-                res.Add(dt.Subtract(sib.RequestDate.AddMilliseconds(sib.RequestTime)).TotalMinutes, sib.RequestTime);
+                res.Add((sib.RequestDate.AddMilliseconds(sib.RequestTime) - dt).TotalMinutes, sib.RequestTime);
             }
             return res;
         }
@@ -104,6 +104,14 @@ namespace mcswbot2.Bot
         internal static SKImage PlotData(IEnumerable<PlottableData> dat, string xLbl, string yLbl, int pxWidth = 720, int pxHeight = 480)
         {
             var plt = new ScottPlot.Plot(pxWidth, pxHeight);
+
+            var allXMin = dat.OrderBy(d => d.xMin).Last().xMin;
+            var allXMax = dat.OrderBy(d => d.xMax).First().xMax;
+            var allYMax = dat.OrderBy(d => d.xMax).First().yMax;
+            plt.Axis(allXMin * 1.1, 0, 0, allYMax * 1.2);
+
+            plt.Style(ScottPlot.Style.Black);
+            plt.Ticks(useMultiplierNotation: false);
             plt.XLabel(xLbl);
             plt.YLabel(yLbl);
             plt.Legend();
@@ -174,9 +182,9 @@ namespace mcswbot2.Bot
                     var thisP = new SKPoint(
                         (float)(plotXPos + plotWidth - plotWidth * (thisX - -allXMin) / xRange),
                         (float)(plotYPos + plotHeight - plotHeight * (thisY - -allYMin) / yRange));
-                    // draw from last to this point
+                    // draw from Last to this point
                     canvas.DrawLine(lastP, thisP, linePaint);
-                    // update last point
+                    // update Last point
                     lastP = thisP;
                 }
             }

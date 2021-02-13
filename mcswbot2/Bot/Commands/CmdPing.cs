@@ -18,7 +18,7 @@ namespace mcswbot2.Bot.Commands
                 using var bm = PlotData(plots, "Minutes Ago", "Response time (ms)");
                 g.SendMsg(null, bm);
             }
-            else g.SendMsg("Not enough data. Did you /add a server?");
+            else g.SendMsg("Not enough data. Please wait or /add a server.");
         }
     }
 }

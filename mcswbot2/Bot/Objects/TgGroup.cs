@@ -74,9 +74,9 @@ namespace mcswbot2.Bot.Objects
                         ImagingData.Add(t);
                         sent = true;
                     }
-                    else if (srv.Wrapped.FavIcon != null)
+                    else if (srv.Wrapped.Last.FavIcon != null)
                     {
-                        using (var txtBmp = Imaging.MakeSticker(srv.Wrapped.FavIcon, updateMsg))
+                        using (var txtBmp = Imaging.MakeSticker(srv.Wrapped.Last.FavIcon, updateMsg))
                             SendMsg(null, txtBmp, ParseMode.Default, 0, true);
                         sent = true;
                     }
