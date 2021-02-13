@@ -35,8 +35,8 @@ namespace mcswbot2.Bot.Objects
         {
             Wrapped = wrap;
             Label = wrap.Label;
-            Address = wrap.Updater.Address;
-            Port = wrap.Updater.Port;
+            Address = wrap.Parent.Address;
+            Port = wrap.Parent.Port;
             Sticker = true;
             NameHistory = new Dictionary<string, string>();
             PlayTime = new Dictionary<string, TimeSpan>();
