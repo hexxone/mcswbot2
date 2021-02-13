@@ -19,17 +19,17 @@ namespace mcswbot2.Bot.Commands
             foreach (var s in g.Servers)
             {
                 msg += "\r\n=== == = = = = = = == ===";
-                msg += "\r\n[<code>" + s.Label + "</code>] <b>" + s.Address + ":" + s.Port + "</b>\r\n  Status: ";
+                msg += "\r\n[<code>" + s.Label + "</code>] <b>" + s.Address + ":" + s.Port + "</b>";
                 if (s.Wrapped.IsOnline)
                 {
-                    msg += "Online 🌐";
-                    msg += "\r\n  Version:<code> " + s.Wrapped.Version;
-                    msg += "</code>\r\n  MOTD:<code> " + s.Wrapped.MOTD;
-                    msg += "</code>\r\n  Player:<code> " + s.Wrapped.PlayerCount + " / " + s.Wrapped.MaxPlayerCount + "</code>";
+                    msg += "\r\n  Status:<code> Online</code> 🌐";
+                    msg += "\r\n  Version:<code> " + s.Wrapped.Version + "</code>";
+                    msg += "\r\n  MOTD:<code> " + s.Wrapped.MOTD + "</code>";
+                    msg += "\r\n  Player:<code> " + s.Wrapped.PlayerCount + " / " + s.Wrapped.MaxPlayerCount + "</code>";
                 }
                 else
                 {
-                    msg += "Offline ❌";
+                    msg += "\r\n  Status:<code> Offline</code> ❌";
                     msg += "\r\n  Error:<code> " + s.Wrapped.LastError + "</code>";
                 }
             }

@@ -1,7 +1,7 @@
 ﻿using BooruSharp.Search.Post;
 using Newtonsoft.Json;
 using System;
-using System.Drawing;
+using SkiaSharp;
 
 namespace mcswbot2.Bot.Objects
 {
@@ -12,19 +12,25 @@ namespace mcswbot2.Bot.Objects
         public SearchResult SResult;
 
         [JsonIgnore]
-        public Bitmap Bmap;
+        public SKImage Bmap;
 
         public int RelatedMsgID;
 
 
-        public TahnosInfo(SearchResult result, Bitmap img)
+        private TahnosInfo(SearchResult result, SKImage img)
         {
             Acquired = DateTime.Now;
             SResult = result;
             Bmap = img;
         }
 
-
+        [JsonConstructor]
+        private TahnosInfo(DateTime acquired, SearchResult sresult, int relatedMsgId)
+        {
+            Acquired = acquired;
+            SResult = sresult;
+            RelatedMsgID = relatedMsgId;
+        }
 
         /// <summary>
         /// ...
@@ -37,12 +43,12 @@ namespace mcswbot2.Bot.Objects
             try
             {
                 var booru = new BooruSharp.Booru.Gelbooru();
-                var result = booru.GetRandomImage(new[] { "" }).Result;
-                if (result.fileUrl == null) throw new ArgumentNullException("No result!");
-                var request = System.Net.WebRequest.Create(result.fileUrl);
+                var result = booru.GetRandomPostAsync(new[] { "" }).Result;
+                if (result.FileUrl == null) throw new ArgumentNullException("No result!");
+                var request = System.Net.WebRequest.Create(result.FileUrl);
                 var response = request.GetResponse();
                 var responseStream = response.GetResponseStream();
-                return new TahnosInfo(result, new Bitmap(responseStream));
+                return new TahnosInfo(result, SKImage.FromEncodedData(responseStream));
             }
             catch (Exception ex)
             {
