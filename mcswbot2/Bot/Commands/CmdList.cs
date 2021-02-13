@@ -18,19 +18,20 @@ namespace mcswbot2.Bot.Commands
             var msg = "Watchlist:<code> " + g.Servers.Count + " / 3</code>";
             foreach (var s in g.Servers)
             {
+                var status = s.Wrapped.Last;
                 msg += "\r\n=== == = = = = = = == ===";
                 msg += "\r\n[<code>" + s.Label + "</code>] <b>" + s.Address + ":" + s.Port + "</b>";
-                if (s.Wrapped.IsOnline)
+                if (status.HadSuccess)
                 {
                     msg += "\r\n  Status:<code> Online</code> 🌐";
-                    msg += "\r\n  Version:<code> " + s.Wrapped.Version + "</code>";
-                    msg += "\r\n  MOTD:<code> " + s.Wrapped.MOTD + "</code>";
-                    msg += "\r\n  Player:<code> " + s.Wrapped.PlayerCount + " / " + s.Wrapped.MaxPlayerCount + "</code>";
+                    msg += "\r\n  Version:<code> " + status.MinecraftVersion + "</code>";
+                    msg += "\r\n  MOTD:<code> " + status.ServerMotd + "</code>";
+                    msg += "\r\n  Player:<code> " + status.CurrentPlayerCount + " / " + status.MaxPlayerCount + "</code>";
                 }
                 else
                 {
                     msg += "\r\n  Status:<code> Offline</code> ❌";
-                    msg += "\r\n  Error:<code> " + s.Wrapped.LastError + "</code>";
+                    msg += "\r\n  Error:<code> " + status.LastError + "</code>";
                 }
             }
 

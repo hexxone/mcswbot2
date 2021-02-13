@@ -37,7 +37,7 @@ namespace mcswbot2.Bot.Commands
                     msg += $"\r\n[<code>{s.Label}</code>";
                     msg += $"\r\n  Player: <code>{fullname}</code>";
                     // status & seen time
-                    var online = s.Wrapped.PlayerList.FindAll(s => s.Name == name || s.Id == name).Count > 0;
+                    var online = s.Wrapped.Last.OnlinePlayers.FindAll(s => s.Name == name || s.Id == name).Count > 0;
                     var seenSpan = DateTime.Now - s.SeenTime[id];
                     msg += "\r\n  Status: <code>";
                     msg += online ? "Online" : "Offline";

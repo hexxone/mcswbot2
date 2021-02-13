@@ -41,6 +41,9 @@ namespace mcswbot2.Bot
                 var scale = 0.95f;
 
                 var line = Lines[ln];
+                // just skip
+                if(string.IsNullOrWhiteSpace(line)) continue;
+
                 var lineStart = ln * LineHeight;
 
                 CustomDrawText(canvas, line, fSize, new SKRect(0, lineStart, blr.Width, lineStart + LineHeight));

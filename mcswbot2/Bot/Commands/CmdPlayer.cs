@@ -23,9 +23,11 @@ namespace mcswbot2.Bot.Commands
             var plots = new List<PlottableData>();
             foreach (var item in g.Servers)
             {
+                var status = item.Wrapped.Last;
+
                 msg += "\r\n[<code>" + item.Label + "</code>] ";
-                if (!item.Wrapped.IsOnline) msg += "Offline";
-                else msg += item.Wrapped.PlayerCount + " / " + item.Wrapped.MaxPlayerCount;
+                if (!status.HadSuccess) msg += "Offline";
+                else msg += status.CurrentPlayerCount + " / " + status.MaxPlayerCount;
 
                 if (TgBot.Conf.DrawPlots)
                 {
@@ -34,9 +36,9 @@ namespace mcswbot2.Bot.Commands
                 }
 
                 // add player names or continue
-                if (item.Wrapped.PlayerList.Count <= 0) continue;
+                if (status.OnlinePlayers.Count <= 0) continue;
                 var n = "";
-                foreach (var plr in item.Wrapped.PlayerList)
+                foreach (var plr in status.OnlinePlayers)
                 {
                     if (!string.IsNullOrEmpty(n)) n += ", ";
                     var span = DateTime.Now - item.SeenTime[plr.Id];
