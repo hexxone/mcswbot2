@@ -25,7 +25,7 @@ namespace mcswbot2.Bot.Objects
         }
 
         [JsonConstructor]
-        private TahnosInfo(DateTime acquired, SearchResult sresult, int relatedMsgId)
+        internal TahnosInfo(DateTime acquired, SearchResult sresult, int relatedMsgId)
         {
             Acquired = acquired;
             SResult = sresult;
@@ -37,14 +37,15 @@ namespace mcswbot2.Bot.Objects
         /// </summary>
         /// <param name="recurseTry"></param>
         /// <param name="recurseTries"></param>
+        /// <exception cref="ArgumentNullException"></exception>
         /// <returns></returns>
         internal static TahnosInfo Get(int recurseTry = 0, int recurseTries = 5)
         {
             try
             {
                 var booru = new BooruSharp.Booru.Gelbooru();
-                var result = booru.GetRandomPostAsync(new[] { "" }).Result;
-                if (result.FileUrl == null) throw new ArgumentNullException("No result!");
+                var result = booru.GetRandomPostAsync(new[] { "mature" }).Result;
+                if (result.FileUrl == null) throw new ArgumentNullException(nameof(result.FileUrl), "No url given!");
                 var request = System.Net.WebRequest.Create(result.FileUrl);
                 var response = request.GetResponse();
                 var responseStream = response.GetResponseStream();

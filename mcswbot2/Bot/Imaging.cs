@@ -37,16 +37,14 @@ namespace mcswbot2.Bot
             float LineHeight = blr.Height / Lines.Length;
             for (var ln = 0; ln < Lines.Length; ln++)
             {
-                var fSize = LineHeight * 0.5f;
-                var scale = 0.95f;
-
+                // get & check line
                 var line = Lines[ln];
-                // just skip
                 if(string.IsNullOrWhiteSpace(line)) continue;
 
+               // Calculate & draw text
+                var fSize = LineHeight * 0.4f;
                 var lineStart = ln * LineHeight;
-
-                CustomDrawText(canvas, line, fSize, new SKRect(0, lineStart, blr.Width, lineStart + LineHeight));
+                CanvasDrawText(canvas, line, fSize, new SKRect(0, lineStart, blr.Width, lineStart + LineHeight));
             }
 
             // Done boii
@@ -57,9 +55,9 @@ namespace mcswbot2.Bot
         }
 
         // Draw centered text
-        public static void CustomDrawText(SKCanvas cvs, string txt, float fSize, SKRect pos, bool shadow = true)
+        private static void CanvasDrawText(SKCanvas cvs, string txt, float fSize, SKRect pos, int shadow = 3)
         {
-            var scale = 1.0f;
+            var scale = 0.95f;
 
             // main texture
             using var textPain = new SKPaint()
@@ -70,7 +68,7 @@ namespace mcswbot2.Bot
                 TextAlign = SKTextAlign.Center,
                 Color = SKColors.White,
             };
-            // shadow texture
+            // shadow texture, used to measure text scale because its slightly bigger.
             using var shadowPain = new SKPaint()
             {
                 IsAntialias = true,
@@ -78,7 +76,8 @@ namespace mcswbot2.Bot
                 TextSize = fSize,
                 TextAlign = SKTextAlign.Center,
                 Color = SKColors.Black,
-                MaskFilter = SKMaskFilter.CreateBlur(SKBlurStyle.Normal, 7)
+                MaskFilter = SKMaskFilter.CreateBlur(SKBlurStyle.Solid, 5),
+                BlendMode = SKBlendMode.HardLight
             };
 
 
@@ -104,9 +103,11 @@ namespace mcswbot2.Bot
             using var te = SKTextBlob.Create(txt, fo);
 
             // draw shadow
-            if (shadow)
+            if (shadow > 0)
             {
-                cvs.DrawText(te, xPos, yPos, shadowPain);
+                for (var i = 0; i < shadow; i++)
+                    cvs.DrawText(te, xPos, yPos, shadowPain);
+
                 cvs.Flush();
             }
 
@@ -136,11 +137,6 @@ namespace mcswbot2.Bot
             {
                 var graph = surface.Canvas;
 
-                // fill white background
-                // could be removed in theory...
-                var pnt = new SKPaint { Color = new SKColor(255, 255, 255, 50) };
-                graph.DrawRect(new SKRect(0, 0, size, size), pnt);
-
                 // scale fill cropped image
                 graph.DrawImage(rawImage,
                     new SKRect(off_x, off_y, minSide, minSide),
@@ -164,15 +160,18 @@ namespace mcswbot2.Bot
             var canvas = g.Canvas;
 
             // draw darkening rect
+            /* TODO: dont destroy pngs, just make them darker
             using (var darkPaint = new SKPaint())
             {
+                darkPaint.BlendMode = SKBlendMode.Luminosity; 
                 darkPaint.Color = new SKColor(0, 0, 0, 100);
                 canvas.DrawRect(new SKRect(0, 0, input.Width, input.Height), darkPaint);
             }
+            */
 
             // draw blurred image
             var dn = DateTime.Now;
-            var blurVal = (dn.DayOfWeek != DayOfWeek.Saturday && dn.DayOfWeek != DayOfWeek.Sunday && dn.Hour > 8 && dn.Hour < 17) ? 18 : 4;
+            var blurVal = (dn.DayOfWeek != DayOfWeek.Saturday && dn.DayOfWeek != DayOfWeek.Sunday && dn.Hour > 8 && dn.Hour < 17) ? 28 : 7;
             using (var blurPain = new SKPaint())
             {
                 blurPain.ImageFilter = SKImageFilter.CreateBlur(blurVal, blurVal);
