@@ -15,7 +15,7 @@ namespace mcswbot2.Bot.Commands
         {
             if(g.Servers.Count < 1)
             {
-                g.SendMsg("No servers watched. Use: /add", null);
+                g.SendMsg("Please /add a server first.");
                 return;
             }
 
@@ -26,25 +26,24 @@ namespace mcswbot2.Bot.Commands
                 var status = item.Wrapped.Last;
 
                 msg += "\r\n[<code>" + item.Label + "</code>] ";
-                if (!status.HadSuccess) msg += "Offline";
+                if ((!status?.HadSuccess) ?? true) msg += " Offline";
                 else msg += status.CurrentPlayerCount + " / " + status.MaxPlayerCount;
 
                 if (TgBot.Conf.DrawPlots)
                 {
                     var ud = GetUserData(item.Wrapped);
-                    if(ud.Length > 1) plots.Add(ud);
+                    if(ud.Length > 4) plots.Add(ud);
                 }
 
                 // add player names or continue
-                if (status.OnlinePlayers.Count <= 0) continue;
+                if ((status?.OnlinePlayers.Count ?? 0) <= 0) continue;
                 var n = "";
                 foreach (var plr in status.OnlinePlayers)
                 {
-                    if (!string.IsNullOrEmpty(n)) n += ", ";
                     var span = DateTime.Now - item.SeenTime[plr.Id];
-                    n += plr.Name + " (" + span.ToString("hh:MM") + ")";
+                    n += $"\r\n  + {plr.Name} ({span.TotalHours:0.00} hrs)";
                 }
-                msg += "\r\nNames: <code>" + n + "</code>";
+                msg += "<code>" + n + "</code>";
             }
 
             if (TgBot.Conf.DrawPlots && plots.Count > 0)

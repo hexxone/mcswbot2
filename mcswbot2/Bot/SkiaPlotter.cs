@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using mcswlib.ServerStatus;
 using SkiaSharp;
@@ -8,8 +9,6 @@ namespace mcswbot2.Bot
 {
     static class SkiaPlotter
     {
-        private static Random rand = new Random(420 * 69);
-
         internal struct PlottableData
         {
             internal string Label { get; }
@@ -22,10 +21,10 @@ namespace mcswbot2.Bot
 
             public double[] X => DataX.ToArray();
             public double[] Y => DataY.ToArray();
-            public double xMin { get; private set; }
-            public double xMax { get; private set; }
-            public double yMin { get; private set; }
-            public double yMax { get; private set; }
+            public double XMin { get; private set; }
+            public double XMax { get; private set; }
+            public double YMin { get; private set; }
+            public double YMax { get; private set; }
 
 
             /// <summary>
@@ -36,21 +35,22 @@ namespace mcswbot2.Bot
             internal void Add(double x, double y)
             {
                 DataX.Add(x);
-                if (x < xMin) xMin = x;
-                if (x > xMax) xMax = x;
+                if (x < XMin) XMin = x;
+                if (x > XMax) XMax = x;
                 DataY.Add(y);
-                if (y < yMin) yMin = y;
-                if (y > yMax) yMax = y;
+                if (y < YMin) YMin = y;
+                if (y > YMax) YMax = y;
             }
 
             /// <summary>
             ///     Returns data [x,y]
             /// </summary>
             /// <param name="index"></param>
+            /// <exception cref="ArgumentOutOfRangeException"></exception>
             /// <returns></returns>
             internal Tuple<double, double> Get(int index)
             {
-                if (index < 0 || index >= Length) throw new ArgumentOutOfRangeException("Invalid Index!");
+                if (index < 0 || index >= Length) throw new ArgumentOutOfRangeException(nameof(index), "Invalid Index!");
                 return new Tuple<double, double>(DataX[index], DataY[index]);
             }
 
@@ -59,8 +59,8 @@ namespace mcswbot2.Bot
                 Label = lbl;
                 DataX = new List<double>();
                 DataY = new List<double>();
-                xMin = yMin = double.MaxValue;
-                xMax = yMax = double.MinValue;
+                XMin = YMin = double.MaxValue;
+                XMax = YMax = double.MinValue;
             }
         }
 
@@ -70,11 +70,11 @@ namespace mcswbot2.Bot
         ///     returns all the time-plottable online player count data
         /// </summary>
         /// <returns></returns>
-        internal static PlottableData GetUserData(ServerStatus Status)
+        internal static PlottableData GetUserData(ServerStatus status)
         {
             var dt = DateTime.Now;
-            var res = new PlottableData(Status.Label);
-            foreach (var sib in Status.Parent.History)
+            var res = new PlottableData(status.Label);
+            foreach (var sib in status.Parent.History)
             {
                 res.Add((sib.RequestDate.AddMilliseconds(sib.RequestTime) - dt).TotalMinutes, sib.CurrentPlayerCount);
             }
@@ -85,11 +85,11 @@ namespace mcswbot2.Bot
         ///     returns all the time-plottable ping data
         /// </summary>
         /// <returns></returns>
-        internal static PlottableData GetPingData(ServerStatus Base)
+        internal static PlottableData GetPingData(ServerStatus @base)
         {
             var dt = DateTime.Now;
-            var res = new PlottableData(Base.Label);
-            foreach (var sib in Base.Parent.History)
+            var res = new PlottableData(@base.Label);
+            foreach (var sib in @base.Parent.History)
             {
                 res.Add((sib.RequestDate.AddMilliseconds(sib.RequestTime) - dt).TotalMinutes, sib.RequestTime);
             }
@@ -105,9 +105,8 @@ namespace mcswbot2.Bot
         {
             var plt = new ScottPlot.Plot(pxWidth, pxHeight);
 
-            var allXMin = dat.OrderBy(d => d.xMin).Last().xMin;
-            var allXMax = dat.OrderBy(d => d.xMax).First().xMax;
-            var allYMax = dat.OrderBy(d => d.xMax).First().yMax;
+            var allXMin = dat.OrderBy(d => d.XMin).Last().XMin;
+            var allYMax = dat.OrderBy(d => d.XMax).First().YMax;
             plt.Axis(allXMin * 1.1, 0, 0, allYMax * 1.2);
 
             plt.Style(ScottPlot.Style.Black);
@@ -115,9 +114,19 @@ namespace mcswbot2.Bot
             plt.XLabel(xLbl);
             plt.YLabel(yLbl);
             plt.Legend();
+
+            var colorCnt = 0;
             foreach (var da in dat)
-                if (da.Length > 0)
-                    plt.PlotScatter(da.X, da.Y, null, 1D, 5D, da.Label);
+            {
+                if (da.Length <= 4) continue;
+                var col = ColorByIndx(colorCnt++);
+                // original points
+                plt.PlotScatter(xs: da.X, ys: da.Y, lineWidth: 0, markerSize: 5d, label: da.Label, color:col);
+                // interpolated lines
+                var nsi = new ScottPlot.Statistics.Interpolation.NaturalSpline(da.X, da.Y, resolution: 15);
+                plt.PlotScatter(xs: nsi.interpolatedXs, ys: nsi.interpolatedYs, lineWidth: 1d, markerSize: 0d, label: null, color: col);
+            }
+
             using var bm = plt.GetBitmap();
             using var stream = new System.IO.MemoryStream();
             bm.Save(stream, System.Drawing.Imaging.ImageFormat.Bmp);
@@ -146,10 +155,10 @@ namespace mcswbot2.Bot
             var canvas = g.Canvas;
 
             var pDat = dat as PlottableData[] ?? dat.ToArray();
-            var allXMin = pDat.OrderBy(d => d.xMin).Last().xMin;
-            var allXMax = pDat.OrderBy(d => d.xMax).First().xMax;
-            var allYMin = pDat.OrderBy(d => d.xMin).Last().yMin;
-            var allYMax = pDat.OrderBy(d => d.xMax).First().yMax;
+            var allXMin = pDat.OrderBy(d => d.XMin).Last().XMin;
+            var allXMax = pDat.OrderBy(d => d.XMax).First().XMax;
+            var allYMin = pDat.OrderBy(d => d.XMin).Last().YMin;
+            var allYMax = pDat.OrderBy(d => d.XMax).First().YMax;
             var xRange = Math.Max(0.0001d, allXMax - allXMin);
             var yRange = Math.Max(0.0001d, allYMax - allYMin);
             var colorIndx = 0;
@@ -157,7 +166,7 @@ namespace mcswbot2.Bot
             foreach (var pd in pDat)
             {
                 // choose color
-                var lineColor = ColorByIndx(colorIndx++);
+                var lineColor = SKColorByIndx(colorIndx++);
                 // add color and name to legend
                 legend.Add(pd.Label, lineColor);
                 // make line material
@@ -222,7 +231,7 @@ namespace mcswbot2.Bot
             return image;
         }
 
-        private static SKColor ColorByIndx(int indx)
+        private static SKColor SKColorByIndx(int indx)
         {
             return (indx % 7) switch
             {
@@ -232,6 +241,19 @@ namespace mcswbot2.Bot
                 5 => SKColors.Purple,
                 6 => SKColors.Olive,
                 _ => SKColors.IndianRed
+            };
+        }
+
+        private static Color ColorByIndx(int indx)
+        {
+            return (indx % 7) switch
+            {
+                1 => Color.LawnGreen,
+                2 => Color.DodgerBlue,
+                4 => Color.Orange,
+                5 => Color.DarkOrchid,
+                6 => Color.Olive,
+                _ => Color.OrangeRed
             };
         }
     }

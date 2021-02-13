@@ -16,9 +16,9 @@ namespace mcswbot2.Bot
                 privateFonts.AddFontFile("./fonts/segoe_ui.ttf");
                 return privateFonts.Families[0];
             }
-            catch (Exception e)
+            catch (Exception)
             {
-                // Todos
+                // Todo
             }
             return GetDefaultFontName();
         }

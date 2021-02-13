@@ -18,10 +18,11 @@ namespace mcswbot2.Bot.Commands
             var msg = "Watchlist:<code> " + g.Servers.Count + " / 3</code>";
             foreach (var s in g.Servers)
             {
-                var status = s.Wrapped.Last;
                 msg += "\r\n=== == = = = = = = == ===";
                 msg += "\r\n[<code>" + s.Label + "</code>] <b>" + s.Address + ":" + s.Port + "</b>";
-                if (status.HadSuccess)
+
+                var status = s.Wrapped.Last;
+                if (status != null && status.HadSuccess)
                 {
                     msg += "\r\n  Status:<code> Online</code> 🌐";
                     msg += "\r\n  Version:<code> " + status.MinecraftVersion + "</code>";
@@ -31,7 +32,8 @@ namespace mcswbot2.Bot.Commands
                 else
                 {
                     msg += "\r\n  Status:<code> Offline</code> ❌";
-                    msg += "\r\n  Error:<code> " + status.LastError + "</code>";
+                    if (status?.LastError != null)
+                        msg += "\r\n  Error:<code> " + status.LastError + "</code>";
                 }
             }
 
