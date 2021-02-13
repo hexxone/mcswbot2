@@ -1,5 +1,4 @@
 ﻿using mcswbot2.Bot.Objects;
-using mcswlib.ServerStatus;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 
@@ -61,12 +60,12 @@ namespace mcswbot2.Bot.Commands
         private static string GetSrvNotifications(ServerStatusWrapped wra)
         {
             var srv = wra.Wrapped;
-            var msg = "[" + srv.Label + "] Notifications:";
-            msg += "\r\nState change:<code> " + srv.NotifyServer;
-            msg += "</code>\r\nCount change:<code> " + srv.NotifyCount;
-            msg += "</code>\r\nPlayer change:<code> " + srv.NotifyNames;
-            msg += "</code>\r\nSend Sticker:<code> " + wra.Sticker;
-            return msg + "</code>";
+            var msg = "[<code>" + srv.Label + "</code>] Notifications:";
+            msg += "\r\nState change:<code> " + srv.NotifyServer + "</code>";
+            msg += "\r\nCount change:<code> " + srv.NotifyCount + "</code>";
+            msg += "\r\nPlayer change:<code> " + srv.NotifyNames + "</code>";
+            msg += "\r\nSend Sticker:<code> " + wra.Sticker + "</code>";
+            return msg;
         }
     }
 }

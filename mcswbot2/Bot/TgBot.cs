@@ -36,7 +36,7 @@ namespace mcswbot2.Bot
         /// </summary>
         internal static void Start()
         {
-            Program.WriteLine("MineCraftServerWatchBotV2 for Telegram made by @hexxon");
+            Program.WriteLine("MineCraftServerWatchBotV2 for Telegram");
             Program.WriteLine("starting...");
 
             Generator.PreInit();
@@ -48,11 +48,11 @@ namespace mcswbot2.Bot
             var messages = new EventMessages
             {
                 NameJoin = "+ <code><name></code>",
-                NameLeave = "- <code><name></code>",
+                NameLeave = "- <code><name></code> (<time>)",
                 CountJoin = "<code><count></code> <player> joined.",
                 CountLeave = "<code><count></code> <player> left.",
-                ServerOnline = "Server status: <code>online</code> :)\r\nMOTD:\r\n<code><text></code>",
-                ServerOffline = "Server status: <code>offline</code> :("
+                ServerOnline = "Server status: <code>online</code> ++\r\nVersion: <code><version></code>\r\nMOTD:\r\n<code><text></code>",
+                ServerOffline = "Server status: <code>offline</code> --"
             };
 
             // server status & updater factory
@@ -67,7 +67,7 @@ namespace mcswbot2.Bot
             Commands.Add(new CmdRemove());
             Commands.Add(new CmdStart());
             Commands.Add(new CmdStats());
-            Commands.Add(new CmdSven());
+            Commands.Add(new CmdTahnos());
 
             // Load users, groups & settings
             Load();
@@ -175,7 +175,7 @@ namespace mcswbot2.Bot
             {
                 var spl = usrCmd.Split('@');
                 // this command is malformatted or meant for another bot
-                if (spl.Length != 2 || spl[1] != TgBotUser.Username.ToLower()) return;
+                if (spl[1] != TgBotUser.Username.ToLower()) return;
                 // dont include botname in command
                 usrCmd = spl[0];
             }

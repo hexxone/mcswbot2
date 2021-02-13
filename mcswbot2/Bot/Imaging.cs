@@ -1,78 +1,20 @@
-﻿using mcswbot2.Bot.Objects;
-using mcswlib.ServerStatus;
-using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Drawing.Drawing2D;
-using System.Drawing.Text;
+﻿using System;
+using SkiaSharp;
 
 namespace mcswbot2.Bot
 {
     internal static class Imaging
     {
-
-        /// <summary>
-        ///     returns all the time-plottable online player count data
-        /// </summary>
-        /// <returns></returns>
-        internal static PlottableData GetUserData(ServerStatus Status)
-        {
-            var nauw = DateTime.Now;
-            var lx = new List<double>();
-            var ly = new List<double>();
-            foreach (var infoBase in Status.Updater.History)
-            {
-                var diff = nauw.Subtract(infoBase.RequestDate.AddMilliseconds(infoBase.RequestTime)).TotalMinutes;
-                lx.Add(diff);
-                ly.Add(infoBase.CurrentPlayerCount);
-            }
-            return new PlottableData(Status.Label, lx.ToArray(), ly.ToArray());
-        }
-
-        /// <summary>
-        ///     returns all the time-plottable ping data
-        /// </summary>
-        /// <returns></returns>
-        internal static PlottableData GetPingData(ServerStatus Base)
-        {
-            var nauw = DateTime.Now;
-            var lx = new List<double>();
-            var ly = new List<double>();
-            foreach (var infoBase in Base.Updater.History)
-            {
-                var diff = nauw.Subtract(infoBase.RequestDate.AddMilliseconds(infoBase.RequestTime)).TotalMinutes;
-                lx.Add(diff);
-                ly.Add(infoBase.RequestTime);
-            }
-            return new PlottableData(Base.Label, lx.ToArray(), ly.ToArray());
-        }
-
-        /// <summary>
-        ///     Will Plot and save Data to a file
-        /// </summary>
-        /// <param name="dat"></param>
-        internal static Bitmap PlotData(PlottableData[] dat, string xLab, string yLab)
-        {
-            var plt = new ScottPlot.Plot(355, 200);
-            plt.XLabel(xLab);
-            plt.YLabel(yLab);
-            plt.Legend(true);
-            foreach (var da in dat)
-                if (da.DataX.Length > 0)
-                    plt.PlotScatter(da.DataX, da.DataY, null, 1D, 5D, da.Label);
-            return plt.GetBitmap();
-        }
-
         /// <summary>
         ///     Wrapper for scaling and writing text to an image
         /// </summary>
         /// <param name="input"></param>
         /// <param name="txt"></param>
         /// <returns></returns>
-        internal static Bitmap MakeSticker(Bitmap input, string txt)
+        internal static SKImage MakeSticker(SKImage input, string txt)
         {
-            using (var scaled = MakeThumbnail(input))
-                return WriteText(scaled, Utils.NoHtml(txt));
+            using var scaled = MakeThumbnail(input);
+            return WriteText(scaled, Utils.NoHtml(txt));
         }
 
         /// <summary>
@@ -81,46 +23,93 @@ namespace mcswbot2.Bot
         /// <param name="bmp"></param>
         /// <param name="txt"></param>
         /// <returns></returns>
-        internal static Bitmap WriteText(Bitmap bmp, string txt)
+        private static SKImage WriteText(SKImage bmp, string txt)
         {
-            var rectf = new RectangleF(0, 0, bmp.Width, bmp.Height);
-
-            var dn = DateTime.Now;
-            var blurVal = 3;
-            if (dn.DayOfWeek != DayOfWeek.Saturday && dn.DayOfWeek != DayOfWeek.Sunday && dn.Hour > 8 && dn.Hour < 17) blurVal = 20;
-            // fast gaussian
-            var gb = new GaussianBlur(bmp);
-            var blurred = gb.Process(blurVal);
             // Create graphic object that will draw onto the bitmap
-            using (var g = Graphics.FromImage(blurred))
+            using var blr = BlurInternal(bmp);
+            using var g = SKSurface.Create(new SKImageInfo(blr.Width, blr.Height));
+            var canvas = g.Canvas;
+            // copy blurred iamge
+            canvas.DrawImage(blr, 0, 0);
+
+            // Process all lines
+            var Lines = txt.Split("\r\n");
+            float LineHeight = blr.Height / Lines.Length;
+            for (var ln = 0; ln < Lines.Length; ln++)
             {
-                // NOTE that path gradient brushes do not obey the smoothing mode. 
-                g.SmoothingMode = SmoothingMode.AntiAlias;
-                // The interpolation mode determines how intermediate values between two endpoints are calculated.
-                g.InterpolationMode = InterpolationMode.HighQualityBicubic;
-                // Use this property to specify either higher quality, slower rendering, or lower quality, faster rendering of the contents of this Graphics object.
-                g.PixelOffsetMode = PixelOffsetMode.HighQuality;
-                // This one is important
-                g.TextRenderingHint = TextRenderingHint.AntiAliasGridFit;
-                // dampening
-                using (Brush brush = new SolidBrush(Color.FromArgb(137, Color.Black)))
-                    g.FillRectangle(brush, rectf);
+                var fSize = LineHeight * 0.5f;
+                var scale = 0.95f;
 
-                var fSize = 26;
-                var df = Fonts.GetCustomFont();
-                var sf = new StringFormat()
-                {
-                    Alignment = StringAlignment.Center,
-                    LineAlignment = StringAlignment.Center
-                };
+                var line = Lines[ln];
+                var lineStart = ln * LineHeight;
 
-                // Draw the text
-                var fo = new Font(df, fSize);
-                g.DrawString(txt, fo, Brushes.White, rectf, sf);
-                g.Flush();
+                CustomDrawText(canvas, line, fSize, new SKRect(0, lineStart, blr.Width, lineStart + LineHeight));
             }
-            // Now save or use the bitmap
-            return blurred;
+
+            // Done boii
+            canvas.Flush();
+            var result = g.Snapshot();
+            g.Dispose();
+            return result;
+        }
+
+        // Draw centered text
+        public static void CustomDrawText(SKCanvas cvs, string txt, float fSize, SKRect pos, bool shadow = true)
+        {
+            var scale = 1.0f;
+
+            // main texture
+            using var textPain = new SKPaint()
+            {
+                IsAntialias = true,
+                Style = SKPaintStyle.Fill,
+                TextSize = fSize,
+                TextAlign = SKTextAlign.Center,
+                Color = SKColors.White,
+            };
+            // shadow texture
+            using var shadowPain = new SKPaint()
+            {
+                IsAntialias = true,
+                Style = SKPaintStyle.Fill,
+                TextSize = fSize,
+                TextAlign = SKTextAlign.Center,
+                Color = SKColors.Black,
+                MaskFilter = SKMaskFilter.CreateBlur(SKBlurStyle.Normal, 7)
+            };
+
+
+            // bounding box stuff
+            var textBounds = new SKRect();
+            shadowPain.MeasureText(txt, ref textBounds);
+            // adaptive downscaling
+            if (textBounds.Width > pos.Width)
+            {
+                scale *= (pos.Width / textBounds.Width);
+                fSize *= scale;
+            }
+
+
+            // text position
+            var xPos = (pos.Width / 2) - textBounds.MidX * scale;
+            var yPos = pos.Top + (pos.Height / 2) - textBounds.MidY;
+
+            // font stuffs
+            var ff = Fonts.GetCustomFont();
+            var fa = SKTypeface.FromFamilyName(ff.Name);
+            using var fo = new SKFont(fa, fSize);
+            using var te = SKTextBlob.Create(txt, fo);
+
+            // draw shadow
+            if (shadow)
+            {
+                cvs.DrawText(te, xPos, yPos, shadowPain);
+                cvs.Flush();
+            }
+
+            // draw text #NoFilter
+            cvs.DrawText(te, xPos, yPos, textPain);
+            cvs.Flush();
         }
 
         /// <summary>
@@ -128,7 +117,7 @@ namespace mcswbot2.Bot
         /// </summary>
         /// <param name="rawImage"></param>
         /// <returns></returns>
-        internal static Bitmap MakeThumbnail(Bitmap rawImage, int size = 512)
+        private static SKImage MakeThumbnail(SKImage rawImage, int size = 512)
         {
             // calculate crop
             var minSide = Math.Min(rawImage.Width, rawImage.Height);
@@ -136,20 +125,61 @@ namespace mcswbot2.Bot
             if (minSide < rawImage.Width) off_x = (rawImage.Width - minSide) / 2;
             if (minSide < rawImage.Height) off_y = (rawImage.Height - minSide) / 2;
             // make new bitmap
-            var scaledBitmap = new Bitmap(size, size);
-            Graphics graph = Graphics.FromImage(scaledBitmap);
-            graph.InterpolationMode = InterpolationMode.High;
-            graph.CompositingQuality = CompositingQuality.HighQuality;
-            graph.SmoothingMode = SmoothingMode.AntiAlias;
-            // fill white background
-            graph.FillRectangle(new SolidBrush(Color.White), new RectangleF(0, 0, size, size));
-            // scale fill cropped image
-            graph.DrawImage(rawImage,
-                new Rectangle(0, 0, size, size),
-                new Rectangle(off_x, off_y, minSide, minSide),
-                GraphicsUnit.Pixel);
+
+
+            var info = new SKImageInfo(size, size);
+            SKImage result = null;
+            using (var surface = SKSurface.Create(info))
+            {
+                var graph = surface.Canvas;
+
+                // fill white background
+                // could be removed in theory...
+                var pnt = new SKPaint { Color = new SKColor(255, 255, 255, 50) };
+                graph.DrawRect(new SKRect(0, 0, size, size), pnt);
+
+                // scale fill cropped image
+                graph.DrawImage(rawImage,
+                    new SKRect(off_x, off_y, minSide, minSide),
+                    new SKRect(0, 0, size, size));
+
+                graph.Flush();
+                result = surface.Snapshot();
+            }
             // done
-            return scaledBitmap;
+            return result;
+        }
+
+        /// <summary>
+        ///     Blurs given Image, ready for writing text on it
+        /// </summary>
+        /// <param name="input"></param>
+        /// <returns></returns>
+        private static SKImage BlurInternal(SKImage input)
+        {
+            using var g = SKSurface.Create(new SKImageInfo(input.Width, input.Height));
+            var canvas = g.Canvas;
+
+            // draw darkening rect
+            using (var darkPaint = new SKPaint())
+            {
+                darkPaint.Color = new SKColor(0, 0, 0, 100);
+                canvas.DrawRect(new SKRect(0, 0, input.Width, input.Height), darkPaint);
+            }
+
+            // draw blurred image
+            var dn = DateTime.Now;
+            var blurVal = (dn.DayOfWeek != DayOfWeek.Saturday && dn.DayOfWeek != DayOfWeek.Sunday && dn.Hour > 8 && dn.Hour < 17) ? 18 : 4;
+            using (var blurPain = new SKPaint())
+            {
+                blurPain.ImageFilter = SKImageFilter.CreateBlur(blurVal, blurVal);
+                canvas.DrawImage(input, 0, 0, blurPain);
+            }
+
+            canvas.Flush();
+            var result = g.Snapshot();
+            g.Dispose();
+            return result;
         }
     }
 }

@@ -2,22 +2,34 @@
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace mcswbot2.Bot.Objects
 {
     public class ServerStatusWrapped
     {
         [JsonIgnore]
-        public ServerStatus Wrapped { get; private set; }
+        public ServerStatus Wrapped { get; }
 
-        public string Label { get; private set; }
+        public string Label { get; }
 
-        public string Address { get; private set; }
+        public string Address { get; }
 
-        public int Port { get; private set; }
+        public int Port { get; }
 
-        public bool Sticker = true;
+        public bool Sticker { get; set;  }
+
+        // <UID>:<NAME>
+        // SAVE PLAYER NAMES -> NOTICE / ANNOUNCE RENAMES ?
+        public Dictionary<string,string> NameHistory { get; }
+
+        // <UID>:<MINUTES_ONLINE>
+        // OVERALL ON-TIME, GETS ADDED ON LEAVE
+        public Dictionary<string,TimeSpan> PlayTime { get; }
+
+        // <UID>:<TIMESTAMP>
+        // if user currently online, STAMP = JOIN TIME -> PLAY TIME
+        // if user offline, STAMP = LEAVE TIME -> OFFLINE TIME
+        public Dictionary<string,DateTime> SeenTime { get; }
 
         internal ServerStatusWrapped(ServerStatus wrap)
         {
@@ -25,14 +37,21 @@ namespace mcswbot2.Bot.Objects
             Label = wrap.Label;
             Address = wrap.Updater.Address;
             Port = wrap.Updater.Port;
+            Sticker = true;
+            NameHistory = new Dictionary<string, string>();
+            PlayTime = new Dictionary<string, TimeSpan>();
+            SeenTime = new Dictionary<string, DateTime>();
         }
 
         [JsonConstructor]
-        public ServerStatusWrapped(string label, string address, int port)
+        public ServerStatusWrapped(string label, string address, int port, Dictionary<string, string> nameHistory, Dictionary<string, TimeSpan> playTime, Dictionary<string, DateTime> seenTime)
         {
             Label = label;
             Address = address;
             Port = port;
+            NameHistory = nameHistory;
+            PlayTime = playTime;
+            SeenTime = seenTime;
         }
     }
 }

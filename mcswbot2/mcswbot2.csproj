@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>netcoreapp2.1</TargetFramework>
+    <TargetFramework>net5.0</TargetFramework>
     <StartupObject>mcswbot2.Program</StartupObject>
     <SignAssembly>false</SignAssembly>
     <AssemblyOriginatorKeyFile>hexxon_me_CA.pfx</AssemblyOriginatorKeyFile>
@@ -15,24 +15,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="BooruSharp" Version="1.4.8" />
+    <PackageReference Include="BooruSharp" Version="3.0.2" />
     <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
-    <PackageReference Include="ScottPlot" Version="4.0.22" />
-    <PackageReference Include="System.Drawing.Common" Version="4.7.0" />
-    <PackageReference Include="Telegram.Bot" Version="15.4.0" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Reference Include="Imazen.WebP">
-      <HintPath>..\..\libwebp-net\src\Imazen.WebP\bin\Debug\netstandard2.0\Imazen.WebP.dll</HintPath>
-    </Reference>
-    <Reference Include="ZufallSatz">
-      <HintPath>..\..\ZufallSatz\ZufallSatz\bin\Debug\netstandard2.0\ZufallSatz.dll</HintPath>
-    </Reference>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="IncludeBuild\fonts\" />
+    <PackageReference Include="ScottPlot" Version="4.0.48" />
+    <PackageReference Include="System.Drawing.Common" Version="5.0.1" />
+    <PackageReference Include="Telegram.Bot" Version="15.7.1" />
   </ItemGroup>
 
   <ItemGroup>
@@ -41,6 +28,48 @@
 
   <ItemGroup>
     <ProjectReference Include="..\mcswlib\mcswlib\mcswlib.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="ZufallSatz">
+      <HintPath>IncludeBuild\ZufallSatz.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="IncludeBuild\fonts\segoe_ui.ttf">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="IncludeBuild\text\adjektiv.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="IncludeBuild\text\gegenstaende.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="IncludeBuild\text\intransitive_verben.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="IncludeBuild\text\intransitive_verben_2.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="IncludeBuild\text\ort.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="IncludeBuild\text\pflanzen.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="IncludeBuild\text\tiere.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="IncludeBuild\text\vornamen_m.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="IncludeBuild\text\vornamen_w.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="IncludeBuild\ZufallSatz.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Resource>
   </ItemGroup>
 
 </Project>
