@@ -1,7 +1,9 @@
-﻿using mcswbot2.Bot.Objects;
+﻿using System;
+using mcswbot2.Bot.Objects;
 using System.Collections.Generic;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
+using static mcswbot2.Bot.SkiaPlotter;
 
 namespace mcswbot2.Bot.Commands
 {
@@ -16,6 +18,7 @@ namespace mcswbot2.Bot.Commands
                 g.SendMsg("No servers watched. Use: /add", null);
                 return;
             }
+
             var msg = "Player Online:";
             var plots = new List<PlottableData>();
             foreach (var item in g.Servers)
@@ -26,8 +29,8 @@ namespace mcswbot2.Bot.Commands
 
                 if (TgBot.Conf.DrawPlots)
                 {
-                    var ud = Imaging.GetUserData(item.Wrapped);
-                    if(ud.DataX.Length > 0) plots.Add(ud);
+                    var ud = GetUserData(item.Wrapped);
+                    if(ud.Length > 1) plots.Add(ud);
                 }
 
                 // add player names or continue
@@ -36,16 +39,18 @@ namespace mcswbot2.Bot.Commands
                 foreach (var plr in item.Wrapped.PlayerList)
                 {
                     if (!string.IsNullOrEmpty(n)) n += ", ";
-                    n += plr.Name;
+                    var span = DateTime.Now - item.SeenTime[plr.Id];
+                    n += plr.Name + " (" + span.ToString("hh:MM") + ")";
                 }
                 msg += "\r\nNames: <code>" + n + "</code>";
             }
 
             if (TgBot.Conf.DrawPlots && plots.Count > 0)
-                using (var bm = Imaging.PlotData(plots.ToArray(), "Minutes Ago", "Player Online"))
-                    g.SendMsg(msg, bm, ParseMode.Html);
-            else
-                g.SendMsg(msg, null, ParseMode.Html);
+            {
+                using var bm = PlotData(plots, "Minutes Ago", "Player Online");
+                g.SendMsg(msg, bm, ParseMode.Html);
+            }
+            else g.SendMsg(msg, null, ParseMode.Html);
         }
     }
 }

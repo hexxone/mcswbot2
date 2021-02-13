@@ -1,48 +1,55 @@
-﻿using System.Drawing;
+﻿using System;
+using System.Drawing;
 using System.Drawing.Text;
+using System.Linq;
 
 namespace mcswbot2.Bot
 {
+    // TODO find better way then System.Drawing only for Fonts...
     internal static class Fonts
     {
         internal static FontFamily GetCustomFont()
         {
-            var privateFonts = new PrivateFontCollection();
-            privateFonts.AddFontFile("./fonts/segoe_ui.ttf");
-            return privateFonts.Families[0];
+            try
+            {
+                var privateFonts = new PrivateFontCollection();
+                privateFonts.AddFontFile("./fonts/segoe_ui.ttf");
+                return privateFonts.Families[0];
+            }
+            catch (Exception e)
+            {
+                // Todos
+            }
+            return GetDefaultFontName();
         }
 
         internal static FontFamily GetDefaultFontName()
         {
-            var f = GetSansFontName();
-            if (f == null) f = GetSerifFontName();
-            if (f == null) f = GetMonospaceFontName();
-            if (f == null) f = SystemFonts.DefaultFont.FontFamily;
-            return f;
+            return ((GetSansFontName() ?? GetSerifFontName()) ?? GetMonospaceFontName()) ?? SystemFonts.DefaultFont.FontFamily;
         }
 
         internal static FontFamily GetSansFontName()
         {
-            string[] sansFonts = new string[] { "Segoe UI", "DejaVu Sans", "Helvetica" };
+            var sansFonts = new string[] { "Segoe UI", "DejaVu Sans", "Helvetica" };
             return GetValidFontName(sansFonts);
         }
 
         internal static FontFamily GetSerifFontName()
         {
-            string[] serifFonts = new string[] { "Times New Roman", "DejaVu Serif", "Times" };
+            var serifFonts = new string[] { "Times New Roman", "DejaVu Serif", "Times" };
             return GetValidFontName(serifFonts);
         }
 
         internal static FontFamily GetMonospaceFontName()
         {
-            string[] monospaceFonts = new string[] { "Consolas", "DejaVu Sans Mono", "Courier" };
+            var monospaceFonts = new string[] { "Consolas", "DejaVu Sans Mono", "Courier" };
             return GetValidFontName(monospaceFonts);
         }
 
         internal static FontFamily GetValidFontName(string fontName)
         {
-            foreach (FontFamily installedFont in FontFamily.Families)
-                if (string.Equals(installedFont.Name, fontName, System.StringComparison.OrdinalIgnoreCase))
+            foreach (var installedFont in FontFamily.Families)
+                if (string.Equals(installedFont.Name, fontName, StringComparison.OrdinalIgnoreCase))
                     return installedFont;
 
             return GetDefaultFontName();
@@ -50,11 +57,10 @@ namespace mcswbot2.Bot
 
         internal static FontFamily GetValidFontName(string[] fontNames)
         {
-            foreach (string preferredFont in fontNames)
-                foreach (FontFamily font in FontFamily.Families)
-                    if (string.Equals(preferredFont, font.Name, System.StringComparison.OrdinalIgnoreCase))
-                        return font;
-            return null;
+            return (from preferred in fontNames
+                    from font in FontFamily.Families
+                    where string.Equals(preferred, font.Name, StringComparison.OrdinalIgnoreCase)
+                    select font).FirstOrDefault();
         }
     }
 }

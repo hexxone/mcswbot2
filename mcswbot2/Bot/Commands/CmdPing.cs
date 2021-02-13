@@ -1,6 +1,7 @@
 ﻿using mcswbot2.Bot.Objects;
-using System.Collections.Generic;
+using System.Linq;
 using Telegram.Bot.Types;
+using static mcswbot2.Bot.SkiaPlotter;
 
 namespace mcswbot2.Bot.Commands
 {
@@ -10,17 +11,14 @@ namespace mcswbot2.Bot.Commands
 
         internal override void Call(Message m, TgGroup g, TgUser u, string[] args, bool dev)
         {
-            var plots = new List<PlottableData>();
-            foreach (var item in g.Servers)
-            {
-                var pd = Imaging.GetPingData(item.Wrapped);
-                if(pd.DataX.Length > 0) plots.Add(pd);
-            }
+            // collect Plot Data
+            var plots = g.Servers.Select(item => GetPingData(item.Wrapped)).Where(pd => pd.Length > 1).ToList();
             if (plots.Count > 0)
-                using (var bm = Imaging.PlotData(plots.ToArray(), "Minutes Ago", "Response time (ms)"))
-                    g.SendMsg(null, bm);
-            else
-                g.SendMsg("Not enough data. Did you /add a server?");
+            {
+                using var bm = PlotData(plots, "Minutes Ago", "Response time (ms)");
+                g.SendMsg(null, bm);
+            }
+            else g.SendMsg("Not enough data. Did you /add a server?");
         }
     }
 }

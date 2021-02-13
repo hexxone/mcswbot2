@@ -1,5 +1,6 @@
 ﻿using mcswbot2.Bot.Objects;
 using System.Diagnostics;
+using System.Linq;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 
@@ -11,25 +12,21 @@ namespace mcswbot2.Bot.Commands
 
         internal override void Call(Message m, TgGroup g, TgUser u, string[] args, bool dev)
         {
-            var msg = "Global Bot stats:";
-            msg += "\r\n  known users:<code> " + TgBot.TgUsers.Length;
-            msg += "</code>\r\n  known groups:<code> " + TgBot.TgGroups.Length;
-            var serverCount = 0;
-            var userCount = 0;
+            double totalSize = Process.GetCurrentProcess().WorkingSet64 / 1024 / 1024;
+            int serverCount = 0, userCount = 0;
             foreach (var gr in TgBot.TgGroups)
             {
                 serverCount += gr.Servers.Count;
-                foreach (var sr in gr.Servers)
-                    userCount += sr.Wrapped.PlayerCount;
+                userCount += gr.Servers.Sum(sr => sr.Wrapped.PlayerCount);
             }
 
-            msg += "</code>\r\n  watched servers:<code> " + serverCount;
-            msg += "</code>\r\n  online MC users:<code> " + userCount;
-
-            double totalSize = Process.GetCurrentProcess().WorkingSet64 / 1024 / 1024;
-            msg += $"</code>\r\n  live ram usage:<code> {totalSize:0.00} MB";
-
-            g.SendMsg(msg + "</code>", null, ParseMode.Html);
+            var msg = "Global Bot stats:";
+            msg += $"\r\n  known users:<code> {TgBot.TgUsers.Length}</code>";
+            msg += $"\r\n  known groups:<code> {TgBot.TgGroups.Length}</code>";
+            msg += $"\r\n  watched servers:<code> {serverCount}</code>";
+            msg += $"\r\n  online MC users:<code> {userCount}</code>";
+            msg += $"\r\n  live ram usage:<code> {totalSize:0.00} MB</code>";
+            g.SendMsg(msg, null, ParseMode.Html);
         }
     }
 }
