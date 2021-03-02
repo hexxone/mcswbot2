@@ -1,4 +1,5 @@
 ﻿using System;
+using mcswbot2.Static;
 
 namespace mcswbot2.Objects
 {

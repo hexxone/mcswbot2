@@ -9,15 +9,15 @@ using System.Threading;
 using System.Threading.Tasks;
 using mcswbot2.Event;
 using mcswbot2.Objects;
+using mcswbot2.Static;
 using Newtonsoft.Json;
 using SkiaSharp;
 
-namespace mcswbot2.ServerInfo
+namespace mcswbot2.Minecraft
 {
 
     internal class ServerInfo
     {
-        private static Random rnd = new Random(69 * 1337 - 42);
         private readonly string _address;
         private readonly int _port;
 
@@ -38,7 +38,7 @@ namespace mcswbot2.ServerInfo
         /// </summary>
         /// <param name="ct"></param>
         /// <returns></returns>
-        public async Task<ServerInfoBase> GetAsync(CancellationToken ct, DateTime dt)
+        public async Task<ServerInfoExtended> GetAsync(CancellationToken ct, DateTime dt)
         {
             try
             {
@@ -48,7 +48,7 @@ namespace mcswbot2.ServerInfo
             }
             catch (Exception e)
             {
-                return new ServerInfoBase(dt, e);
+                return new ServerInfoExtended(dt, e);
             }
         }
 
@@ -80,7 +80,7 @@ namespace mcswbot2.ServerInfo
         private const string Header = "data:image/png;base64,";
 
 
-        private ServerInfoBase Get(CancellationToken ct, DateTime dt, TcpClient client, NetworkStream stream)
+        private ServerInfoExtended Get(CancellationToken ct, DateTime dt, TcpClient client, NetworkStream stream)
         {
             var offset = 0;
             var writeBuffer = new List<byte>();
@@ -155,7 +155,7 @@ namespace mcswbot2.ServerInfo
 
             dynamic ping = JsonConvert.DeserializeObject(json);
 
-            return new ServerInfoBase(dt,
+            return new ServerInfoExtended(dt,
                 sw.ElapsedMilliseconds / 2,
                 GetDescription(ping.description),
                 (int)ping.players.max,

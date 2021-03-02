@@ -2,10 +2,10 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
-using mcswbot2.ServerStatus;
+using mcswbot2.Minecraft;
 using SkiaSharp;
 
-namespace mcswbot2.Telegram
+namespace mcswbot2.Static
 {
     static class SkiaPlotter
     {
@@ -76,7 +76,7 @@ namespace mcswbot2.Telegram
             var res = new PlottableData(status.Label);
 
             // Add all data points
-            foreach (var sib in status.History.Select(siw => siw.Wrapped).OrderByDescending(sib => sib.RequestDate))
+            foreach (var sib in status.History.Select(siw => siw).OrderByDescending(sib => sib.RequestDate))
                 res.Add((sib.RequestDate - dt).TotalDays, sib.CurrentPlayerCount);
 
             // If Status given, Scale by Max Players
@@ -98,7 +98,7 @@ namespace mcswbot2.Telegram
             var res = new PlottableData(status.Label);
 
             // Add all data points
-            foreach (var sib in status.History.Select(siw => siw.Wrapped).OrderByDescending(sib => sib.RequestDate))
+            foreach (var sib in status.History.Select(siw => siw).OrderByDescending(sib => sib.RequestDate))
                 res.Add((sib.RequestDate - dt).TotalDays, sib.RequestTime);
 
             res.XMin = Math.Min(-0.1, res.XMin);

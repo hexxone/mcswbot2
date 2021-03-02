@@ -3,10 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using mcswbot2.Commands;
+using mcswbot2.Minecraft;
 using mcswbot2.Objects;
-using mcswbot2.ServerStatus;
-using mcswbot2.Telegram;
+using mcswbot2.Static;
 using Telegram.Bot;
+using Telegram.Bot.Args;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 using ZufallSatz;
@@ -20,8 +21,7 @@ namespace mcswbot2
         internal static readonly List<TgGroup> TgGroups = new();
 
         internal static Config Conf { get; set; }
-
-        internal static ServerStatusFactory Factory { get; private set; }
+        
         internal static TelegramBotClient Client { get; private set; }
         internal static User TgBotUser { get; private set; }
 
@@ -37,8 +37,6 @@ namespace mcswbot2
 
             // default config
             Conf = new Config();
-            // server status & updater factory
-            Factory = new ServerStatusFactory();
 
             // Add Bot commands
             Commands.Add(new CmdAdd());
@@ -64,23 +62,27 @@ namespace mcswbot2
             if (enumValues.Contains(Conf.LogLevel)) Logger.LogLevel = (Types.LogLevel)Conf.LogLevel;
             else Logger.WriteLine("Invalid LogLevel: " + Conf.LogLevel, Types.LogLevel.Error);
 
-
-            // start pinging servers
-
-            Factory.StartAutoUpdate(Conf.SleepTime);
-
+            
             // Start the telegram bot
 
             _ = RunBotAsync();
 
             // main save loop
-            while (Factory.AutoUpdating)
+            while (true)
             {
-                Program.WriteLine("Sleeping...");
-                Task.Delay(Conf.SleepTime).Wait();
+                try
+                {
 
-                // save data
-                Storage.Save();
+                    Program.WriteLine("Sleeping...");
+                    Task.Delay(Conf.SleepTime).Wait();
+
+                    // save data
+                    Storage.Save();
+                }
+                catch (Exception e)
+                {
+                    Logger.WriteLine("MAIN LOOP EXCEPTION: " + e, Types.LogLevel.Error);
+                }
             }
 
             Console.WriteLine("Reached end of pr0gram! Auto updating stopped for some reason ???");
@@ -101,13 +103,13 @@ namespace mcswbot2
             // start taking requests
             Client.StartReceiving();
         }
-
+        
         /// <summary>
         ///     Event Callback for Telegram Bot
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private static void Client_OnMessage(object sender, Telegram.Bot.Args.MessageEventArgs e)
+        private static void Client_OnMessage(object? sender, MessageEventArgs e)
         {
             try
             {
@@ -217,7 +219,6 @@ namespace mcswbot2
 
         internal static void DestroyGroup(TgGroup tgg)
         {
-            tgg.Destroy();
             TgGroups.Remove(tgg);
         }
 

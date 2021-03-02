@@ -31,14 +31,7 @@ namespace mcswbot2.Objects
             SResult = sresult;
             RelatedMsgID = relatedMsgId;
         }
-
-        /// <summary>
-        /// ...
-        /// </summary>
-        /// <param name="recurseTry"></param>
-        /// <param name="recurseTries"></param>
-        /// <exception cref="ArgumentNullException"></exception>
-        /// <returns></returns>
+        
         internal static TahnosInfo Get(int recurseTry = 0, int recurseTries = 5)
         {
             try

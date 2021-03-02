@@ -3,7 +3,7 @@ using mcswbot2.Objects;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-namespace mcswbot2.Telegram
+namespace mcswbot2.Static
 {
     internal static class Storage
     {

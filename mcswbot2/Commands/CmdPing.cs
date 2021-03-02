@@ -1,7 +1,7 @@
 ﻿using System.Linq;
 using mcswbot2.Objects;
 using Telegram.Bot.Types;
-using static mcswbot2.Telegram.SkiaPlotter;
+using static mcswbot2.Static.SkiaPlotter;
 
 namespace mcswbot2.Commands
 {

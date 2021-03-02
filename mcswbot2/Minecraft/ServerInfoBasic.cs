@@ -1,7 +1,7 @@
 ﻿using System;
 using Newtonsoft.Json;
 
-namespace mcswbot2.ServerInfo
+namespace mcswbot2.Minecraft
 {
     [Serializable]
     public class ServerInfoBasic
@@ -26,15 +26,23 @@ namespace mcswbot2.ServerInfo
         /// </summary>
         public double CurrentPlayerCount { get; set; }
 
+        /// <summary>
+        ///     Quantization Level
+        /// </summary>
+        public int QLevel { get; set; }
+
+
+
         public ServerInfoBasic() { }
 
         [JsonConstructor]
-        public ServerInfoBasic(bool hadSuccess, DateTime requestDate, double requestTime, double currentPlayerCount)
+        public ServerInfoBasic(bool hadSuccess, DateTime requestDate, double requestTime, double currentPlayerCount, int qLevel)
         {
             HadSuccess = hadSuccess;
             RequestDate = requestDate;
             RequestTime = requestTime;
             CurrentPlayerCount = currentPlayerCount;
+            QLevel = qLevel;
         }
     }
 }
