@@ -3,47 +3,53 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
+using mcswlib;
+using mcswlib.ServerStatus;
 using mcswlib.ServerStatus.Event;
 using SkiaSharp;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
+using Telegram.Bot.Types.InputFiles;
 
 namespace mcswbot2.Bot.Objects
 {
+    [Serializable]
     public class TgGroup
     {
-        // the time over which server infos are held in memory...
-        [JsonIgnore]
-        public static TimeSpan ClearSpan = new TimeSpan(3, 0, 0, 0);
-
         // Identity
-        public List<ServerStatusWrapped> Servers = new List<ServerStatusWrapped>();
+        public List<ServerStatusWrapped> Servers = new();
         public Chat Base { get; set; }
 
         public bool Tahnos = false;
 
-        public List<TahnosInfo> ImagingData = new List<TahnosInfo>();
+        public List<TahnosInfo> ImagingData = new();
+
+        public int LivePlayerMsgId = 0;
 
         /// <summary>
         ///     Register & Start updating all the servers in this group after deserializing
         /// </summary>
-        internal void UpdateAll()
+        private void Update(ServerStatus status, EventBase[] events)
         {
-            Parallel.ForEach(Servers, srv =>
+            foreach (var srv in Servers)
             {
-                var res = srv.Wrapped.Update();
-                if (res.Length <= 0) return;
+                if (srv.Wrapped != status) continue;
 
                 var updateMsg = $"[<code>{srv.Label}</code>]";
                 var addMore = true;
-                foreach (var evt in res)
+                var added = false;
+                foreach (var evt in events)
                 {
-                    var (txt, more) = ProcessEventMMessage(srv, evt);
+                    var (txt, more) = ProcessEventMessage(srv, evt);
+                    if(txt == null) continue;
                     // stop adding further text after "online-status" event
                     if (addMore) updateMsg += txt;
                     addMore = addMore && more;
+                    added = true;
                 }
+
+                // no events processed => no message to send
+                if(!added) continue;
 
                 // get & scale server image or use empty
                 var sent = false;
@@ -69,9 +75,7 @@ namespace mcswbot2.Bot.Objects
                 }
                 // send message if sticker disabled or failed
                 if (!sent) SendMsg(updateMsg, null, ParseMode.Html, 0, false);
-            });
-            // free resources
-            CleanData();
+            }
         }
 
         /// <summary>
@@ -80,17 +84,19 @@ namespace mcswbot2.Bot.Objects
         /// <param name="srv"></param>
         /// <param name="evt"></param>
         /// <returns>   string (message), bool (continue processing?)</returns>
-        private static Tuple<string, bool> ProcessEventMMessage(ServerStatusWrapped srv, EventBase evt)
+        private static Tuple<string, bool> ProcessEventMessage(ServerStatusWrapped srv, EventBase evt)
         {
             switch (evt)
             {
                 case OnlineStatusEvent ose:
+                    if (!srv.NotifyServer) return new Tuple<string, bool>(null, false);
                     return new Tuple<string, bool>((ose.ServerStatus ? EventMessages.ServerOnline : EventMessages.ServerOffline)
                         .Replace("<text>", ose.StatusText)
                         .Replace("<version>", ose.Version)
                         .Replace("<players>", $"{ose.CurrentPlayers} / {ose.MaxPlayers}"), false);
 
                 case PlayerChangeEvent pce:
+                    if (!srv.NotifyCount) return new Tuple<string, bool>(null, false);
                     var abs = Math.Abs(pce.PlayerDiff);
                     var msg2 = pce.PlayerDiff > 0 ? EventMessages.CountJoin : EventMessages.CountLeave;
                     msg2 = msg2.Replace("<count>", abs.ToString());
@@ -100,22 +106,29 @@ namespace mcswbot2.Bot.Objects
                 case PlayerStateEvent pse:
                     // update player history / time etc..
                     var now = DateTime.Now;
-                    // add null data
-                    if (!srv.PlayTime.ContainsKey(pse.Player.Id))
-                        srv.PlayTime[pse.Player.Id] = TimeSpan.Zero;
 
-                    var playSpan = TimeSpan.Zero;
+                    // add seen data
+                    if (!srv.SeenTime.ContainsKey(pse.Player.Id))
+                        srv.SeenTime.Add(pse.Player.Id, now);
+                    else
+                        srv.SeenTime[pse.Player.Id] = now;
+
+                    // "Add" Play time
+                    if (!srv.PlayTime.ContainsKey(pse.Player.Id))
+                        srv.PlayTime.Add(pse.Player.Id, TimeSpan.Zero);
+
+                    var playSpan = DateTime.Now - srv.SeenTime[pse.Player.Id];
                     if (pse.Online)
                     {
-                        srv.NameHistory[pse.Player.Id] = pse.Player.Name;
-                        srv.SeenTime[pse.Player.Id] = now;
+                        // Add current player name
+                        if (!srv.NameHistory.ContainsKey(pse.Player.Id))
+                            srv.NameHistory.Add(pse.Player.Id, pse.Player.Name);
+                        else
+                            srv.NameHistory[pse.Player.Id] = pse.Player.Name;
                     }
-                    else
-                    {
-                        playSpan = now - srv.SeenTime[pse.Player.Id];
-                        srv.SeenTime[pse.Player.Id] = now;
-                        srv.PlayTime[pse.Player.Id] += playSpan;
-                    }
+                    else srv.PlayTime[pse.Player.Id] += playSpan;
+
+                    if (!srv.NotifyNames) return new Tuple<string, bool>(null, false);
                     // build & return message
                     var msg1 = (pse.Online ? EventMessages.NameJoin : EventMessages.NameLeave);
                     msg1 = msg1.Replace("<name>", pse.Player.Name);
@@ -123,25 +136,6 @@ namespace mcswbot2.Bot.Objects
                     return new Tuple<string, bool>(msg1, true);
             }
             return new Tuple<string, bool>("", false);
-        }
-
-        /// <summary>
-        ///     Clean-up ImagingData
-        /// </summary>
-        private void CleanData()
-        {
-            // clear old elements > 3 days
-            ImagingData.FindAll(id => id.Acquired < DateTime.Now.Subtract(ClearSpan)).ForEach(id =>
-            {
-                ImagingData.Remove(id);
-            });
-            // TODO TEST
-            // clear old elements if count > 30
-            ImagingData.OrderBy(id => id.Acquired.Ticks).Where((a, i) => i > 30).ToList().ForEach(id =>
-            {
-                 ImagingData.Remove(id);
-            });
-            GC.Collect();
         }
 
         /// <summary>
@@ -163,7 +157,42 @@ namespace mcswbot2.Bot.Objects
         internal void AddServer(string l, string adr, int p)
         {
             var news = TgBot.Factory.Make(adr, p, false, l);
-            Servers.Add(new ServerStatusWrapped(news));
+            news.ChangedEvent += StatusChanged;
+            var wrap = new ServerStatusWrapped(news);
+            Servers.Add(wrap);
+        }
+
+        /// <summary>
+        ///     RE-Adding a Server from loaded Json
+        /// </summary>
+        /// <param name="ssw"></param>
+        internal void LoadedServer(ServerStatusWrapped loaded)
+        {
+            var news = TgBot.Factory.Make(loaded.Address, loaded.Port, false, loaded.Label);
+            news.ChangedEvent += StatusChanged;
+            loaded.Wrapped = news;
+        }
+
+        /// <summary>
+        ///     Event on Server status change
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void StatusChanged(object? sender, EventBase[] e)
+        {
+            // get the sending status
+            var status = (ServerStatus) sender;
+            // get wrapped object
+            var wrap = GetServer(status.Label);
+            // add current status to history
+            wrap.History.Add(new ServerInfoWrapped(status.Last, 0));
+
+            // do the updating
+            if(e.Length > 0) Update(status, e);
+            UpdateLivePlayer();
+            
+            // free resources
+            CleanData();
         }
 
         /// <summary>
@@ -188,18 +217,14 @@ namespace mcswbot2.Bot.Objects
         /// <param name="pm"></param>
         /// <param name="replyMsg"></param>
         /// <param name="sticker"></param>
-        internal Message SendMsg(string text = null, SKImage bitmap = null, ParseMode pm = ParseMode.Default, int replyMsg = 0, bool sticker = false)
+        internal Message SendMsg(string text = null, SKImage bitmap = null, ParseMode pm = ParseMode.Default, int replyMsg = 0, bool sticker = false, int editMsg = 0)
         {
-            if (bitmap != null)
-            {
-                var ms = bitmap.Encode(sticker ? SKEncodedImageFormat.Webp : SKEncodedImageFormat.Png, 100).AsStream();
-                ms.Position = 0;
-                return SendMsgStream(text, ms, pm, replyMsg, sticker);
-            }
-            else
-            {
-                return SendMsgStream(text, null, pm, replyMsg, sticker);
-            }
+            if (bitmap == null) return SendMsgStream(text, null, pm, replyMsg, sticker);
+
+            var ms = bitmap.Encode(sticker ? SKEncodedImageFormat.Webp : SKEncodedImageFormat.Png, 100).AsStream();
+            ms.Position = 0;
+            return SendMsgStream(text, ms, pm, replyMsg, sticker, editMsg);
+
         }
 
         /// <summary>
@@ -210,34 +235,69 @@ namespace mcswbot2.Bot.Objects
         /// <param name="pm"></param>
         /// <param name="replyMsg"></param>
         /// <param name="sticker"></param>
-        private Message SendMsgStream(string text = null, Stream imgStream = null, ParseMode pm = ParseMode.Default, int replyMsg = 0, bool sticker = false)
+        private Message SendMsgStream(string text = null, Stream imgStream = null, ParseMode pm = ParseMode.Default, int replyMsg = 0, bool sticker = false, int editMsg = 0)
         {
             Message lMsg = null;
             try
             {
                 if (imgStream != null)
                 {
-                    var iof = new Telegram.Bot.Types.InputFiles.InputOnlineFile(imgStream);
-                    // send sticker
+
+                    // send sticker (cant be updated!)
                     if (sticker)
                     {
+                        var iof = new InputOnlineFile(imgStream);
+
+                        if (editMsg != 0) Logger.WriteLine("Stickers cant be updated!");
+
                         lMsg = TgBot.Client.SendStickerAsync(Base.Id, iof, false, replyMsg).Result;
                         // send text in response immediately afterwards ?
                         if (text != null)
                         {
                             replyMsg = lMsg.MessageId;
-                            lMsg = TgBot.Client.SendTextMessageAsync(Base.Id, text, pm, true, false, replyMsg).Result;
+                            lMsg = TgBot.Client.SendTextMessageAsync(Base.Id,
+                                text,
+                                pm,
+                                true,
+                                false,
+                                replyMsg).Result;
                         }
                     }
                     // send normal image
                     else
                     {
-                        lMsg = TgBot.Client.SendPhotoAsync(Base.Id, iof, text, pm, false, replyMsg).Result;
+                        // Update existing image
+                        lMsg = editMsg != 0 ? TgBot.Client.EditMessageMediaAsync(new ChatId(Base.Id),
+                                editMsg,
+                                new InputMediaPhoto(new InputMedia(imgStream, "updated.png")) { Caption = text, ParseMode = pm }).Result :
+                            // Send new Image
+                            TgBot.Client.SendPhotoAsync(Base.Id, 
+                                new InputOnlineFile(imgStream),
+                                text,
+                                pm, 
+                                false,
+                                replyMsg).Result;
                     }
+                    
                     imgStream.Dispose();
                 }
                 // send normal text
-                else if (text != null) lMsg = TgBot.Client.SendTextMessageAsync(Base.Id, text, pm, true, false, replyMsg).Result;
+                else if (text != null)
+                {
+                        // Update existing message
+                    lMsg = editMsg != 0 ? TgBot.Client.EditMessageTextAsync(new ChatId(Base.Id),
+                            editMsg,
+                            text,
+                            pm,
+                            true).Result :
+                        // Send New
+                        TgBot.Client.SendTextMessageAsync(Base.Id,
+                            text,
+                            pm,
+                            true,
+                            false,
+                            replyMsg).Result;
+                }
                 // uhoh?
                 else throw new Exception("Nothing to send!");
             }
@@ -253,6 +313,81 @@ namespace mcswbot2.Bot.Objects
         {
             foreach (var item in Servers)
                 TgBot.Factory.Destroy(item.Wrapped);
+        }
+
+        /// <summary>
+        ///     Automatically update live player message?
+        /// </summary>
+        private void UpdateLivePlayer()
+        {
+            if (LivePlayerMsgId == 0) return;
+            SendPlayerMessage(LivePlayerMsgId);
+        }
+
+        /// <summary>
+        ///     Send or Edit Online Player Message
+        /// </summary>
+        /// <param name="editMessage"></param>
+        /// <returns></returns>
+        internal Message SendPlayerMessage(int editMessage = 0)
+        {
+            var msg = "Player Online:";
+            var plots = new List<SkiaPlotter.PlottableData>();
+            foreach (var item in Servers)
+            {
+                var status = item.Wrapped.Last;
+
+                msg += "\r\n[<code>" + item.Label + "</code>] ";
+                if ((!status?.HadSuccess) ?? true) msg += " Offline";
+                else msg += status.CurrentPlayerCount + " / " + status.MaxPlayerCount;
+
+                if (TgBot.Conf.DrawPlots)
+                {
+                    var ud = SkiaPlotter.GetUserData(item);
+                    if (ud.Length > 4) plots.Add(ud);
+                }
+
+                // add player names or continue
+                if ((status?.OnlinePlayers?.Count ?? 0) <= 0) continue;
+                var n = "";
+                foreach (var plr in status.OnlinePlayers)
+                {
+                    var span = DateTime.Now - item.SeenTime[plr.Id];
+                    n += $"\r\n  + {plr.Name} ({span.TotalHours:0.00} hrs)";
+                }
+                msg += "<code>" + n + "</code>";
+            }
+
+            // Send text only?
+            if (!TgBot.Conf.DrawPlots || plots.Count <= 0)
+                return SendMsg(msg, null, ParseMode.Html, 0, false, editMessage);
+
+            // Send text on image
+            using var bm = SkiaPlotter.PlotData(plots, "Days Ago", "Player Online");
+            return SendMsg(msg, bm, ParseMode.Html, 0, false, editMessage);
+        }
+
+
+        /// <summary>
+        ///     Clean-up Imaging & History Data
+        /// </summary>
+        private void CleanData()
+        {
+            // clear old elements > 3 days
+            ImagingData.FindAll(id => id.Acquired < DateTime.Now - TimeSpan.FromHours(TgBot.Conf.HistoryHours)).ForEach(id =>
+            {
+                ImagingData.Remove(id);
+            });
+            
+            // clear old elements if count > 30
+            ImagingData.OrderBy(id => id.Acquired.Ticks).Where((a, i) => i > 30).ToList().ForEach(id =>
+            {
+                ImagingData.Remove(id);
+            });
+            
+            Servers.ForEach(s => s.CleanData());
+
+            GC.Collect();
         }
     }
 }

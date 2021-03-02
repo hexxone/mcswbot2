@@ -1,7 +1,9 @@
-﻿using Telegram.Bot.Types;
+﻿using System;
+using Telegram.Bot.Types;
 
 namespace mcswbot2.Bot.Objects
 {
+    [Serializable]
     public class TgUser
     {
         /// <summary>
@@ -14,10 +16,6 @@ namespace mcswbot2.Bot.Objects
         }
 
         public User Base { get; set; }
-
-        public override string ToString()
-        {
-            return $"[TGUser: {Base.Id}, name: {Base.FirstName} {Base.LastName}, username: {Base.Username}]";
-        }
+        
     }
 }

@@ -36,7 +36,7 @@ namespace mcswbot2.Bot
         /// <returns></returns>
         internal static void VerifyAddress(string addr, int port)
         {
-            // dont 
+            // length check
             if (addr.Length > 256) throw new Exception("The address length should not exceed 256 characters!");
             // port check
             if (port < 80 || port > 65534) throw new Exception("Invalid Port! Choose one above 79 and below 65535.");
@@ -47,14 +47,14 @@ namespace mcswbot2.Bot
             else
             {
                 // some hostname checks
-                if (Dns.GetHostName().ToLower() == addr.ToLower() ||
+                if (string.Equals(Dns.GetHostName(), addr, StringComparison.CurrentCultureIgnoreCase) ||
                     Uri.CheckHostName(addr) == UriHostNameType.Unknown ||
                     !addr.Contains('.'))
                     throw new Exception("Invalid hostname!");
                 // resolve
                 var host = Dns.GetHostEntry(addr);
                 if (host == null || host.AddressList == null || host.AddressList.Length == 0) throw new Exception("No hostname address entries!");
-                // try toget ipv4 entry
+                // try to get ipv4 entry
                 try
                 {
                     resolved = host.AddressList.First(h => h.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork).ToString();

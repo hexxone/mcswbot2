@@ -35,13 +35,13 @@ namespace mcswbot2.Bot.Commands
                         switch (args[2].ToLower())
                         {
                             case "state":
-                                srv2.Wrapped.NotifyServer = argl;
+                                srv2.NotifyServer = argl;
                                 break;
                             case "count":
-                                srv2.Wrapped.NotifyCount = argl;
+                                srv2.NotifyCount = argl;
                                 break;
                             case "name":
-                                srv2.Wrapped.NotifyNames = argl;
+                                srv2.NotifyNames = argl;
                                 break;
                             case "sticker":
                                 srv2.Sticker = argl;
@@ -59,11 +59,10 @@ namespace mcswbot2.Bot.Commands
 
         private static string GetSrvNotifications(ServerStatusWrapped wra)
         {
-            var srv = wra.Wrapped;
-            var msg = "[<code>" + srv.Label + "</code>] Notifications:";
-            msg += "\r\nState change:<code> " + srv.NotifyServer + "</code>";
-            msg += "\r\nCount change:<code> " + srv.NotifyCount + "</code>";
-            msg += "\r\nPlayer change:<code> " + srv.NotifyNames + "</code>";
+            var msg = "[<code>" + wra.Wrapped.Label + "</code>] Notifications:";
+            msg += "\r\nState change:<code> " + wra.NotifyServer + "</code>";
+            msg += "\r\nCount change:<code> " + wra.NotifyCount + "</code>";
+            msg += "\r\nPlayer change:<code> " + wra.NotifyNames + "</code>";
             msg += "\r\nSend Sticker:<code> " + wra.Sticker + "</code>";
             return msg;
         }

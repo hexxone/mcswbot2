@@ -2,7 +2,8 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
-using mcswlib.ServerStatus;
+using System.Text.Json.Serialization;
+using mcswbot2.Bot.Objects;
 using SkiaSharp;
 
 namespace mcswbot2.Bot
@@ -21,10 +22,10 @@ namespace mcswbot2.Bot
 
             public double[] X => DataX.ToArray();
             public double[] Y => DataY.ToArray();
-            public double XMin { get; private set; }
-            public double XMax { get; private set; }
-            public double YMin { get; private set; }
-            public double YMax { get; private set; }
+            public double XMin { get; set; }
+            public double XMax { get; set; }
+            public double YMin { get; set; }
+            public double YMax { get; set; }
 
 
             /// <summary>
@@ -70,14 +71,21 @@ namespace mcswbot2.Bot
         ///     returns all the time-plottable online player count data
         /// </summary>
         /// <returns></returns>
-        internal static PlottableData GetUserData(ServerStatus status)
+        internal static PlottableData GetUserData(ServerStatusWrapped status)
         {
             var dt = DateTime.Now;
             var res = new PlottableData(status.Label);
-            foreach (var sib in status.Parent.History)
-            {
-                res.Add((sib.RequestDate.AddMilliseconds(sib.RequestTime) - dt).TotalMinutes, sib.CurrentPlayerCount);
-            }
+
+            // Add all data points
+            foreach (var sib in status.History.Select(siw => siw.Wrapped).OrderByDescending(sib => sib.RequestDate))
+                res.Add((sib.RequestDate - dt).TotalDays, sib.CurrentPlayerCount);
+
+            // If Status given, Scale by Max Players
+            if(status.Wrapped.Last != null && status.Wrapped.Last.HadSuccess)
+                res.YMax = status.Wrapped.Last.MaxPlayerCount;
+
+            res.XMin = Math.Min(-0.1, res.XMin);
+            res.YMin = -5; // fix for better visibility
             return res;
         }
 
@@ -85,29 +93,33 @@ namespace mcswbot2.Bot
         ///     returns all the time-plottable ping data
         /// </summary>
         /// <returns></returns>
-        internal static PlottableData GetPingData(ServerStatus @base)
+        internal static PlottableData GetPingData(ServerStatusWrapped status)
         {
             var dt = DateTime.Now;
-            var res = new PlottableData(@base.Label);
-            foreach (var sib in @base.Parent.History)
-            {
-                res.Add((sib.RequestDate.AddMilliseconds(sib.RequestTime) - dt).TotalMinutes, sib.RequestTime);
-            }
+            var res = new PlottableData(status.Label);
+
+            // Add all data points
+            foreach (var sib in status.History.Select(siw => siw.Wrapped).OrderByDescending(sib => sib.RequestDate))
+                res.Add((sib.RequestDate - dt).TotalDays, sib.RequestTime);
+
+            res.XMin = Math.Min(-0.1, res.XMin);
+            res.YMin = 0; // fix for better visibility
             return res;
         }
 
 
         /// <summary>
-        ///     Will Plot and save Data to a file
+        ///     Will Plot and save Data to a SKImage
         /// </summary>
         /// <param name="dat"></param>
-        internal static SKImage PlotData(IEnumerable<PlottableData> dat, string xLbl, string yLbl, int pxWidth = 720, int pxHeight = 480)
+        internal static SKImage PlotData(IEnumerable<PlottableData> dat, string xLbl, string yLbl, int pxWidth = 690, int pxHeight = 420, bool interpolate = false)
         {
             var plt = new ScottPlot.Plot(pxWidth, pxHeight);
 
-            var allXMin = dat.OrderBy(d => d.XMin).Last().XMin;
-            var allYMax = dat.OrderBy(d => d.XMax).First().YMax;
-            plt.Axis(allXMin * 1.1, 0, 0, allYMax * 1.2);
+            var allXMin = dat.Min(s => s.XMin);
+            var allYMin = dat.Min(s => s.YMin);
+            var allYMax = dat.Max(s => s.YMax);
+            plt.Axis(allXMin * 1.1, 0, allYMin, allYMax * 1.2);
 
             plt.Style(ScottPlot.Style.Black);
             plt.Ticks(useMultiplierNotation: false);
@@ -120,11 +132,14 @@ namespace mcswbot2.Bot
             {
                 if (da.Length <= 4) continue;
                 var col = ColorByIndx(colorCnt++);
+
                 // original points
-                plt.PlotScatter(xs: da.X, ys: da.Y, lineWidth: 0, markerSize: 5d, label: da.Label, color:col);
+                plt.PlotScatter(da.X, da.Y, lineWidth: interpolate ? 0 : 1, markerSize: 5d, label: da.Label, color:col);
+
                 // interpolated lines
-                var nsi = new ScottPlot.Statistics.Interpolation.NaturalSpline(da.X, da.Y, resolution: 15);
-                plt.PlotScatter(xs: nsi.interpolatedXs, ys: nsi.interpolatedYs, lineWidth: 1d, markerSize: 0d, label: null, color: col);
+                if (!interpolate) continue;
+                var nsi = new ScottPlot.Statistics.Interpolation.NaturalSpline(da.X, da.Y, 30);
+                plt.PlotScatter(nsi.interpolatedXs, nsi.interpolatedYs, lineWidth: 1d, markerSize: 0d, label: null, color: col);
             }
 
             using var bm = plt.GetBitmap();
@@ -135,7 +150,7 @@ namespace mcswbot2.Bot
 
         // TODO
         /// <summary>
-        ///     Will Plot and save Data to a file
+        ///     Will Plot and save Data to a SKImage
         /// </summary>
         /// <param name="dat"></param>
         private static SKImage PlotData2(IEnumerable<PlottableData> dat, string xLbl, string yLbl, int pxWidth = 720, int pxHeight = 480)
