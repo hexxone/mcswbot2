@@ -14,14 +14,14 @@ using ZufallSatz;
 
 namespace mcswbot2
 {
-    class MCSWBot
+    internal class MCSWBot
     {
         private static readonly List<ICommand> Commands = new();
         internal static readonly List<TgUser> TgUsers = new();
         internal static readonly List<TgGroup> TgGroups = new();
 
         internal static Config Conf { get; set; }
-        
+
         internal static TelegramBotClient Client { get; private set; }
         internal static User TgBotUser { get; private set; }
 
@@ -56,22 +56,21 @@ namespace mcswbot2
 
             ServerStatusWatcher.Retries = Conf.Retries;
             ServerStatusWatcher.RetryMs = Conf.RetryMs;
-            
+
 
             var enumValues = Enum.GetValues(typeof(Types.LogLevel)).Cast<int>().ToList();
-            if (enumValues.Contains(Conf.LogLevel)) Logger.LogLevel = (Types.LogLevel)Conf.LogLevel;
+            if (enumValues.Contains(Conf.LogLevel)) Logger.LogLevel = (Types.LogLevel) Conf.LogLevel;
             else Logger.WriteLine("Invalid LogLevel: " + Conf.LogLevel, Types.LogLevel.Error);
-            
+
             // Start the telegram bot
 
             _ = RunBotAsync();
 
             // Minecraft Update Lööp
             while (true)
-            {
                 try
                 {
-                    ServerStatus.UpdateAll(30000);
+                    ServerStatus.UpdateAll();
 
                     Program.WriteLine("Sleeping...");
                     Task.Delay(Conf.SleepTime).Wait();
@@ -83,12 +82,11 @@ namespace mcswbot2
                 {
                     Logger.WriteLine("MAIN LOOP EXCEPTION: " + e, Types.LogLevel.Error);
                 }
-            }
 
             Console.WriteLine("Reached end of pr0gram! Auto updating stopped for some reason ???");
             Console.ReadLine();
         }
-        
+
         /// <summary>
         ///     Start receiving message updates on the Telegram Bot
         /// </summary>
@@ -103,7 +101,7 @@ namespace mcswbot2
             // start taking requests
             Client.StartReceiving();
         }
-        
+
         /// <summary>
         ///     Event Callback for Telegram Bot
         /// </summary>
@@ -155,7 +153,7 @@ namespace mcswbot2
 
             // build text/command arguments
             var text = msg.Text;
-            var args = new[] { text };
+            var args = new[] {text};
             if (text.Contains(" "))
                 args = text.Split(' ');
 
@@ -196,6 +194,7 @@ namespace mcswbot2
                     usr.Base = u;
                     return usr;
                 }
+
             var newU = new TgUser(u);
             TgUsers.Add(newU);
             return newU;
@@ -223,6 +222,5 @@ namespace mcswbot2
         }
 
         #endregion
-
     }
 }

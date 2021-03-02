@@ -8,11 +8,14 @@ namespace mcswbot2.Commands
 {
     internal class CmdPlayer : ICommand
     {
-        internal override string Command() => "player";
+        internal override string Command()
+        {
+            return "player";
+        }
 
         internal override void Call(Message m, TgGroup g, TgUser u, string[] args, bool dev)
         {
-            if(g.Servers.Count < 1)
+            if (g.Servers.Count < 1)
             {
                 g.SendMsg("Please /add a server first.");
                 return;
@@ -37,7 +40,8 @@ namespace mcswbot2.Commands
                 foreach (var s in g.Servers)
                 {
                     // check known partial name
-                    var player= s.Watcher.AllPlayers.FirstOrDefault(x => x.Name.ToLower().Contains(name) || x.Id.ToLower().Contains(name));
+                    var player = s.Watcher.AllPlayers.FirstOrDefault(x =>
+                        x.Name.ToLower().Contains(name) || x.Id.ToLower().Contains(name));
                     if (player == null) continue;
                     found = true;
                     // common info
@@ -51,7 +55,6 @@ namespace mcswbot2.Commands
                     msg += $" since {seenSpan.TotalHours:0.00}h</code>";
                     // playtime
                     msg += $"\r\n  Playtime: <code>{(seenSpan + player.PlayTime).TotalDays:0.00} days</code>";
-
                 }
 
                 if (!found) msg = "Nothing found.";

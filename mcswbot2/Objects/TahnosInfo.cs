@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Net;
+using BooruSharp.Booru;
 using BooruSharp.Search.Post;
 using Newtonsoft.Json;
 using SkiaSharp;
@@ -9,12 +11,11 @@ namespace mcswbot2.Objects
     {
         public DateTime Acquired;
 
-        public SearchResult SResult;
-
-        [JsonIgnore]
-        public SKImage Bmap;
+        [JsonIgnore] public SKImage Bmap;
 
         public int RelatedMsgID;
+
+        public SearchResult SResult;
 
 
         private TahnosInfo(SearchResult result, SKImage img)
@@ -31,15 +32,15 @@ namespace mcswbot2.Objects
             SResult = sresult;
             RelatedMsgID = relatedMsgId;
         }
-        
+
         internal static TahnosInfo Get(int recurseTry = 0, int recurseTries = 5)
         {
             try
             {
-                var booru = new BooruSharp.Booru.Gelbooru();
-                var result = booru.GetRandomPostAsync(new[] { "mature" }).Result;
+                var booru = new Gelbooru();
+                var result = booru.GetRandomPostAsync("mature").Result;
                 if (result.FileUrl == null) throw new ArgumentNullException(nameof(result.FileUrl), "No url given!");
-                var request = System.Net.WebRequest.Create(result.FileUrl);
+                var request = WebRequest.Create(result.FileUrl);
                 var response = request.GetResponse();
                 var responseStream = response.GetResponseStream();
                 return new TahnosInfo(result, SKImage.FromEncodedData(responseStream));
@@ -50,6 +51,7 @@ namespace mcswbot2.Objects
                 if (recurseTry < recurseTries)
                     return Get(recurseTry + 1);
             }
+
             return null;
         }
     }

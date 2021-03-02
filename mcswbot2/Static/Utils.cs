@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Net;
+using System.Net.Sockets;
 using System.Text.RegularExpressions;
 
 namespace mcswbot2.Static
@@ -43,7 +44,10 @@ namespace mcswbot2.Static
             // check if ip address was entered
             var ipRegex = @"(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)){3}";
             var resolved = "";
-            if (Regex.IsMatch(addr, ipRegex)) resolved = addr;
+            if (Regex.IsMatch(addr, ipRegex))
+            {
+                resolved = addr;
+            }
             else
             {
                 // some hostname checks
@@ -53,20 +57,25 @@ namespace mcswbot2.Static
                     throw new Exception("Invalid hostname!");
                 // resolve
                 var host = Dns.GetHostEntry(addr);
-                if (host == null || host.AddressList == null || host.AddressList.Length == 0) throw new Exception("No hostname address entries!");
+                if (host == null || host.AddressList == null || host.AddressList.Length == 0)
+                    throw new Exception("No hostname address entries!");
                 // try to get ipv4 entry
                 try
                 {
-                    resolved = host.AddressList.First(h => h.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork).ToString();
+                    resolved = host.AddressList.First(h => h.AddressFamily == AddressFamily.InterNetwork).ToString();
                 }
                 catch
                 {
                     try
                     {
-                        resolved = host.AddressList.First(h => h.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6).ToString();
+                        resolved = host.AddressList.First(h => h.AddressFamily == AddressFamily.InterNetworkV6)
+                            .ToString();
                     }
-                    catch { }
+                    catch
+                    {
+                    }
                 }
+
                 if (string.IsNullOrEmpty(resolved)) throw new Exception("No valid hostname resolved.");
             }
 
@@ -77,7 +86,8 @@ namespace mcswbot2.Static
                 192.168.0.0 – 192.168.255.255   192.168.0.0 /16
             */
             // assumes that ipv4 format sanity checking has already been done 
-            var blockStr = @"(192\.168(\.[0-9]{1,3}){2})|(172\.(1[6-9]|2[0-9]|3[0-1])(\.[0-9]{1,3}){2})|([10|27]+(\.[0-9]{1,3}){3})";
+            var blockStr =
+                @"(192\.168(\.[0-9]{1,3}){2})|(172\.(1[6-9]|2[0-9]|3[0-1])(\.[0-9]{1,3}){2})|([10|27]+(\.[0-9]{1,3}){3})";
             // private check
             if (Regex.IsMatch(resolved, blockStr)) throw new Exception("Invalid IP-Address Range!");
             // all ok

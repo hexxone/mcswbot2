@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using mcswbot2.Objects;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -14,37 +15,38 @@ namespace mcswbot2.Static
         {
             try
             {
-                var set = new JsonSerializerSettings()
-                {
-                    //TypeNameHandling = TypeNameHandling.Objects
-                };
+                var set = new JsonSerializerSettings();
 
                 // load config
-                if (System.IO.File.Exists("config.json"))
+                if (File.Exists("config.json"))
                 {
-                    var json = System.IO.File.ReadAllText("config.json");
+                    var json = File.ReadAllText("config.json");
                     MCSWBot.Conf = JsonConvert.DeserializeObject<Config>(json, set);
                 }
                 else
                 {
                     Save();
-                    Program.WriteLine("\r\n\r\n\tWARNING: CONFIG JUST GOT CREATED. PLEASE MODIFY IT BEFORE STARTING AGAIN.\r\n");
+                    Program.WriteLine(
+                        "\r\n\r\n\tWARNING: CONFIG JUST GOT CREATED. PLEASE MODIFY IT BEFORE STARTING AGAIN.\r\n");
                     Environment.Exit(0);
                 }
 
                 // load users objects if file exists
-                if (System.IO.File.Exists("users.json"))
+                if (File.Exists("users.json"))
                 {
-                    var json = System.IO.File.ReadAllText("users.json");
-                    MCSWBot.TgUsers.AddRange(JsonConvert.DeserializeObject<TgUser[]>(json, set) ?? Array.Empty<TgUser>());
+                    var json = File.ReadAllText("users.json");
+                    MCSWBot.TgUsers.AddRange(
+                        JsonConvert.DeserializeObject<TgUser[]>(json, set) ?? Array.Empty<TgUser>());
                 }
 
                 // load group objects if file exists
-                if (System.IO.File.Exists("groups.json"))
+                if (File.Exists("groups.json"))
                 {
-                    var json = System.IO.File.ReadAllText("groups.json");
-                    MCSWBot.TgGroups.AddRange(JsonConvert.DeserializeObject<TgGroup[]>(json, set) ?? Array.Empty<TgGroup>());
+                    var json = File.ReadAllText("groups.json");
+                    MCSWBot.TgGroups.AddRange(JsonConvert.DeserializeObject<TgGroup[]>(json, set) ??
+                                              Array.Empty<TgGroup>());
                 }
+
                 // done
                 Program.WriteLine($"Loaded data. [{MCSWBot.TgUsers.Count} Users, {MCSWBot.TgGroups.Count} Groups]");
             }
@@ -61,27 +63,26 @@ namespace mcswbot2.Static
         {
             try
             {
-                var set = new JsonSerializerSettings()
-                {
-                    //TypeNameHandling = TypeNameHandling.Objects
-                };
+                var set = new JsonSerializerSettings();
 
                 // write config
                 var str = JsonConvert.SerializeObject(MCSWBot.Conf, Formatting.None, set);
                 str = JToken.Parse(str).ToString(Formatting.Indented);
-                System.IO.File.WriteAllText("config.json", str);
+                File.WriteAllText("config.json", str);
                 // write user if any
                 if (MCSWBot.TgUsers.Count > 0)
                 {
                     str = JsonConvert.SerializeObject(MCSWBot.TgUsers, Formatting.None, set);
-                    System.IO.File.WriteAllText("users.json", str);
+                    File.WriteAllText("users.json", str);
                 }
+
                 // write groups if any
                 if (MCSWBot.TgGroups.Count > 0)
                 {
                     str = JsonConvert.SerializeObject(MCSWBot.TgGroups, Formatting.None, set);
-                    System.IO.File.WriteAllText("groups.json", str);
+                    File.WriteAllText("groups.json", str);
                 }
+
                 // done
                 Program.WriteLine($"Saved data. [{MCSWBot.TgUsers.Count} Users, {MCSWBot.TgGroups.Count} Groups]");
             }

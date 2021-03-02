@@ -20,7 +20,7 @@ namespace mcswbot2.Event
         public string Id { get; set; }
 
 
-        public  bool Online { get; set; }
+        public bool Online { get; set; }
 
         public DateTime LastSeen { get; set; }
 
