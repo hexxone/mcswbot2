@@ -54,24 +54,24 @@ namespace mcswbot2
 
             // Apply static Config vars
 
-            ServerStatusUpdater.Retries = Conf.Retries;
-            ServerStatusUpdater.RetryMs = Conf.RetryMs;
+            ServerStatusWatcher.Retries = Conf.Retries;
+            ServerStatusWatcher.RetryMs = Conf.RetryMs;
             
 
             var enumValues = Enum.GetValues(typeof(Types.LogLevel)).Cast<int>().ToList();
             if (enumValues.Contains(Conf.LogLevel)) Logger.LogLevel = (Types.LogLevel)Conf.LogLevel;
             else Logger.WriteLine("Invalid LogLevel: " + Conf.LogLevel, Types.LogLevel.Error);
-
             
             // Start the telegram bot
 
             _ = RunBotAsync();
 
-            // main save loop
+            // Minecraft Update Lööp
             while (true)
             {
                 try
                 {
+                    ServerStatus.UpdateAll(30000);
 
                     Program.WriteLine("Sleeping...");
                     Task.Delay(Conf.SleepTime).Wait();
@@ -212,7 +212,7 @@ namespace mcswbot2
             foreach (var cc in TgGroups)
                 if (cc.Base.Id == c.Id)
                     return cc;
-            var newC = new TgGroup() { Base = c };
+            var newC = new TgGroup(c);
             TgGroups.Add(newC);
             return newC;
         }

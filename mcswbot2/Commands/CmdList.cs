@@ -21,7 +21,7 @@ namespace mcswbot2.Commands
                 msg += "\r\n=== == = = = = = = == ===";
                 msg += "\r\n[<code>" + s.Label + "</code>] <b>" + s.Address + ":" + s.Port + "</b>";
 
-                var status = s.Wrapped.Last;
+                var status = s.Last;
                 if (status != null && status.HadSuccess)
                 {
                     msg += "\r\n  Status:<code> Online</code> 🌐";

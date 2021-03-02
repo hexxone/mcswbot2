@@ -37,21 +37,20 @@ namespace mcswbot2.Commands
                 foreach (var s in g.Servers)
                 {
                     // check known partial name
-                    var (id, fullname) = s.NameHistory.FirstOrDefault(x => x.Value.ToLower().Contains(name) || x.Key.ToLower().Contains(name));
-                    if (id == null || fullname == null) continue;
+                    var player= s.Watcher.AllPlayers.FirstOrDefault(x => x.Name.ToLower().Contains(name) || x.Id.ToLower().Contains(name));
+                    if (player == null) continue;
                     found = true;
                     // common info
                     msg += "\r\n--------------------";
                     msg += $"\r\n[<code>{s.Label}</code>]";
-                    msg += $"\r\n  Player: <code>{fullname}</code>";
+                    msg += $"\r\n  Player: <code>{player.Name}</code>";
                     // status & seen time
-                    var online = s.Wrapped.Last != null && (s.Wrapped.Last.OnlinePlayers.FindAll(s => s.Id == id).Count > 0);
-                    var seenSpan = DateTime.Now - s.SeenTime[id];
+                    var seenSpan = DateTime.Now - player.LastSeen;
                     msg += "\r\n  Status: <code>";
-                    msg += online ? "Online" : "Offline";
+                    msg += player.Online ? "Online" : "Offline";
                     msg += $" since {seenSpan.TotalHours:0.00}h</code>";
                     // playtime
-                    msg += $"\r\n  Playtime: <code>{(seenSpan + s.PlayTime[id]).TotalDays:0.00} days</code>";
+                    msg += $"\r\n  Playtime: <code>{(seenSpan + player.PlayTime).TotalDays:0.00} days</code>";
 
                 }
 

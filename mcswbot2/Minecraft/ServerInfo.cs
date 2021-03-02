@@ -8,7 +8,6 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using mcswbot2.Event;
-using mcswbot2.Objects;
 using mcswbot2.Static;
 using Newtonsoft.Json;
 using SkiaSharp;
@@ -38,13 +37,13 @@ namespace mcswbot2.Minecraft
         /// </summary>
         /// <param name="ct"></param>
         /// <returns></returns>
-        public async Task<ServerInfoExtended> GetAsync(CancellationToken ct, DateTime dt)
+        public async Task<ServerInfoExtended> GetAsync(CancellationToken ct, DateTime dt, List<PlayerPayLoad> players)
         {
             try
             {
                 using var client = new TcpClient();
                 await using var stream = ConnectWrap(ct, client);
-                return Get(ct, dt, client, stream);
+                return Get(ct, dt, client, stream, players);
             }
             catch (Exception e)
             {
@@ -80,7 +79,7 @@ namespace mcswbot2.Minecraft
         private const string Header = "data:image/png;base64,";
 
 
-        private ServerInfoExtended Get(CancellationToken ct, DateTime dt, TcpClient client, NetworkStream stream)
+        private ServerInfoExtended Get(CancellationToken ct, DateTime dt, TcpClient client, NetworkStream stream, List<PlayerPayLoad> players)
         {
             var offset = 0;
             var writeBuffer = new List<byte>();
@@ -102,7 +101,7 @@ namespace mcswbot2.Minecraft
 
             // IF an IOException arises here, this server is probably not a MineCraft-one
             // TODO test if "+ 3" is always the case because of fixed ints?
-            var allLength = ReadVarInt(ref offset, readBuffer) + 3;
+            var allLength = ReadVarInt(ref offset, readBuffer);
 
             // Read the rest of the announced data
             while (readLen < allLength)
@@ -162,7 +161,7 @@ namespace mcswbot2.Minecraft
                 (int)ping.players.online,
                 (string)ping.version.name,
                 GetImage(ping.favicon),
-                GetSample(ping.players));
+                GetSample(ping.players, players));
         }
 
 
@@ -242,7 +241,7 @@ namespace mcswbot2.Minecraft
         /// </summary>
         /// <param name="players"></param>
         /// <returns></returns>
-        private static List<PlayerPayLoad> GetSample(dynamic players)
+        private static List<PlayerPayLoad> GetSample(dynamic players, List<PlayerPayLoad> source)
         {
             var sample = new List<PlayerPayLoad>();
             try
@@ -251,7 +250,13 @@ namespace mcswbot2.Minecraft
                     foreach (var key in players.sample)
                     {
                         if (key.id == null || key.name == null) continue;
-                        sample.Add(new PlayerPayLoad() { Id = key.id, RawName = key.name });
+                        // searrch for existing player sample by id
+                        var exists = source.Find(s => s.Id == key.id);
+                        // Add new global playerPayload
+                        if (exists == null) source.Add(exists = new PlayerPayLoad() {Id = key.id, RawName = key.name});
+                        else exists.Online = true;
+                        // add it to sample
+                        sample.Add(exists);
                     }
             }
             catch (Exception e)
@@ -315,7 +320,7 @@ namespace mcswbot2.Minecraft
             while ((value & 128) != 0)
             {
                 buffer.Add((byte)(value & 127 | 128));
-                value = (int)((uint)value) >> 7;
+                value = (int)(uint)value >> 7;
             }
             buffer.Add((byte)value);
         }
