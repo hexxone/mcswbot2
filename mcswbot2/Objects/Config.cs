@@ -34,7 +34,7 @@ namespace mcswbot2.Objects
         ///     Draw & send visual time graphs?
         ///     (For Execute & Player Command)
         /// </summary>
-        public bool DrawPlots = true;
+        //public bool DrawPlots = true;
         
         /// <summary>
         ///     Use debug Logging?

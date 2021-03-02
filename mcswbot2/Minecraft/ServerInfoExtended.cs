@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using mcswbot2.Event;
-using mcswbot2.Objects;
 using mcswbot2.Static;
 using Newtonsoft.Json;
 using SkiaSharp;
@@ -43,14 +42,17 @@ namespace mcswbot2.Minecraft
         /// <param name="ex">the Last occured Exception when determining Server status</param>
         internal ServerInfoExtended(DateTime dt, Exception ex)
         {
+            HadSuccess = false;
             RequestDate = dt;
             LastError = ex;
 
-            HadSuccess = false;
+            RawMotd = "";
             RequestTime = 1;
             MaxPlayerCount = 0;
             CurrentPlayerCount = 0;
             MinecraftVersion = "0.0.0";
+            FavIcon = null;
+            OnlinePlayers = new List<PlayerPayLoad>();
         }
         
         /// <summary>

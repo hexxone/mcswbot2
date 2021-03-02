@@ -70,21 +70,17 @@ namespace mcswbot2.Static
         ///     returns all the time-plottable online player count data
         /// </summary>
         /// <returns></returns>
-        internal static PlottableData GetUserData(ServerStatusWrapped status)
+        internal static PlottableData GetUserData(ServerStatus status)
         {
             var dt = DateTime.Now;
             var res = new PlottableData(status.Label);
 
             // Add all data points
-            foreach (var sib in status.History.Select(siw => siw).OrderByDescending(sib => sib.RequestDate))
+            foreach (var sib in status.Watcher.InfoHistory.Select(siw => siw).OrderByDescending(sib => sib.RequestDate))
                 res.Add((sib.RequestDate - dt).TotalDays, sib.CurrentPlayerCount);
-
-            // If Status given, Scale by Max Players
-            if(status.Wrapped.Last != null && status.Wrapped.Last.HadSuccess)
-                res.YMax = status.Wrapped.Last.MaxPlayerCount;
-
+            
             res.XMin = Math.Min(-0.1, res.XMin);
-            res.YMin = -5; // fix for better visibility
+            res.YMin = -1; // fix for better visibility
             return res;
         }
 
@@ -92,13 +88,13 @@ namespace mcswbot2.Static
         ///     returns all the time-plottable ping data
         /// </summary>
         /// <returns></returns>
-        internal static PlottableData GetPingData(ServerStatusWrapped status)
+        internal static PlottableData GetPingData(ServerStatus status)
         {
             var dt = DateTime.Now;
             var res = new PlottableData(status.Label);
 
             // Add all data points
-            foreach (var sib in status.History.Select(siw => siw).OrderByDescending(sib => sib.RequestDate))
+            foreach (var sib in status.Watcher.InfoHistory.Select(siw => siw).OrderByDescending(sib => sib.RequestDate))
                 res.Add((sib.RequestDate - dt).TotalDays, sib.RequestTime);
 
             res.XMin = Math.Min(-0.1, res.XMin);

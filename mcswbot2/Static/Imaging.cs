@@ -87,14 +87,14 @@ namespace mcswbot2.Static
             // adaptive downscaling
             if (textBounds.Width > pos.Width)
             {
-                scale *= (pos.Width / textBounds.Width);
+                scale *= pos.Width / textBounds.Width;
                 fSize *= scale;
             }
 
 
             // text position
-            var xPos = (pos.Width / 2) - textBounds.MidX * scale;
-            var yPos = pos.Top + (pos.Height / 2) - textBounds.MidY;
+            var xPos = pos.Width / 2 - textBounds.MidX * scale;
+            var yPos = pos.Top + pos.Height / 2 - textBounds.MidY;
 
             // font stuffs
             var ff = Fonts.GetCustomFont();
@@ -171,7 +171,7 @@ namespace mcswbot2.Static
 
             // draw blurred image
             var dn = DateTime.Now;
-            var blurVal = (dn.DayOfWeek != DayOfWeek.Saturday && dn.DayOfWeek != DayOfWeek.Sunday && dn.Hour > 6 && dn.Hour < 18) ? 28 : 7;
+            var blurVal = dn.DayOfWeek != DayOfWeek.Saturday && dn.DayOfWeek != DayOfWeek.Sunday && dn.Hour > 6 && dn.Hour < 18 ? 28 : 7;
             using (var blurPain = new SKPaint())
             {
                 blurPain.ImageFilter = SKImageFilter.CreateBlur(blurVal, blurVal);
