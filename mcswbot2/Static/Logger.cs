@@ -1,7 +1,7 @@
 ﻿using System;
-using static mcswbot2.Objects.Types;
+using static mcswbot2.Static.Types;
 
-namespace mcswbot2.Objects
+namespace mcswbot2.Static
 {
     public static class Logger
     {

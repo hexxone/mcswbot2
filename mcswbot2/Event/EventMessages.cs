@@ -1,5 +1,5 @@
 ﻿
-namespace mcswbot2.Telegram
+namespace mcswbot2.Event
 {
     /// <summary>
     ///     Public class representing Event messages.

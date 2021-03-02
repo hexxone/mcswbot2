@@ -1,16 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using mcswbot2.ServerInfo;
 using Newtonsoft.Json;
 
-namespace mcswbot2.ServerStatus
+namespace mcswbot2.Minecraft
 {
     [Serializable]
     public class ServerStatusWrapped
     {
         [JsonIgnore]
-        public mcswbot2.ServerStatus.ServerStatus Wrapped { get; set; }
+        public ServerStatus Wrapped { get; set; }
 
         // Settings
 
@@ -39,10 +38,10 @@ namespace mcswbot2.ServerStatus
         public Dictionary<string, DateTime> SeenTime { get; set; }
 
         // List of past received Server Infos
-        public List<ServerInfoWrapped> History { get; set; }
+        public List<ServerInfoBasic> History { get; set; }
 
 
-        internal ServerStatusWrapped(mcswbot2.ServerStatus.ServerStatus wrap)
+        internal ServerStatusWrapped(ServerStatus wrap)
         {
             Wrapped = wrap;
             Label = wrap.Label;
@@ -57,12 +56,12 @@ namespace mcswbot2.ServerStatus
             NameHistory = new Dictionary<string, string>();
             PlayTime = new Dictionary<string, TimeSpan>();
             SeenTime = new Dictionary<string, DateTime>();
-            History = new List<ServerInfoWrapped>();
+            History = new List<ServerInfoBasic>();
         }
 
         [JsonConstructor]
         public ServerStatusWrapped(string label, string address, int port, bool notifyServer, bool notifyCount, bool notifyNames, bool sticker,
-            Dictionary<string, string> nameHistory, Dictionary<string, TimeSpan> playTime, Dictionary<string, DateTime> seenTime, List<ServerInfoWrapped> history)
+            Dictionary<string, string> nameHistory, Dictionary<string, TimeSpan> playTime, Dictionary<string, DateTime> seenTime, List<ServerInfoBasic> history)
         {
             Label = label;
             Address = address;
@@ -87,7 +86,7 @@ namespace mcswbot2.ServerStatus
         public void CleanData()
         {
             // Remove very old data
-            foreach (var hk in History.Where(hk => hk.Wrapped.RequestDate < DateTime.Now - TimeSpan.FromHours(MCSWBot.Conf.HistoryHours)))
+            foreach (var hk in History.Where(hk => hk.RequestDate < DateTime.Now - TimeSpan.FromHours(MCSWBot.Conf.HistoryHours)))
             {
                 History.Remove(hk);
             }
@@ -99,23 +98,22 @@ namespace mcswbot2.ServerStatus
             var quInd = 0;
             while (History.Count > qThreshold)
             {
-                var search = History.Where(h => h.QLevel == quInd).OrderBy(h => h.Wrapped.RequestDate);
+                var search = History.Where(h => h.QLevel == quInd).OrderBy(h => h.RequestDate);
                 if (search.Count() > qRatio * 2)
                 {
                     var counter = 0;
                     double date = 0;
                     double time = 0;
                     double online = 0;
-                    foreach (var siw in search)
+                    foreach (var sib in search)
                     {
-                        var sib = siw.Wrapped;
                         if (counter++ >= qRatio) break;
                         date += (sib.RequestDate.Ticks / qRatio);
                         time += sib.RequestTime / qRatio;
                         online += sib.CurrentPlayerCount / qRatio;
-                        History.Remove(siw);
+                        History.Remove(sib);
                     }
-                    History.Add(new ServerInfoWrapped((long)date, time, online, quInd + 1));
+                    History.Add(new ServerInfoBasic(true, new DateTime((long)date), time, online, quInd + 1));
                 }
                 else
                 {

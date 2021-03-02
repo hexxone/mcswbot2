@@ -2,9 +2,8 @@
 using System.Drawing;
 using System.Drawing.Text;
 using System.Linq;
-using mcswbot2.Objects;
 
-namespace mcswbot2.Telegram
+namespace mcswbot2.Static
 {
     // TODO find better way then System.Drawing only for Fonts...
     internal static class Fonts

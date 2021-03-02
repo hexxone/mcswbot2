@@ -3,7 +3,7 @@ using System.Linq;
 using System.Net;
 using System.Text.RegularExpressions;
 
-namespace mcswbot2.Telegram
+namespace mcswbot2.Static
 {
     internal class Utils
     {

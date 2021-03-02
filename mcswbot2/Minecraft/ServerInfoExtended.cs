@@ -2,15 +2,16 @@
 using System.Collections.Generic;
 using mcswbot2.Event;
 using mcswbot2.Objects;
+using mcswbot2.Static;
 using Newtonsoft.Json;
 using SkiaSharp;
 
-namespace mcswbot2.ServerInfo
+namespace mcswbot2.Minecraft
 {
-    public class ServerInfoBase : ServerInfoBasic, IDisposable
+    public class ServerInfoExtended : ServerInfoBasic, IDisposable
     {
         /// <summary>
-        ///     Creates a new instance of <see cref="ServerInfoBase" /> with specified values
+        ///     Creates a new instance of <see cref="ServerInfoExtended" /> with specified values
         ///     => successful request
         /// </summary>
         /// <param name="dt">When did the request start?</param>
@@ -21,7 +22,7 @@ namespace mcswbot2.ServerInfo
         /// <param name="version">Server's Minecraft version</param>
         /// <param name="favIco">Server's favicon object if given</param>
         /// <param name="players">Server's online players</param>
-        internal ServerInfoBase(DateTime dt, long sp, string motd, int maxPlayers, int playerCount, string version,
+        internal ServerInfoExtended(DateTime dt, long sp, string motd, int maxPlayers, int playerCount, string version,
             SKImage favIco, List<PlayerPayLoad> players)
         {
             HadSuccess = true;
@@ -36,11 +37,11 @@ namespace mcswbot2.ServerInfo
         }
 
         /// <summary>
-        ///     Creates a new instance of <see cref="ServerInfoBase" /> with specified values
+        ///     Creates a new instance of <see cref="ServerInfoExtended" /> with specified values
         ///     => failed request
         /// </summary>
         /// <param name="ex">the Last occured Exception when determining Server status</param>
-        internal ServerInfoBase(DateTime dt, Exception ex)
+        internal ServerInfoExtended(DateTime dt, Exception ex)
         {
             RequestDate = dt;
             LastError = ex;

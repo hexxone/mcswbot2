@@ -1,4 +1,5 @@
 ﻿using mcswbot2.Objects;
+using mcswbot2.Static;
 
 namespace mcswbot2.Event
 {

@@ -1,6 +1,6 @@
 ﻿using System.Threading.Tasks;
 
-namespace mcswbot2.Objects
+namespace mcswbot2.Static
 {
     public static class Types
     {
