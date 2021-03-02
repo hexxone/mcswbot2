@@ -2,6 +2,7 @@
 using System.Drawing;
 using System.Drawing.Text;
 using System.Linq;
+using mcswlib;
 
 namespace mcswbot2.Bot
 {
@@ -16,9 +17,9 @@ namespace mcswbot2.Bot
                 privateFonts.AddFontFile("./fonts/segoe_ui.ttf");
                 return privateFonts.Families[0];
             }
-            catch (Exception)
+            catch (Exception e)
             {
-                // Todo
+                Logger.WriteLine("Font Error: " + e, Types.LogLevel.Error);
             }
             return GetDefaultFontName();
         }

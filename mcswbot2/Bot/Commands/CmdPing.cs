@@ -12,10 +12,10 @@ namespace mcswbot2.Bot.Commands
         internal override void Call(Message m, TgGroup g, TgUser u, string[] args, bool dev)
         {
             // collect Plot Data
-            var plots = g.Servers.Select(item => GetPingData(item.Wrapped)).Where(pd => pd.Length > 4).ToList();
+            var plots = g.Servers.Select(GetPingData).Where(pd => pd.Length > 4).ToList();
             if (plots.Count > 0)
             {
-                using var bm = PlotData(plots, "Minutes Ago", "Response time (ms)");
+                using var bm = PlotData(plots, "Days Ago", "Response time (ms)");
                 g.SendMsg(null, bm);
             }
             else if (g.Servers.Count < 1) g.SendMsg("Please /add a server  first.");

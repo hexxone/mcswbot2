@@ -1,14 +1,12 @@
 ﻿using mcswbot2.Bot.Commands;
 using mcswbot2.Bot.Objects;
 using mcswlib.ServerStatus;
-using mcswlib.ServerStatus.Event;
 using ZufallSatz;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
+using System.Linq;
 using System.Threading.Tasks;
+using mcswlib;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
@@ -17,9 +15,9 @@ namespace mcswbot2.Bot
 {
     class TgBot
     {
-        private static readonly List<ICommand> Commands = new List<ICommand>();
-        internal static readonly List<TgUser> TgUsers = new List<TgUser>();
-        internal static readonly List<TgGroup> TgGroups = new List<TgGroup>();
+        private static readonly List<ICommand> Commands = new();
+        internal static readonly List<TgUser> TgUsers = new();
+        internal static readonly List<TgGroup> TgGroups = new();
 
         internal static Config Conf { get; set; }
 
@@ -44,7 +42,6 @@ namespace mcswbot2.Bot
 
             // Add Bot commands
             Commands.Add(new CmdAdd());
-            Commands.Add(new CmdInfo());
             Commands.Add(new CmdList());
             Commands.Add(new CmdNotify());
             Commands.Add(new CmdPing());
@@ -57,31 +54,39 @@ namespace mcswbot2.Bot
             // Load users, groups & settings
             Storage.Load();
 
-            // Start the bot async
+            // Apply static Config vars
+
+            ServerStatusUpdater.Retries = Conf.Retries;
+            ServerStatusUpdater.RetryMs = Conf.RetryMs;
+            
+
+            var enumValues = Enum.GetValues(typeof(Types.LogLevel)).Cast<int>().ToList();
+            if (enumValues.Contains(Conf.LogLevel)) Logger.LogLevel = (Types.LogLevel)Conf.LogLevel;
+            else Logger.WriteLine("Invalid LogLevel: " + Conf.LogLevel, Types.LogLevel.Error);
+
+
+            // start pinging servers
+
+            Factory.StartAutoUpdate(Conf.SleepTime);
+
+            // Start the telegram bot
+
             _ = RunBotAsync();
 
-            // main ping loop
-            var sw = new Stopwatch();
-            var avgWait = Conf.SleepTime;
-            while (true)
+            // main save loop
+            while (Factory.AutoUpdating)
             {
-                sw.Reset();
-                sw.Start();
-                Factory.PingAll();
-                Parallel.ForEach(TgGroups, tgg => tgg.UpdateAll());
-                sw.Stop();
-
-                // calculate average wait time
-                var waitme = Conf.SleepTime - Convert.ToInt32(sw.ElapsedMilliseconds);
-                avgWait = Math.Max(10000, (avgWait + waitme) / 2);
-                Program.WriteLine($"Sleeping {avgWait} MS...");
-                Task.Delay(avgWait).Wait();
+                Program.WriteLine("Sleeping...");
+                Task.Delay(Conf.SleepTime).Wait();
 
                 // save data
                 Storage.Save();
             }
-        }
 
+            Console.WriteLine("Reached end of pr0gram! Auto updating stopped for some reason ???");
+            Console.ReadLine();
+        }
+        
         /// <summary>
         ///     Start receiving message updates on the Telegram Bot
         /// </summary>
@@ -90,7 +95,7 @@ namespace mcswbot2.Bot
         {
             Client = new TelegramBotClient(Conf.ApiKey);
             TgBotUser = await Client.GetMeAsync();
-            Program.WriteLine("I am Bot: " + new TgUser(TgBotUser));
+            Program.WriteLine("I am Robot: " + TgBotUser.Username);
             Client.OnMessage += Client_OnMessage;
 
             // start taking requests
@@ -169,7 +174,7 @@ namespace mcswbot2.Bot
             foreach (var cmd in Commands)
                 if (usrCmd == cmd.Command().ToLower())
                 {
-                    Program.WriteLine("Command: " + cmd + " by " + user);
+                    Program.WriteLine("Command: " + cmd.Command() + " by " + user.Base.Id);
                     cmd.Call(msg, group, user, args, isDev);
                 }
         }
