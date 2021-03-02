@@ -2,7 +2,6 @@
 {
     public class PlayerChangeEvent : EventBase
     {
-
         internal PlayerChangeEvent(double diff)
         {
             PlayerDiff = diff;

@@ -54,7 +54,7 @@ namespace mcswbot2.Minecraft
             FavIcon = null;
             OnlinePlayers = new List<PlayerPayLoad>();
         }
-        
+
         /// <summary>
         ///     Returns the Last occured runtime error
         /// </summary>
@@ -91,10 +91,13 @@ namespace mcswbot2.Minecraft
         /// </summary>
         [JsonIgnore]
         public SKImage FavIcon { get; }
-        
+
         /// <summary>
         ///     better Dispose of Graphics object explicitly
         /// </summary>
-        public void Dispose() => FavIcon?.Dispose();
+        public void Dispose()
+        {
+            FavIcon?.Dispose();
+        }
     }
 }

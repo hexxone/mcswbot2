@@ -6,6 +6,21 @@ namespace mcswbot2.Minecraft
     [Serializable]
     public class ServerInfoBasic
     {
+        public ServerInfoBasic()
+        {
+        }
+
+        [JsonConstructor]
+        public ServerInfoBasic(bool hadSuccess, DateTime requestDate, double requestTime, double currentPlayerCount,
+            int qLevel)
+        {
+            HadSuccess = hadSuccess;
+            RequestDate = requestDate;
+            RequestTime = requestTime;
+            CurrentPlayerCount = currentPlayerCount;
+            QLevel = qLevel;
+        }
+
         /// <summary>
         ///     Determines if the request was successfull
         /// </summary>
@@ -30,19 +45,5 @@ namespace mcswbot2.Minecraft
         ///     Quantization Level
         /// </summary>
         public int QLevel { get; set; }
-
-
-
-        public ServerInfoBasic() { }
-
-        [JsonConstructor]
-        public ServerInfoBasic(bool hadSuccess, DateTime requestDate, double requestTime, double currentPlayerCount, int qLevel)
-        {
-            HadSuccess = hadSuccess;
-            RequestDate = requestDate;
-            RequestTime = requestTime;
-            CurrentPlayerCount = currentPlayerCount;
-            QLevel = qLevel;
-        }
     }
 }

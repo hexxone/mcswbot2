@@ -20,29 +20,31 @@ namespace mcswbot2.Static
             {
                 Logger.WriteLine("Font Error: " + e, Types.LogLevel.Error);
             }
+
             return GetDefaultFontName();
         }
 
         internal static FontFamily GetDefaultFontName()
         {
-            return ((GetSansFontName() ?? GetSerifFontName()) ?? GetMonospaceFontName()) ?? SystemFonts.DefaultFont.FontFamily;
+            return ((GetSansFontName() ?? GetSerifFontName()) ?? GetMonospaceFontName()) ??
+                   SystemFonts.DefaultFont.FontFamily;
         }
 
         internal static FontFamily GetSansFontName()
         {
-            var sansFonts = new string[] { "Segoe UI", "DejaVu Sans", "Helvetica" };
+            var sansFonts = new[] {"Segoe UI", "DejaVu Sans", "Helvetica"};
             return GetValidFontName(sansFonts);
         }
 
         internal static FontFamily GetSerifFontName()
         {
-            var serifFonts = new string[] { "Times New Roman", "DejaVu Serif", "Times" };
+            var serifFonts = new[] {"Times New Roman", "DejaVu Serif", "Times"};
             return GetValidFontName(serifFonts);
         }
 
         internal static FontFamily GetMonospaceFontName()
         {
-            var monospaceFonts = new string[] { "Consolas", "DejaVu Sans Mono", "Courier" };
+            var monospaceFonts = new[] {"Consolas", "DejaVu Sans Mono", "Courier"};
             return GetValidFontName(monospaceFonts);
         }
 
@@ -58,9 +60,9 @@ namespace mcswbot2.Static
         internal static FontFamily GetValidFontName(string[] fontNames)
         {
             return (from preferred in fontNames
-                    from font in FontFamily.Families
-                    where string.Equals(preferred, font.Name, StringComparison.OrdinalIgnoreCase)
-                    select font).FirstOrDefault();
+                from font in FontFamily.Families
+                where string.Equals(preferred, font.Name, StringComparison.OrdinalIgnoreCase)
+                select font).FirstOrDefault();
         }
     }
 }

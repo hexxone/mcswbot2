@@ -16,6 +16,5 @@ namespace mcswbot2.Objects
         }
 
         public User Base { get; set; }
-        
     }
 }

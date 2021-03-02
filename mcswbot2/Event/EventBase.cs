@@ -2,6 +2,9 @@
 {
     public abstract class EventBase
     {
-        public override string ToString() { return GetType().FullName; }
+        public override string ToString()
+        {
+            return GetType().FullName;
+        }
     }
 }

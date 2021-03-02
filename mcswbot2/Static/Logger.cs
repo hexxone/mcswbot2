@@ -13,7 +13,7 @@ namespace mcswbot2.Static
         /// <param name="l"></param>
         public static void WriteLine(string l, LogLevel lv = LogLevel.Normal)
         {
-            if(LogLevel >= lv)  Console.WriteLine($"[{DateTime.Now.ToString("yyyy-MM-ss HH:mm:ss")}] {l}");
+            if (LogLevel >= lv) Console.WriteLine($"[{DateTime.Now.ToString("yyyy-MM-ss HH:mm:ss")}] {l}");
         }
     }
 }
