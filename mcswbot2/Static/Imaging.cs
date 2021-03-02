@@ -1,7 +1,7 @@
 ﻿using System;
 using SkiaSharp;
 
-namespace mcswbot2.Telegram
+namespace mcswbot2.Static
 {
     internal static class Imaging
     {

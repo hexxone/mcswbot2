@@ -1,5 +1,5 @@
-﻿using mcswbot2.Objects;
-using mcswbot2.ServerStatus;
+﻿using mcswbot2.Minecraft;
+using mcswbot2.Objects;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 

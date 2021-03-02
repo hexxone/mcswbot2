@@ -3,9 +3,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using mcswbot2.Event;
-using mcswbot2.ServerInfo;
 
-namespace mcswbot2.ServerStatus
+namespace mcswbot2.Minecraft
 {
     public class ServerStatus
     {
@@ -35,9 +34,9 @@ namespace mcswbot2.ServerStatus
         private readonly Dictionary<string, string> _userNames = new();
         private readonly Dictionary<string, bool> _userStates = new();
 
-        public ServerInfoBase Last { get; private set; }
+        public ServerInfoExtended Last { get; private set; }
 
-        private void UpdatedEvent(object? sender, ServerInfoBase e)
+        private void UpdatedEvent(object? sender, ServerInfoExtended e)
         {
             var updater = (ServerStatusUpdater) sender;
             var events = Update(e);
@@ -48,7 +47,7 @@ namespace mcswbot2.ServerStatus
         ///     Will compare the Last status with the current one and return event updates.
         /// </summary>
         /// <returns></returns>
-        private EventBase[] Update(ServerInfoBase current)
+        private EventBase[] Update(ServerInfoExtended current)
         {
             // event-queue
             var events = new List<EventBase>();

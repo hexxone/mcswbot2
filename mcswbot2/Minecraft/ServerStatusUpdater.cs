@@ -2,9 +2,9 @@
 using System.Threading;
 using System.Threading.Tasks;
 using mcswbot2.Objects;
-using mcswbot2.ServerInfo;
+using mcswbot2.Static;
 
-namespace mcswbot2.ServerStatus
+namespace mcswbot2.Minecraft
 {
     public class ServerStatusUpdater : IDisposable
     {
@@ -19,9 +19,9 @@ namespace mcswbot2.ServerStatus
         public int Port { get; set; }
         
 
-        public ServerInfoBase Latest;
+        public ServerInfoExtended Latest;
 
-        public EventHandler<ServerInfoBase> UpdatedEvent;
+        public EventHandler<ServerInfoExtended> UpdatedEvent;
 
 
         /// <summary>
@@ -44,12 +44,12 @@ namespace mcswbot2.ServerStatus
             catch (Exception e)
             {
                 Logger.WriteLine("Execute Error? [" + Address + ":" + Port + "]: " + e);
-                Latest = new ServerInfoBase(DateTime.Now - tSpan, e);
+                Latest = new ServerInfoExtended(DateTime.Now - tSpan, e);
             }
         }
 
 
-        private ServerInfoBase Execute(CancellationToken ct)
+        private ServerInfoExtended Execute(CancellationToken ct)
         {
             var srv = "[" + Address + ":" + Port + "]";
             Logger.WriteLine("Pinging server " + srv);
@@ -58,8 +58,8 @@ namespace mcswbot2.ServerStatus
             {
                 // current server-info object
                 var dt = DateTime.Now;
-                ServerInfoBase current = null;
-                var si = new ServerInfo.ServerInfo(Address, Port);
+                ServerInfoExtended current = null;
+                var si = new ServerInfo(Address, Port);
                 for (var r = 0; r < Retries; r++)
                 {
                     current = si.GetAsync(ct, dt).Result;

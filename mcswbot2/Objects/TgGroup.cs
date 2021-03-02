@@ -3,9 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using mcswbot2.Event;
-using mcswbot2.ServerInfo;
-using mcswbot2.ServerStatus;
-using mcswbot2.Telegram;
+using mcswbot2.Minecraft;
+using mcswbot2.Static;
 using SkiaSharp;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
@@ -29,7 +28,7 @@ namespace mcswbot2.Objects
         /// <summary>
         ///     Register & Start updating all the servers in this group after deserializing
         /// </summary>
-        private void Update(ServerStatus.ServerStatus status, EventBase[] events)
+        private void Update(ServerStatus status, EventBase[] events)
         {
             foreach (var srv in Servers)
             {
@@ -156,7 +155,11 @@ namespace mcswbot2.Objects
         /// <param name="p"></param>
         internal void AddServer(string l, string adr, int p)
         {
-            var news = MCSWBot.Factory.Make(adr, p, false, l);
+            // TODO
+            var key = new ServerStatusUpdater() { Address = adr, Port = p };
+            var news = new ServerStatus(l, key);
+
+
             news.ChangedEvent += StatusChanged;
             var wrap = new ServerStatusWrapped(news);
             Servers.Add(wrap);
@@ -168,7 +171,11 @@ namespace mcswbot2.Objects
         /// <param name="ssw"></param>
         internal void LoadedServer(ServerStatusWrapped loaded)
         {
-            var news = MCSWBot.Factory.Make(loaded.Address, loaded.Port, false, loaded.Label);
+            // TODO
+            var key = new ServerStatusUpdater() { Address = loaded.Address, Port = loaded.Port };
+            var news = new ServerStatus(loaded.Label, key);
+            
+
             news.ChangedEvent += StatusChanged;
             loaded.Wrapped = news;
         }
@@ -181,11 +188,11 @@ namespace mcswbot2.Objects
         private void StatusChanged(object? sender, EventBase[] e)
         {
             // get the sending status
-            var status = (ServerStatus.ServerStatus) sender;
+            var status = (ServerStatus) sender;
             // get wrapped object
             var wrap = GetServer(status.Label);
             // add current status to history
-            wrap.History.Add(new ServerInfoWrapped(status.Last, 0));
+            wrap.History.Add(status.Last);
 
             // do the updating
             if(e.Length > 0) Update(status, e);
@@ -205,7 +212,7 @@ namespace mcswbot2.Objects
             var stat = GetServer(l);
             if (stat == null) return false;
             Servers.Remove(stat);
-            return MCSWBot.Factory.Destroy(stat.Wrapped);
+            return true;
         }
 
 
@@ -307,12 +314,6 @@ namespace mcswbot2.Objects
                 else Program.WriteLine("Send Exception: " + ex + "\r\nGroup: " + Base.Id + "\r\nStack: " + ex.StackTrace);
             }
             return lMsg;
-        }
-
-        internal void Destroy()
-        {
-            foreach (var item in Servers)
-                MCSWBot.Factory.Destroy(item.Wrapped);
         }
 
         /// <summary>
