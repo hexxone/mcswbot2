@@ -15,28 +15,8 @@ namespace mcswbot2.Minecraft
         public static int Retries = 3;
         public static int RetryMs = 3000;
 
-        public string Address { get; set; }
-        public int Port { get; set; }
-
-
-
-        // List of past received Server Infos
-        public List<ServerInfoBasic> InfoHistory { get; set; }
-
-
-        // List of all known Players
-        public List<PlayerPayLoad> AllPlayers { get; set; }
-
-
-        // List of currently online players
-        [JsonIgnore]
-        public List<PlayerPayLoad> OnlinePlayers => AllPlayers.Where(ap => ap.Online).ToList();
-
-
 
         public EventHandler<ServerInfoExtended> UpdatedEvent;
-
-
 
 
         /// <summary>
@@ -61,13 +41,29 @@ namespace mcswbot2.Minecraft
         /// <param name="seenTime"></param>
         /// <param name="infoHistory"></param>
         [JsonConstructor]
-        internal ServerStatusWatcher(string address, int port, List<ServerInfoBasic> infoHistory, List<PlayerPayLoad> allPlayers)
+        internal ServerStatusWatcher(string address, int port, List<ServerInfoBasic> infoHistory,
+            List<PlayerPayLoad> allPlayers)
         {
             Address = address;
             Port = port;
             InfoHistory = infoHistory;
             AllPlayers = allPlayers;
         }
+
+        public string Address { get; set; }
+        public int Port { get; set; }
+
+
+        // List of past received Server Infos
+        public List<ServerInfoBasic> InfoHistory { get; set; }
+
+
+        // List of all known Players
+        public List<PlayerPayLoad> AllPlayers { get; set; }
+
+
+        // List of currently online players
+        [JsonIgnore] public List<PlayerPayLoad> OnlinePlayers => AllPlayers.Where(ap => ap.Online).ToList();
 
 
         /// <summary>
@@ -85,21 +81,23 @@ namespace mcswbot2.Minecraft
                 var task = Task.Run(() => Execute(token));
                 task.Wait(token);
                 sie = task.Result ?? throw new Exception("null");
-                
-                // list of all "last-online" player ids
-                var oIds = (from op in sie.OnlinePlayers select op.Id);
-                // Set all players leaving to offline
-                OnlinePlayers.FindAll(player => !oIds.Contains(player.Id))
-                    .ForEach(player => player.Online = false);
 
+                // list of all "last-online" player ids
+                var oIds = from op in sie.OnlinePlayers select op.Id;
+                // Set all players leaving to offline
+                if (oIds.Any() && OnlinePlayers.Count > 0)
+                    OnlinePlayers.FindAll(player => !oIds.Contains(player.Id))
+                        .ForEach(player => player.Online = false);
             }
             catch (Exception e)
             {
                 Logger.WriteLine("Execute Error? [" + Address + ":" + Port + "]: " + e);
                 sie = new ServerInfoExtended(DateTime.Now, e);
             }
+
             InfoHistory.Add(sie);
             UpdatedEvent?.Invoke(this, sie);
+            CleanData();
         }
 
 
@@ -124,7 +122,9 @@ namespace mcswbot2.Minecraft
                 // if the result is null, nothing to do here
                 if (current != null)
                 {
-                    Logger.WriteLine("Execute result: " + srv + " is: " + current.HadSuccess + " Err: " + current.LastError, Types.LogLevel.Debug);
+                    Logger.WriteLine(
+                        "Execute result: " + srv + " is: " + current.HadSuccess + " Err: " + current.LastError,
+                        Types.LogLevel.Debug);
                     return current;
                 }
 
@@ -134,18 +134,17 @@ namespace mcswbot2.Minecraft
             {
                 Logger.WriteLine("Fatal Error when Pinging... " + ex, Types.LogLevel.Error);
             }
+
             return null;
         }
 
 
-
+        // TODO
         public void CleanData()
         {
             // Remove very old data
-            foreach (var hk in InfoHistory.Where(hk => hk.RequestDate < DateTime.Now - TimeSpan.FromHours(MCSWBot.Conf.HistoryHours)))
-            {
-                InfoHistory.Remove(hk);
-            }
+            foreach (var hk in InfoHistory.Where(hk =>
+                hk.RequestDate < DateTime.Now - TimeSpan.FromHours(MCSWBot.Conf.HistoryHours))) InfoHistory.Remove(hk);
 
             // Quantize, I don't even know...
             var qThreshold = MCSWBot.Conf.QThreshold;
@@ -155,7 +154,7 @@ namespace mcswbot2.Minecraft
             while (InfoHistory.Count > qThreshold)
             {
                 var search = InfoHistory.Where(h => h.QLevel == quInd).OrderBy(h => h.RequestDate);
-                if (search.Count() > qRatio * 2)
+                if (search.Count() > qRatio * 1.5)
                 {
                     var counter = 0;
                     double date = 0;
@@ -169,7 +168,8 @@ namespace mcswbot2.Minecraft
                         online += sib.CurrentPlayerCount / qRatio;
                         InfoHistory.Remove(sib);
                     }
-                    InfoHistory.Add(new ServerInfoBasic(true, new DateTime((long)date), time, online, quInd + 1));
+
+                    InfoHistory.Add(new ServerInfoBasic(true, new DateTime((long) date), time, online, quInd + 1));
                 }
                 else
                 {

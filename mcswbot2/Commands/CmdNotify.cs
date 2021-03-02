@@ -7,7 +7,10 @@ namespace mcswbot2.Commands
 {
     internal class CmdNotify : ICommand
     {
-        internal override string Command() => "notify";
+        internal override string Command()
+        {
+            return "notify";
+        }
 
         internal override void Call(Message m, TgGroup g, TgUser u, string[] args, bool dev)
         {
@@ -51,9 +54,14 @@ namespace mcswbot2.Commands
                                 g.SendMsg("Unknown setting.\r\n\r\n" + usage);
                                 return;
                         }
+
                         g.SendMsg(GetSrvNotifications(srv2), null, ParseMode.Html);
                     }
-                    else g.SendMsg("Server label not found.\r\n\r\n" + usage);
+                    else
+                    {
+                        g.SendMsg("Server label not found.\r\n\r\n" + usage);
+                    }
+
                     break;
             }
         }

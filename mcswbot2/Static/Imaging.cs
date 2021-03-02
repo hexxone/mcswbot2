@@ -39,9 +39,9 @@ namespace mcswbot2.Static
             {
                 // get & check line
                 var line = Lines[ln];
-                if(string.IsNullOrWhiteSpace(line)) continue;
+                if (string.IsNullOrWhiteSpace(line)) continue;
 
-               // Calculate & draw text
+                // Calculate & draw text
                 var fSize = LineHeight * 0.4f;
                 var lineStart = ln * LineHeight;
                 CanvasDrawText(canvas, line, fSize, new SKRect(0, lineStart, blr.Width, lineStart + LineHeight));
@@ -60,16 +60,16 @@ namespace mcswbot2.Static
             var scale = 0.95f;
 
             // main texture
-            using var textPain = new SKPaint()
+            using var textPain = new SKPaint
             {
                 IsAntialias = true,
                 Style = SKPaintStyle.Fill,
                 TextSize = fSize,
                 TextAlign = SKTextAlign.Center,
-                Color = SKColors.White,
+                Color = SKColors.White
             };
             // shadow texture, used to measure text scale because its slightly bigger.
-            using var shadowPain = new SKPaint()
+            using var shadowPain = new SKPaint
             {
                 IsAntialias = true,
                 Style = SKPaintStyle.Fill,
@@ -145,6 +145,7 @@ namespace mcswbot2.Static
                 graph.Flush();
                 result = surface.Snapshot();
             }
+
             // done
             return result;
         }
@@ -171,7 +172,10 @@ namespace mcswbot2.Static
 
             // draw blurred image
             var dn = DateTime.Now;
-            var blurVal = dn.DayOfWeek != DayOfWeek.Saturday && dn.DayOfWeek != DayOfWeek.Sunday && dn.Hour > 6 && dn.Hour < 18 ? 28 : 7;
+            var blurVal = dn.DayOfWeek != DayOfWeek.Saturday && dn.DayOfWeek != DayOfWeek.Sunday && dn.Hour > 6 &&
+                          dn.Hour < 18
+                ? 28
+                : 7;
             using (var blurPain = new SKPaint())
             {
                 blurPain.ImageFilter = SKImageFilter.CreateBlur(blurVal, blurVal);

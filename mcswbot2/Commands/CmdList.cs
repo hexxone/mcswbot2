@@ -6,15 +6,19 @@ namespace mcswbot2.Commands
 {
     internal class CmdList : ICommand
     {
-        internal override string Command() => "list";
+        internal override string Command()
+        {
+            return "list";
+        }
 
         internal override void Call(Message m, TgGroup g, TgUser u, string[] args, bool dev)
         {
             if (g.Servers.Count < 1)
             {
-                g.SendMsg("No servers watched. Use: /add", null);
+                g.SendMsg("No servers watched. Use: /add");
                 return;
             }
+
             var msg = "Watchlist:<code> " + g.Servers.Count + " / 3</code>";
             foreach (var s in g.Servers)
             {
@@ -27,7 +31,8 @@ namespace mcswbot2.Commands
                     msg += "\r\n  Status:<code> Online</code> 🌐";
                     msg += "\r\n  Version:<code> " + status.MinecraftVersion + "</code>";
                     msg += "\r\n  MOTD:<code> " + status.ServerMotd + "</code>";
-                    msg += "\r\n  Player:<code> " + status.CurrentPlayerCount + " / " + status.MaxPlayerCount + "</code>";
+                    msg += "\r\n  Player:<code> " + status.CurrentPlayerCount + " / " + status.MaxPlayerCount +
+                           "</code>";
                 }
                 else
                 {

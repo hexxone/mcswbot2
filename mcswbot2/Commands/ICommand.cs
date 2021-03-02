@@ -20,6 +20,5 @@ namespace mcswbot2.Commands
         /// <param name="args">command arguments splitted by space</param>
         /// <param name="dev">message was sent by developer</param>
         internal abstract void Call(Message m, TgGroup g, TgUser u, string[] args, bool dev);
-        
     }
 }

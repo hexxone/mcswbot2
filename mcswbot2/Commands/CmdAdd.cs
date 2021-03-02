@@ -8,7 +8,10 @@ namespace mcswbot2.Commands
 {
     internal class CmdAdd : ICommand
     {
-        internal override string Command() => "add";
+        internal override string Command()
+        {
+            return "add";
+        }
 
         internal override void Call(Message m, TgGroup g, TgUser u, string[] args, bool dev)
         {
@@ -25,7 +28,7 @@ namespace mcswbot2.Commands
                 // get target
                 var addr = args[2];
                 var port = 25565;
-                
+
                 // try to parse notation <address> <port>
                 if (args.Length == 4 && !int.TryParse(args[3], out port))
                     throw new Exception("Port is not a number.");

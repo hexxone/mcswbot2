@@ -4,8 +4,6 @@ namespace mcswbot2.Static
 {
     public static class Types
     {
-        public static ParallelOptions POptions = new ParallelOptions { MaxDegreeOfParallelism = 10 };
-
         /// <summary>
         ///     Determines what to log and what not.
         /// </summary>
@@ -16,6 +14,8 @@ namespace mcswbot2.Static
             Normal = 20,
             Debug = 30
         }
+
+        public static ParallelOptions POptions = new() {MaxDegreeOfParallelism = 10};
 
         /// <summary>
         ///     removes Minecraft Chat Syle informations

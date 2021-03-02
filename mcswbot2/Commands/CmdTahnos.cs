@@ -8,9 +8,12 @@ using ZufallSatz;
 
 namespace mcswbot2.Commands
 {
-    class CmdTahnos : ICommand
+    internal class CmdTahnos : ICommand
     {
-        internal override string Command() => "tahnos";
+        internal override string Command()
+        {
+            return "tahnos";
+        }
 
         internal override void Call(Message m, TgGroup g, TgUser u, string[] args, bool dev)
         {
@@ -36,6 +39,7 @@ namespace mcswbot2.Commands
                     g.SendMsg(replMsg, null, ParseMode.Html, m.ReplyToMessage.MessageId);
                     return;
                 }
+
                 return;
             }
 

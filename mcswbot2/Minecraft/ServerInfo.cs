@@ -14,9 +14,13 @@ using SkiaSharp;
 
 namespace mcswbot2.Minecraft
 {
-
     internal class ServerInfo
     {
+        // your "client" protocol version to tell the server 
+        // doesn't really matter, server will return its own version independently
+        // for detailed protocol version codes see here: https://wiki.vg/Protocol_version_numbers
+        private const int Proto = 753;
+        private const string Header = "data:image/png;base64,";
         private readonly string _address;
         private readonly int _port;
 
@@ -32,7 +36,7 @@ namespace mcswbot2.Minecraft
         }
 
         /// <summary>
-        ///     Calls the Async connect method and afterwards the specific overwritten 
+        ///     Calls the Async connect method and afterwards the specific overwritten
         ///     stream sending, reading & parsing method
         /// </summary>
         /// <param name="ct"></param>
@@ -65,6 +69,7 @@ namespace mcswbot2.Minecraft
                 Debug.WriteLine("Connecting..");
                 Task.Delay(20).Wait(ct);
             }
+
             if (!client.Connected)
                 throw new EndOfStreamException();
 
@@ -72,14 +77,8 @@ namespace mcswbot2.Minecraft
         }
 
 
-        // your "client" protocol version to tell the server 
-        // doesn't really matter, server will return its own version independently
-        // for detailed protocol version codes see here: https://wiki.vg/Protocol_version_numbers
-        private const int Proto = 753;
-        private const string Header = "data:image/png;base64,";
-
-
-        private ServerInfoExtended Get(CancellationToken ct, DateTime dt, TcpClient client, NetworkStream stream, List<PlayerPayLoad> players)
+        private ServerInfoExtended Get(CancellationToken ct, DateTime dt, TcpClient client, NetworkStream stream,
+            List<PlayerPayLoad> players)
         {
             var offset = 0;
             var writeBuffer = new List<byte>();
@@ -157,9 +156,9 @@ namespace mcswbot2.Minecraft
             return new ServerInfoExtended(dt,
                 sw.ElapsedMilliseconds / 2,
                 GetDescription(ping.description),
-                (int)ping.players.max,
-                (int)ping.players.online,
-                (string)ping.version.name,
+                (int) ping.players.max,
+                (int) ping.players.online,
+                (string) ping.version.name,
                 GetImage(ping.favicon),
                 GetSample(ping.players, players));
         }
@@ -192,20 +191,36 @@ namespace mcswbot2.Minecraft
                         if (!string.IsNullOrWhiteSpace(build)) build += " ";
                         build += pLoad.Text;
                     }
+
                     res = build.Replace("  ", " ");
                 }
             }
-            catch (Exception e) { Logger.WriteLine("Error description.extra.text: " + e, Types.LogLevel.Debug); }
+            catch (Exception e)
+            {
+                Logger.WriteLine("Error description.extra.text: " + e, Types.LogLevel.Debug);
+            }
 
             // try .text
             if (string.IsNullOrEmpty(res))
-                try { res = (string)desc.text; }
-                catch (Exception e) { Logger.WriteLine("Error description.text: " + e, Types.LogLevel.Debug); }
+                try
+                {
+                    res = (string) desc.text;
+                }
+                catch (Exception e)
+                {
+                    Logger.WriteLine("Error description.text: " + e, Types.LogLevel.Debug);
+                }
 
             // another fallback
             if (string.IsNullOrEmpty(res))
-                try { res = (string)desc; }
-                catch (Exception ex) { Logger.WriteLine("Error description: " + ex, Types.LogLevel.Debug); }
+                try
+                {
+                    res = (string) desc;
+                }
+                catch (Exception ex)
+                {
+                    Logger.WriteLine("Error description: " + ex, Types.LogLevel.Debug);
+                }
 
             if (res == null) throw new FormatException("Empty description!");
             return res;
@@ -221,7 +236,7 @@ namespace mcswbot2.Minecraft
             SKImage image = null;
             try
             {
-                var imgStr = (string)favicon;
+                var imgStr = (string) favicon;
                 if (!string.IsNullOrEmpty(imgStr))
                 {
                     if (!imgStr.StartsWith(Header)) throw new Exception("Unknown Format");
@@ -233,6 +248,7 @@ namespace mcswbot2.Minecraft
             {
                 Logger.WriteLine("Error parsing favicon: " + ie, Types.LogLevel.Debug);
             }
+
             return image;
         }
 
@@ -250,10 +266,12 @@ namespace mcswbot2.Minecraft
                     foreach (var key in players.sample)
                     {
                         if (key.id == null || key.name == null) continue;
+                        string id = key.id;
+                        string name = key.name;
                         // searrch for existing player sample by id
-                        var exists = source.Find(s => s.Id == key.id);
+                        var exists = source.Find(s => s.Id == id);
                         // Add new global playerPayload
-                        if (exists == null) source.Add(exists = new PlayerPayLoad() {Id = key.id, RawName = key.name});
+                        if (exists == null) source.Add(exists = new PlayerPayLoad {Id = id, RawName = name});
                         else exists.Online = true;
                         // add it to sample
                         sample.Add(exists);
@@ -263,6 +281,7 @@ namespace mcswbot2.Minecraft
             {
                 Logger.WriteLine("Error when processing sample: " + e, Types.LogLevel.Debug);
             }
+
             return sample;
         }
 
@@ -295,11 +314,9 @@ namespace mcswbot2.Minecraft
             while (((b = ReadByte(ref offset, buffer)) & 0x80) == 0x80)
             {
                 value |= (b & 0x7F) << (size++ * 7);
-                if (size > 5)
-                {
-                    throw new IOException("This VarInt is an imposter!");
-                }
+                if (size > 5) throw new IOException("This VarInt is an imposter!");
             }
+
             return value | ((b & 0x7F) << (size * 7));
         }
 
@@ -319,16 +336,18 @@ namespace mcswbot2.Minecraft
         {
             while ((value & 128) != 0)
             {
-                buffer.Add((byte)(value & 127 | 128));
-                value = (int)(uint)value >> 7;
+                buffer.Add((byte) ((value & 127) | 128));
+                value = (int) (uint) value >> 7;
             }
-            buffer.Add((byte)value);
+
+            buffer.Add((byte) value);
         }
 
         private static void WriteShort(List<byte> buffer, short value)
         {
             buffer.AddRange(BitConverter.GetBytes(value));
         }
+
         private static void WriteLong(List<byte> buffer, long value)
         {
             buffer.AddRange(BitConverter.GetBytes(value));
@@ -347,7 +366,7 @@ namespace mcswbot2.Minecraft
             buffer.Clear();
 
             var add = 0;
-            var packetData = new[] { (byte)0x00 };
+            var packetData = new[] {(byte) 0x00};
             if (id >= 0)
             {
                 WriteVarInt(buffer, id);
@@ -364,6 +383,5 @@ namespace mcswbot2.Minecraft
             await stream.WriteAsync(packetData.AsMemory(0, packetData.Length), ct);
             await stream.WriteAsync(buff.AsMemory(0, buff.Length), ct);
         }
-
     }
 }

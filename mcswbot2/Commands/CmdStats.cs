@@ -8,7 +8,10 @@ namespace mcswbot2.Commands
 {
     internal class CmdStats : ICommand
     {
-        internal override string Command() => "stats";
+        internal override string Command()
+        {
+            return "stats";
+        }
 
         internal override void Call(Message m, TgGroup g, TgUser u, string[] args, bool dev)
         {

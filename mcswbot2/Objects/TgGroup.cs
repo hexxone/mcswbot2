@@ -16,16 +16,14 @@ namespace mcswbot2.Objects
     [Serializable]
     public class TgGroup
     {
+        public List<TahnosInfo> ImagingData = new();
+
+        public int LivePlayerMsgId;
+
         // Identity
         public List<ServerStatus> Servers = new();
 
-        public Chat Base { get; set; }
-
-        public bool Tahnos = false;
-
-        public List<TahnosInfo> ImagingData = new();
-
-        public int LivePlayerMsgId = 0;
+        public bool Tahnos;
 
         /// <summary>
         ///     Normal contructing
@@ -45,19 +43,19 @@ namespace mcswbot2.Objects
         /// <param name="imagingData"></param>
         /// <param name="livePlayerMsgId"></param>
         [JsonConstructor]
-        public TgGroup(List<ServerStatus> servers, Chat Base, bool tahnos, List<TahnosInfo> imagingData, int livePlayerMsgId)
+        public TgGroup(List<ServerStatus> servers, Chat Base, bool tahnos, List<TahnosInfo> imagingData,
+            int livePlayerMsgId)
         {
             Servers = servers;
             // register Events
-            Servers.ForEach(srv =>
-            {
-                srv.ChangedEvent += StatusChanged;
-            });
+            Servers.ForEach(srv => { srv.ChangedEvent += StatusChanged; });
             this.Base = Base;
             Tahnos = tahnos;
             ImagingData = imagingData;
             LivePlayerMsgId = livePlayerMsgId;
         }
+
+        public Chat Base { get; set; }
 
 
         /// <summary>
@@ -93,7 +91,10 @@ namespace mcswbot2.Objects
                     if (srv.Last.FavIcon != null)
                     {
                         using (var txtBmp = Imaging.MakeSticker(srv.Last.FavIcon, updateMsg))
+                        {
                             SendMsg(null, txtBmp, ParseMode.Default, 0, true);
+                        }
+
                         sent = true;
                     }
                     else if (Tahnos && (t = TahnosInfo.Get()) != null)
@@ -107,8 +108,9 @@ namespace mcswbot2.Objects
                         sent = true;
                     }
                 }
+
                 // send message if sticker disabled or failed
-                if (!sent) SendMsg(updateMsg, null, ParseMode.Html, 0, false);
+                if (!sent) SendMsg(updateMsg, null, ParseMode.Html);
             }
         }
 
@@ -124,7 +126,8 @@ namespace mcswbot2.Objects
             switch (evt)
             {
                 case OnlineStatusEvent ose:
-                    return new Tuple<string, bool>((ose.ServerStatus ? EventMessages.ServerOnline : EventMessages.ServerOffline)
+                    return new Tuple<string, bool>(
+                        (ose.ServerStatus ? EventMessages.ServerOnline : EventMessages.ServerOffline)
                         .Replace("<text>", ose.StatusText)
                         .Replace("<version>", ose.Version)
                         .Replace("<players>", $"{ose.CurrentPlayers} / {ose.MaxPlayers}"), false);
@@ -142,6 +145,7 @@ namespace mcswbot2.Objects
                     msg1 = msg1.Replace("<time>", pse.Player.PlayTime.TotalDays.ToString("0.00") + " d");
                     return new Tuple<string, bool>(msg1, true);
             }
+
             return new Tuple<string, bool>("", false);
         }
 
@@ -152,7 +156,8 @@ namespace mcswbot2.Objects
         /// <returns></returns>
         internal ServerStatus GetServer(string l)
         {
-            return Servers.FirstOrDefault(item => string.Equals(item.Label, l, StringComparison.CurrentCultureIgnoreCase));
+            return Servers.FirstOrDefault(item =>
+                string.Equals(item.Label, l, StringComparison.CurrentCultureIgnoreCase));
         }
 
         /// <summary>
@@ -177,7 +182,7 @@ namespace mcswbot2.Objects
         private void StatusChanged(object? sender, EventBase[] e)
         {
             // get the sending status
-            var status = (ServerStatus)sender;
+            var status = (ServerStatus) sender;
 
             // do the updating
             if (e.Length > 0) Update(status, e);
@@ -210,14 +215,14 @@ namespace mcswbot2.Objects
         /// <param name="pm"></param>
         /// <param name="replyMsg"></param>
         /// <param name="sticker"></param>
-        internal Message SendMsg(string text = null, SKImage bitmap = null, ParseMode pm = ParseMode.Default, int replyMsg = 0, bool sticker = false, int editMsg = 0)
+        internal Message SendMsg(string text = null, SKImage bitmap = null, ParseMode pm = ParseMode.Default,
+            int replyMsg = 0, bool sticker = false, int editMsg = 0)
         {
             if (bitmap == null) return SendMsgStream(text, null, pm, replyMsg, sticker);
 
             var ms = bitmap.Encode(sticker ? SKEncodedImageFormat.Webp : SKEncodedImageFormat.Png, 100).AsStream();
             ms.Position = 0;
             return SendMsgStream(text, ms, pm, replyMsg, sticker, editMsg);
-
         }
 
         /// <summary>
@@ -228,14 +233,14 @@ namespace mcswbot2.Objects
         /// <param name="pm"></param>
         /// <param name="replyMsg"></param>
         /// <param name="sticker"></param>
-        private Message SendMsgStream(string text = null, Stream imgStream = null, ParseMode pm = ParseMode.Default, int replyMsg = 0, bool sticker = false, int editMsg = 0)
+        private Message SendMsgStream(string text = null, Stream imgStream = null, ParseMode pm = ParseMode.Default,
+            int replyMsg = 0, bool sticker = false, int editMsg = 0)
         {
             Message lMsg = null;
             try
             {
                 if (imgStream != null)
                 {
-
                     // send sticker (cant be updated!)
                     if (sticker)
                     {
@@ -260,9 +265,12 @@ namespace mcswbot2.Objects
                     else
                     {
                         // Update existing image
-                        lMsg = editMsg != 0 ? MCSWBot.Client.EditMessageMediaAsync(new ChatId(Base.Id),
+                        lMsg = editMsg != 0
+                            ? MCSWBot.Client.EditMessageMediaAsync(new ChatId(Base.Id),
                                 editMsg,
-                                new InputMediaPhoto(new InputMedia(imgStream, "updated.png")) { Caption = text, ParseMode = pm }).Result :
+                                new InputMediaPhoto(new InputMedia(imgStream, "updated.png"))
+                                    {Caption = text, ParseMode = pm}).Result
+                            :
                             // Send new Image
                             MCSWBot.Client.SendPhotoAsync(Base.Id,
                                 new InputOnlineFile(imgStream),
@@ -278,11 +286,13 @@ namespace mcswbot2.Objects
                 else if (text != null)
                 {
                     // Update existing message
-                    lMsg = editMsg != 0 ? MCSWBot.Client.EditMessageTextAsync(new ChatId(Base.Id),
+                    lMsg = editMsg != 0
+                        ? MCSWBot.Client.EditMessageTextAsync(new ChatId(Base.Id),
                             editMsg,
                             text,
                             pm,
-                            true).Result :
+                            true).Result
+                        :
                         // Send New
                         MCSWBot.Client.SendTextMessageAsync(Base.Id,
                             text,
@@ -292,13 +302,19 @@ namespace mcswbot2.Objects
                             replyMsg).Result;
                 }
                 // uhoh?
-                else throw new Exception("Nothing to send!");
+                else
+                {
+                    throw new Exception("Nothing to send!");
+                }
             }
             catch (Exception ex)
             {
                 if (ex.StackTrace.Contains("chat not found")) MCSWBot.DestroyGroup(this);
-                else Program.WriteLine("Send Exception: " + ex + "\r\nGroup: " + Base.Id + "\r\nStack: " + ex.StackTrace);
+                else
+                    Program.WriteLine("Send Exception: " + ex + "\r\nGroup: " + Base.Id + "\r\nStack: " +
+                                      ex.StackTrace);
             }
+
             return lMsg;
         }
 
@@ -341,12 +357,16 @@ namespace mcswbot2.Objects
                     var span = DateTime.Now - plr.LastSeen;
                     n += $"\r\n  + {plr.Name} ({span.TotalHours:0.00} hrs)";
                 }
+
                 msg += "<code>" + n + "</code>";
             }
 
             // Send text only?
             //if (!MCSWBot.Conf.DrawPlots || plots.Count <= 0)
             //return SendMsg(msg, null, ParseMode.Html, 0, false, editMessage);
+
+            if (editMessage != 0)
+                msg += "\r\n\r\n Change:  <code>" + DateTime.Now.ToString("dd.MM.yy hh:mm:ss") + "</code>";
 
             // Send text on image
             using var bm = SkiaPlotter.PlotData(plots, "Days Ago", "Player Online");
@@ -360,10 +380,8 @@ namespace mcswbot2.Objects
         private void CleanData()
         {
             // clear old elements > 3 days
-            ImagingData.FindAll(id => id.Acquired < DateTime.Now - TimeSpan.FromHours(MCSWBot.Conf.HistoryHours)).ForEach(id =>
-            {
-                ImagingData.Remove(id);
-            });
+            ImagingData.FindAll(id => id.Acquired < DateTime.Now - TimeSpan.FromHours(MCSWBot.Conf.HistoryHours))
+                .ForEach(id => { ImagingData.Remove(id); });
 
             // clear old elements if count > 30
             ImagingData.OrderBy(id => id.Acquired.Ticks).Where((a, i) => i > 30).ToList().ForEach(id =>
@@ -373,6 +391,5 @@ namespace mcswbot2.Objects
 
             GC.Collect();
         }
-
     }
 }

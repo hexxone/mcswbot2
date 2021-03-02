@@ -11,13 +11,13 @@
             bool strikethrough = false,
             bool obfuscated = false)
         {
-            this.Text = text;
-            this.Color = color;
-            this.Italic = italic;
-            this.Bold = bold;
-            this.Underlined = underlined;
-            this.Strikethrough = strikethrough;
-            this.Obfuscated = obfuscated;
+            Text = text;
+            Color = color;
+            Italic = italic;
+            Bold = bold;
+            Underlined = underlined;
+            Strikethrough = strikethrough;
+            Obfuscated = obfuscated;
         }
 
         // should always be set
