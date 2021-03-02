@@ -1,5 +1,4 @@
-﻿using mcswbot2.Bot;
-using System;
+﻿using System;
 
 namespace mcswbot2
 {
@@ -7,7 +6,7 @@ namespace mcswbot2
     {
         static void Main(string[] args)
         {
-            TgBot.Start();
+            MCSWBot.Start();
         }
 
         /// <summary>
