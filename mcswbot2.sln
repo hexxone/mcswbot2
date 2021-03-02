@@ -10,8 +10,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		.editorconfig = .editorconfig
 	EndProjectSection
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "mcswlib", "mcswlib\mcswlib\mcswlib.csproj", "{84AB0B9D-ED0E-496C-8F6F-21535B19E1A1}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -22,10 +20,6 @@ Global
 		{E71AF76D-EBAC-4774-8989-3209F1B61272}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E71AF76D-EBAC-4774-8989-3209F1B61272}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E71AF76D-EBAC-4774-8989-3209F1B61272}.Release|Any CPU.Build.0 = Release|Any CPU
-		{84AB0B9D-ED0E-496C-8F6F-21535B19E1A1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{84AB0B9D-ED0E-496C-8F6F-21535B19E1A1}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{84AB0B9D-ED0E-496C-8F6F-21535B19E1A1}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{84AB0B9D-ED0E-496C-8F6F-21535B19E1A1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
