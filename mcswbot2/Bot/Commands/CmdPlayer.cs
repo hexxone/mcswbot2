@@ -1,6 +1,7 @@
 ﻿using System;
 using mcswbot2.Bot.Objects;
 using System.Collections.Generic;
+using System.Linq;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 using static mcswbot2.Bot.SkiaPlotter;
@@ -19,39 +20,52 @@ namespace mcswbot2.Bot.Commands
                 return;
             }
 
-            var msg = "Player Online:";
-            var plots = new List<PlottableData>();
-            foreach (var item in g.Servers)
+
+            if (args.Length > 1)
             {
-                var status = item.Wrapped.Last;
+                var name = args[1];
+                for (var i = 2; i < args.Length - 1; i++)
+                    name += " " + args[i];
 
-                msg += "\r\n[<code>" + item.Label + "</code>] ";
-                if ((!status?.HadSuccess) ?? true) msg += " Offline";
-                else msg += status.CurrentPlayerCount + " / " + status.MaxPlayerCount;
-
-                if (TgBot.Conf.DrawPlots)
+                name = name.Trim().ToLower();
+                if (name.Length < 3)
                 {
-                    var ud = GetUserData(item.Wrapped);
-                    if(ud.Length > 4) plots.Add(ud);
+                    g.SendMsg("Search for at least 3 characters!");
+                    return;
                 }
 
-                // add player names or continue
-                if ((status?.OnlinePlayers.Count ?? 0) <= 0) continue;
-                var n = "";
-                foreach (var plr in status.OnlinePlayers)
+                var found = false;
+                var msg = "Search results for: '" + name + "'";
+                foreach (var s in g.Servers)
                 {
-                    var span = DateTime.Now - item.SeenTime[plr.Id];
-                    n += $"\r\n  + {plr.Name} ({span.TotalHours:0.00} hrs)";
-                }
-                msg += "<code>" + n + "</code>";
-            }
+                    // check known partial name
+                    var (id, fullname) = s.NameHistory.FirstOrDefault(x => x.Value.ToLower().Contains(name) || x.Key.ToLower().Contains(name));
+                    if (id == null || fullname == null) continue;
+                    found = true;
+                    // common info
+                    msg += "\r\n--------------------";
+                    msg += $"\r\n[<code>{s.Label}</code>]";
+                    msg += $"\r\n  Player: <code>{fullname}</code>";
+                    // status & seen time
+                    var online = s.Wrapped.Last != null && (s.Wrapped.Last.OnlinePlayers.FindAll(s => s.Id == id).Count > 0);
+                    var seenSpan = DateTime.Now - s.SeenTime[id];
+                    msg += "\r\n  Status: <code>";
+                    msg += online ? "Online" : "Offline";
+                    msg += $" since {seenSpan.TotalHours:0.00}h</code>";
+                    // playtime
+                    msg += $"\r\n  Playtime: <code>{(seenSpan + s.PlayTime[id]).TotalDays:0.00} days</code>";
 
-            if (TgBot.Conf.DrawPlots && plots.Count > 0)
-            {
-                using var bm = PlotData(plots, "Minutes Ago", "Player Online");
-                g.SendMsg(msg, bm, ParseMode.Html);
+                }
+
+                if (!found) msg = "Nothing found.";
+
+                g.SendMsg(msg, null, ParseMode.Html);
             }
-            else g.SendMsg(msg, null, ParseMode.Html);
+            else
+            {
+                var res = g.SendPlayerMessage();
+                if (res != null) g.LivePlayerMsgId = res.MessageId;
+            }
         }
     }
 }

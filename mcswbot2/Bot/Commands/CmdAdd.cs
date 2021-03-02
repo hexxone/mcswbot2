@@ -21,11 +21,21 @@ namespace mcswbot2.Bot.Commands
                 Utils.VerifyLabel(serverLabel);
                 if (g.GetServer(serverLabel) != null) throw new Exception("Label name already in use.");
 
-                // try to parse target
+                // get target
                 var addr = args[2];
                 var port = 25565;
+                
+                // try to parse notation <address> <port>
                 if (args.Length == 4 && !int.TryParse(args[3], out port))
                     throw new Exception("Port is not a number.");
+
+                // try to parse notation <address:port>
+                if (args.Length == 3 && args[2].Contains(":"))
+                {
+                    var splits = args[2].Split(":");
+                    if (splits.Length == 2 && int.TryParse(splits[1], out port))
+                        addr = splits[0];
+                }
 
                 try
                 {

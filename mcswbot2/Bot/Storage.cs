@@ -14,11 +14,16 @@ namespace mcswbot2.Bot
         {
             try
             {
+                var set = new JsonSerializerSettings()
+                {
+                    //TypeNameHandling = TypeNameHandling.Objects
+                };
+
                 // load config
                 if (System.IO.File.Exists("config.json"))
                 {
                     var json = System.IO.File.ReadAllText("config.json");
-                    TgBot.Conf = JsonConvert.DeserializeObject<Config>(json);
+                    TgBot.Conf = JsonConvert.DeserializeObject<Config>(json, set);
                 }
                 else
                 {
@@ -31,21 +36,19 @@ namespace mcswbot2.Bot
                 if (System.IO.File.Exists("users.json"))
                 {
                     var json = System.IO.File.ReadAllText("users.json");
-                    TgBot.TgUsers.AddRange(JsonConvert.DeserializeObject<TgUser[]>(json));
+                    TgBot.TgUsers.AddRange(JsonConvert.DeserializeObject<TgUser[]>(json, set));
                 }
 
                 // load group objects if file exists
                 if (System.IO.File.Exists("groups.json"))
                 {
                     var json = System.IO.File.ReadAllText("groups.json");
-                    var des = JsonConvert.DeserializeObject<TgGroup[]>(json);
+                    var des = JsonConvert.DeserializeObject<TgGroup[]>(json, set);
+
+                    // Re-Register Servers with the factory
                     foreach (var g in des)
-                    {
-                        var asd = g.Servers.ToArray();
-                        g.Servers.Clear();
-                        foreach (var pair in asd)
-                            g.AddServer(pair.Label, pair.Address, pair.Port);
-                    }
+                        foreach (var pair in g.Servers)
+                            g.LoadedServer(pair);
 
                     TgBot.TgGroups.AddRange(des);
                 }
@@ -65,20 +68,25 @@ namespace mcswbot2.Bot
         {
             try
             {
+                var set = new JsonSerializerSettings()
+                {
+                    //TypeNameHandling = TypeNameHandling.Objects
+                };
+
                 // write config
-                var str = JsonConvert.SerializeObject(TgBot.Conf);
+                var str = JsonConvert.SerializeObject(TgBot.Conf, Formatting.None, set);
                 str = JToken.Parse(str).ToString(Formatting.Indented);
                 System.IO.File.WriteAllText("config.json", str);
                 // write user if any
                 if (TgBot.TgUsers.Count > 0)
                 {
-                    str = JsonConvert.SerializeObject(TgBot.TgUsers);
+                    str = JsonConvert.SerializeObject(TgBot.TgUsers, Formatting.None, set);
                     System.IO.File.WriteAllText("users.json", str);
                 }
                 // write groups if any
                 if (TgBot.TgGroups.Count > 0)
                 {
-                    str = JsonConvert.SerializeObject(TgBot.TgGroups);
+                    str = JsonConvert.SerializeObject(TgBot.TgGroups, Formatting.None, set);
                     System.IO.File.WriteAllText("groups.json", str);
                 }
                 // done

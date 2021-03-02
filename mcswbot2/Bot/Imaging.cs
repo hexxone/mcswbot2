@@ -171,7 +171,7 @@ namespace mcswbot2.Bot
 
             // draw blurred image
             var dn = DateTime.Now;
-            var blurVal = (dn.DayOfWeek != DayOfWeek.Saturday && dn.DayOfWeek != DayOfWeek.Sunday && dn.Hour > 8 && dn.Hour < 17) ? 28 : 7;
+            var blurVal = (dn.DayOfWeek != DayOfWeek.Saturday && dn.DayOfWeek != DayOfWeek.Sunday && dn.Hour > 6 && dn.Hour < 18) ? 28 : 7;
             using (var blurPain = new SKPaint())
             {
                 blurPain.ImageFilter = SKImageFilter.CreateBlur(blurVal, blurVal);
