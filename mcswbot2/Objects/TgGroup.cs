@@ -5,6 +5,7 @@ using System.Linq;
 using mcswbot2.Event;
 using mcswbot2.Minecraft;
 using mcswbot2.Static;
+using Newtonsoft.Json;
 using SkiaSharp;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
@@ -16,7 +17,8 @@ namespace mcswbot2.Objects
     public class TgGroup
     {
         // Identity
-        public List<ServerStatusWrapped> Servers = new();
+        public List<ServerStatus> Servers = new();
+
         public Chat Base { get; set; }
 
         public bool Tahnos = false;
@@ -26,13 +28,46 @@ namespace mcswbot2.Objects
         public int LivePlayerMsgId = 0;
 
         /// <summary>
+        ///     Normal contructing
+        /// </summary>
+        /// <param name="basis"></param>
+        public TgGroup(Chat basis)
+        {
+            Base = basis;
+        }
+
+        /// <summary>
+        ///     Re-Constructing from Json
+        /// </summary>
+        /// <param name="servers"></param>
+        /// <param name="Base"></param>
+        /// <param name="tahnos"></param>
+        /// <param name="imagingData"></param>
+        /// <param name="livePlayerMsgId"></param>
+        [JsonConstructor]
+        public TgGroup(List<ServerStatus> servers, Chat Base, bool tahnos, List<TahnosInfo> imagingData, int livePlayerMsgId)
+        {
+            Servers = servers;
+            // register Events
+            Servers.ForEach(srv =>
+            {
+                srv.ChangedEvent += StatusChanged;
+            });
+            this.Base = Base;
+            Tahnos = tahnos;
+            ImagingData = imagingData;
+            LivePlayerMsgId = livePlayerMsgId;
+        }
+
+
+        /// <summary>
         ///     Register & Start updating all the servers in this group after deserializing
         /// </summary>
         private void Update(ServerStatus status, EventBase[] events)
         {
             foreach (var srv in Servers)
             {
-                if (srv.Wrapped != status) continue;
+                if (srv != status) continue;
 
                 var updateMsg = $"[<code>{srv.Label}</code>]";
                 var addMore = true;
@@ -40,7 +75,7 @@ namespace mcswbot2.Objects
                 foreach (var evt in events)
                 {
                     var (txt, more) = ProcessEventMessage(srv, evt);
-                    if(txt == null) continue;
+                    if (txt == null) continue;
                     // stop adding further text after "online-status" event
                     if (addMore) updateMsg += txt;
                     addMore = addMore && more;
@@ -48,16 +83,16 @@ namespace mcswbot2.Objects
                 }
 
                 // no events processed => no message to send
-                if(!added) continue;
+                if (!added) continue;
 
                 // get & scale server image or use empty
                 var sent = false;
                 if (srv.Sticker)
                 {
                     TahnosInfo t = null;
-                    if (srv.Wrapped.Last.FavIcon != null)
+                    if (srv.Last.FavIcon != null)
                     {
-                        using (var txtBmp = Imaging.MakeSticker(srv.Wrapped.Last.FavIcon, updateMsg))
+                        using (var txtBmp = Imaging.MakeSticker(srv.Last.FavIcon, updateMsg))
                             SendMsg(null, txtBmp, ParseMode.Default, 0, true);
                         sent = true;
                     }
@@ -83,19 +118,18 @@ namespace mcswbot2.Objects
         /// <param name="srv"></param>
         /// <param name="evt"></param>
         /// <returns>   string (message), bool (continue processing?)</returns>
-        private static Tuple<string, bool> ProcessEventMessage(ServerStatusWrapped srv, EventBase evt)
+        private static Tuple<string, bool> ProcessEventMessage(ServerStatus srv, EventBase evt)
         {
+            // build & return message
             switch (evt)
             {
                 case OnlineStatusEvent ose:
-                    if (!srv.NotifyServer) return new Tuple<string, bool>(null, false);
                     return new Tuple<string, bool>((ose.ServerStatus ? EventMessages.ServerOnline : EventMessages.ServerOffline)
                         .Replace("<text>", ose.StatusText)
                         .Replace("<version>", ose.Version)
                         .Replace("<players>", $"{ose.CurrentPlayers} / {ose.MaxPlayers}"), false);
 
                 case PlayerChangeEvent pce:
-                    if (!srv.NotifyCount) return new Tuple<string, bool>(null, false);
                     var abs = Math.Abs(pce.PlayerDiff);
                     var msg2 = pce.PlayerDiff > 0 ? EventMessages.CountJoin : EventMessages.CountLeave;
                     msg2 = msg2.Replace("<count>", abs.ToString());
@@ -103,35 +137,9 @@ namespace mcswbot2.Objects
                     return new Tuple<string, bool>(msg2, true);
 
                 case PlayerStateEvent pse:
-                    // update player history / time etc..
-                    var now = DateTime.Now;
-
-                    // add seen data
-                    if (!srv.SeenTime.ContainsKey(pse.Player.Id))
-                        srv.SeenTime.Add(pse.Player.Id, now);
-                    else
-                        srv.SeenTime[pse.Player.Id] = now;
-
-                    // "Add" Play time
-                    if (!srv.PlayTime.ContainsKey(pse.Player.Id))
-                        srv.PlayTime.Add(pse.Player.Id, TimeSpan.Zero);
-
-                    var playSpan = DateTime.Now - srv.SeenTime[pse.Player.Id];
-                    if (pse.Online)
-                    {
-                        // Add current player name
-                        if (!srv.NameHistory.ContainsKey(pse.Player.Id))
-                            srv.NameHistory.Add(pse.Player.Id, pse.Player.Name);
-                        else
-                            srv.NameHistory[pse.Player.Id] = pse.Player.Name;
-                    }
-                    else srv.PlayTime[pse.Player.Id] += playSpan;
-
-                    if (!srv.NotifyNames) return new Tuple<string, bool>(null, false);
-                    // build & return message
-                    var msg1 = (pse.Online ? EventMessages.NameJoin : EventMessages.NameLeave);
+                    var msg1 = pse.Online ? EventMessages.NameJoin : EventMessages.NameLeave;
                     msg1 = msg1.Replace("<name>", pse.Player.Name);
-                    msg1 = msg1.Replace("<time>", playSpan.TotalHours.ToString("0.00") + " h");
+                    msg1 = msg1.Replace("<time>", pse.Player.PlayTime.TotalDays.ToString("0.00") + " d");
                     return new Tuple<string, bool>(msg1, true);
             }
             return new Tuple<string, bool>("", false);
@@ -142,7 +150,7 @@ namespace mcswbot2.Objects
         /// </summary>
         /// <param name="l"></param>
         /// <returns></returns>
-        internal ServerStatusWrapped GetServer(string l)
+        internal ServerStatus GetServer(string l)
         {
             return Servers.FirstOrDefault(item => string.Equals(item.Label, l, StringComparison.CurrentCultureIgnoreCase));
         }
@@ -153,32 +161,13 @@ namespace mcswbot2.Objects
         /// <param name="l"></param>
         /// <param name="adr"></param>
         /// <param name="p"></param>
-        internal void AddServer(string l, string adr, int p)
+        internal void AddServer(string l, string adr, int p, bool reuse = true)
         {
-            // TODO
-            var key = new ServerStatusUpdater() { Address = adr, Port = p };
-            var news = new ServerStatus(l, key);
-
-
+            var news = new ServerStatus(l, adr, p, reuse);
             news.ChangedEvent += StatusChanged;
-            var wrap = new ServerStatusWrapped(news);
-            Servers.Add(wrap);
+            Servers.Add(news);
         }
 
-        /// <summary>
-        ///     RE-Adding a Server from loaded Json
-        /// </summary>
-        /// <param name="ssw"></param>
-        internal void LoadedServer(ServerStatusWrapped loaded)
-        {
-            // TODO
-            var key = new ServerStatusUpdater() { Address = loaded.Address, Port = loaded.Port };
-            var news = new ServerStatus(loaded.Label, key);
-            
-
-            news.ChangedEvent += StatusChanged;
-            loaded.Wrapped = news;
-        }
 
         /// <summary>
         ///     Event on Server status change
@@ -188,16 +177,13 @@ namespace mcswbot2.Objects
         private void StatusChanged(object? sender, EventBase[] e)
         {
             // get the sending status
-            var status = (ServerStatus) sender;
-            // get wrapped object
-            var wrap = GetServer(status.Label);
-            // add current status to history
-            wrap.History.Add(status.Last);
+            var status = (ServerStatus)sender;
 
             // do the updating
-            if(e.Length > 0) Update(status, e);
+            if (e.Length > 0) Update(status, e);
+
             UpdateLivePlayer();
-            
+
             // free resources
             CleanData();
         }
@@ -278,20 +264,20 @@ namespace mcswbot2.Objects
                                 editMsg,
                                 new InputMediaPhoto(new InputMedia(imgStream, "updated.png")) { Caption = text, ParseMode = pm }).Result :
                             // Send new Image
-                            MCSWBot.Client.SendPhotoAsync(Base.Id, 
+                            MCSWBot.Client.SendPhotoAsync(Base.Id,
                                 new InputOnlineFile(imgStream),
                                 text,
-                                pm, 
+                                pm,
                                 false,
                                 replyMsg).Result;
                     }
-                    
+
                     imgStream.Dispose();
                 }
                 // send normal text
                 else if (text != null)
                 {
-                        // Update existing message
+                    // Update existing message
                     lMsg = editMsg != 0 ? MCSWBot.Client.EditMessageTextAsync(new ChatId(Base.Id),
                             editMsg,
                             text,
@@ -336,32 +322,31 @@ namespace mcswbot2.Objects
             var plots = new List<SkiaPlotter.PlottableData>();
             foreach (var item in Servers)
             {
-                var status = item.Wrapped.Last;
+                var status = item.Last;
 
                 msg += "\r\n[<code>" + item.Label + "</code>] ";
-                if ((!status?.HadSuccess) ?? true) msg += " Offline";
+                if (!status?.HadSuccess ?? true) msg += " Offline";
                 else msg += status.CurrentPlayerCount + " / " + status.MaxPlayerCount;
 
-                if (MCSWBot.Conf.DrawPlots)
-                {
-                    var ud = SkiaPlotter.GetUserData(item);
-                    if (ud.Length > 4) plots.Add(ud);
-                }
+                //if (MCSWBot.Conf.DrawPlots) {
+                var ud = SkiaPlotter.GetUserData(item);
+                if (ud.Length > 0) plots.Add(ud);
+                //}
 
                 // add player names or continue
                 if ((status?.OnlinePlayers?.Count ?? 0) <= 0) continue;
                 var n = "";
                 foreach (var plr in status.OnlinePlayers)
                 {
-                    var span = DateTime.Now - item.SeenTime[plr.Id];
+                    var span = DateTime.Now - plr.LastSeen;
                     n += $"\r\n  + {plr.Name} ({span.TotalHours:0.00} hrs)";
                 }
                 msg += "<code>" + n + "</code>";
             }
 
             // Send text only?
-            if (!MCSWBot.Conf.DrawPlots || plots.Count <= 0)
-                return SendMsg(msg, null, ParseMode.Html, 0, false, editMessage);
+            //if (!MCSWBot.Conf.DrawPlots || plots.Count <= 0)
+            //return SendMsg(msg, null, ParseMode.Html, 0, false, editMessage);
 
             // Send text on image
             using var bm = SkiaPlotter.PlotData(plots, "Days Ago", "Player Online");
@@ -370,7 +355,7 @@ namespace mcswbot2.Objects
 
 
         /// <summary>
-        ///     Clean-up Imaging & History Data
+        ///     Clean-up Imaging & InfoHistory Data
         /// </summary>
         private void CleanData()
         {
@@ -379,16 +364,15 @@ namespace mcswbot2.Objects
             {
                 ImagingData.Remove(id);
             });
-            
+
             // clear old elements if count > 30
             ImagingData.OrderBy(id => id.Acquired.Ticks).Where((a, i) => i > 30).ToList().ForEach(id =>
             {
                 ImagingData.Remove(id);
             });
-            
-            Servers.ForEach(s => s.CleanData());
 
             GC.Collect();
         }
+
     }
 }

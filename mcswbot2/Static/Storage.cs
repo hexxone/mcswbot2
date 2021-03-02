@@ -36,21 +36,14 @@ namespace mcswbot2.Static
                 if (System.IO.File.Exists("users.json"))
                 {
                     var json = System.IO.File.ReadAllText("users.json");
-                    MCSWBot.TgUsers.AddRange(JsonConvert.DeserializeObject<TgUser[]>(json, set));
+                    MCSWBot.TgUsers.AddRange(JsonConvert.DeserializeObject<TgUser[]>(json, set) ?? Array.Empty<TgUser>());
                 }
 
                 // load group objects if file exists
                 if (System.IO.File.Exists("groups.json"))
                 {
                     var json = System.IO.File.ReadAllText("groups.json");
-                    var des = JsonConvert.DeserializeObject<TgGroup[]>(json, set);
-
-                    // Re-Register Servers with the factory
-                    foreach (var g in des)
-                        foreach (var pair in g.Servers)
-                            g.LoadedServer(pair);
-
-                    MCSWBot.TgGroups.AddRange(des);
+                    MCSWBot.TgGroups.AddRange(JsonConvert.DeserializeObject<TgGroup[]>(json, set) ?? Array.Empty<TgGroup>());
                 }
                 // done
                 Program.WriteLine($"Loaded data. [{MCSWBot.TgUsers.Count} Users, {MCSWBot.TgGroups.Count} Groups]");

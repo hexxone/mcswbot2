@@ -58,9 +58,9 @@ namespace mcswbot2.Commands
             }
         }
 
-        private static string GetSrvNotifications(ServerStatusWrapped wra)
+        private static string GetSrvNotifications(ServerStatus wra)
         {
-            var msg = "[<code>" + wra.Wrapped.Label + "</code>] Notifications:";
+            var msg = "[<code>" + wra.Label + "</code>] Notifications:";
             msg += "\r\nState change:<code> " + wra.NotifyServer + "</code>";
             msg += "\r\nCount change:<code> " + wra.NotifyCount + "</code>";
             msg += "\r\nPlayer change:<code> " + wra.NotifyNames + "</code>";
