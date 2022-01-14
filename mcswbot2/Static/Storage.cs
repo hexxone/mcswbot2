@@ -36,7 +36,7 @@ namespace mcswbot2.Static
                 }
 
                 // make data dir
-                if(!Directory.Exists("data"))
+                if (!Directory.Exists("data"))
                     Directory.CreateDirectory("data");
 
                 // load users objects if file exists
