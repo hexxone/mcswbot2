@@ -1,4 +1,5 @@
 ﻿using mcswbot2.Objects;
+using mcswbot2.Static;
 using System.Linq;
 using Telegram.Bot.Types;
 using static mcswbot2.Static.SkiaPlotter;
@@ -17,7 +18,10 @@ namespace mcswbot2.Commands
             // collect Plot Data
             if (g.Servers.Count > 0)
             {
-                var plots = g.Servers.Select(GetPingData) /*.Where(pd => pd.Length > 0)*/.ToList();
+                var scaleTxt = SkiaPlotter.GetTimeScale(g.Servers, out double minuteRange);
+
+                var plots = g.Servers.Select(srv => GetPingData(srv, minuteRange)) /*.Where(pd => pd.Length > 0)*/.ToList();
+
                 using var bm = PlotData(plots, "Days Ago", "Response time (ms)");
                 g.SendMsg(null, bm);
             }

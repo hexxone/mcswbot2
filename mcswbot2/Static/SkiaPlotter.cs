@@ -16,11 +16,39 @@ namespace mcswbot2.Static
         private const int LineWidth = 3;
         private static readonly Random rnd = new(420 + 69 * 137);
 
+        // determines the timescale depending on minutes
+        private const int HourVal = 60;
+        private const int DaysVal = 360;
+
+        /// <summary>
+        ///     Get Time Scale for multiple Server plotting
+        /// </summary>
+        /// <param name="source"></param>
+        /// <returns></returns>
+        internal static string GetTimeScale(List<ServerStatus> source, out double op)
+        {
+            var dn = DateTime.Now;
+
+            // Time scaling
+            op = (source.Min(srv =>
+                (srv.Watcher.InfoHistory.Count < 1) ?
+                    dn :
+                    srv.Watcher.InfoHistory.Min(ih => ih.RequestDate)
+                ) - DateTime.Now).TotalMinutes;
+
+
+            var timeScale = "Minutes";
+            if (op > HourVal) timeScale = "Hours";
+            else if (op > DaysVal) timeScale = "Days";
+
+            return timeScale + " ago  /  " + dn;
+        }
+
         /// <summary>
         ///     returns all the time-plottable online player count data
         /// </summary>
         /// <returns></returns>
-        internal static PlottableData GetUserData(ServerStatus status, double op)
+        internal static PlottableData GetUserData(ServerStatus status, double minuteRange)
         {
             var dt = DateTime.Now;
             var res = new PlottableData(status.Label);
@@ -30,8 +58,8 @@ namespace mcswbot2.Static
             foreach (var sib in ordered)
             {
                 var diff = (sib.RequestDate - dt);
-                if (op > 50) res.Add(diff.TotalHours, sib.CurrentPlayerCount);
-                else if (op > 360) res.Add(diff.TotalDays, sib.CurrentPlayerCount);
+                if (minuteRange > HourVal) res.Add(diff.TotalHours, sib.CurrentPlayerCount);
+                else if (minuteRange > DaysVal) res.Add(diff.TotalDays, sib.CurrentPlayerCount);
                 else res.Add(diff.TotalMinutes, sib.CurrentPlayerCount);
             }
 
@@ -46,14 +74,20 @@ namespace mcswbot2.Static
         ///     returns all the time-plottable ping data
         /// </summary>
         /// <returns></returns>
-        internal static PlottableData GetPingData(ServerStatus status)
+        internal static PlottableData GetPingData(ServerStatus status, double minuteRange)
         {
             var dt = DateTime.Now;
             var res = new PlottableData(status.Label);
 
             // Add all data points
             foreach (var sib in status.Watcher.InfoHistory.OrderByDescending(sib => sib.RequestDate))
-                res.Add((sib.RequestDate - dt).TotalDays, sib.RequestTime);
+            {
+
+                var diff = (sib.RequestDate - dt);
+                if (minuteRange > 60) res.Add(diff.TotalHours, sib.RequestTime);
+                else if (minuteRange > 360) res.Add(diff.TotalDays, sib.RequestTime);
+                else res.Add(diff.TotalMinutes, sib.RequestTime);
+            }
 
 
             res.XMin = Math.Min(-0.1, res.XMin);
