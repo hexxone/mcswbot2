@@ -1,10 +1,10 @@
-﻿using System;
+﻿using mcswbot2.Event;
+using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
-using mcswbot2.Event;
-using Newtonsoft.Json;
 
 namespace mcswbot2.Minecraft
 {

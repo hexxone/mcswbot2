@@ -1,13 +1,13 @@
-﻿using System;
+﻿using mcswbot2.Minecraft;
+using ScottPlot;
+using ScottPlot.Statistics.Interpolation;
+using SkiaSharp;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
-using mcswbot2.Minecraft;
-using ScottPlot;
-using ScottPlot.Statistics.Interpolation;
-using SkiaSharp;
 
 namespace mcswbot2.Static
 {
@@ -20,17 +20,25 @@ namespace mcswbot2.Static
         ///     returns all the time-plottable online player count data
         /// </summary>
         /// <returns></returns>
-        internal static PlottableData GetUserData(ServerStatus status)
+        internal static PlottableData GetUserData(ServerStatus status, double op)
         {
             var dt = DateTime.Now;
             var res = new PlottableData(status.Label);
 
             // Add all data points
-            foreach (var sib in status.Watcher.InfoHistory.Select(siw => siw).OrderByDescending(sib => sib.RequestDate))
-                res.Add((sib.RequestDate - dt).TotalDays, sib.CurrentPlayerCount);
+            var ordered = status.Watcher.InfoHistory.OrderByDescending(sib => sib.RequestDate);
+            foreach (var sib in ordered)
+            {
+                var diff = (sib.RequestDate - dt);
+                if (op > 50) res.Add(diff.TotalHours, sib.CurrentPlayerCount);
+                else if (op > 360) res.Add(diff.TotalDays, sib.CurrentPlayerCount);
+                else res.Add(diff.TotalMinutes, sib.CurrentPlayerCount);
+            }
 
             res.XMin = Math.Min(-0.1, res.XMin);
-            res.YMin = -1; // fix for better visibility
+            // fix for better visibility
+            res.YMin = -0.5;
+            res.YMax = Math.Max(res.YMax, 5);
             return res;
         }
 
@@ -44,11 +52,14 @@ namespace mcswbot2.Static
             var res = new PlottableData(status.Label);
 
             // Add all data points
-            foreach (var sib in status.Watcher.InfoHistory.Select(siw => siw).OrderByDescending(sib => sib.RequestDate))
+            foreach (var sib in status.Watcher.InfoHistory.OrderByDescending(sib => sib.RequestDate))
                 res.Add((sib.RequestDate - dt).TotalDays, sib.RequestTime);
 
+
             res.XMin = Math.Min(-0.1, res.XMin);
-            res.YMin = 0; // fix for better visibility
+            // fix for better visibility
+            res.YMin = 0;
+            res.YMax = Math.Max(res.YMax, 50);
             return res;
         }
 
@@ -80,7 +91,7 @@ namespace mcswbot2.Static
                 var col = ColorByIndx(colorCnt++);
 
                 // original points
-                plt.PlotScatter(da.X, da.Y, lineWidth: interpolate ? 0 : 1, markerSize: 5d, label: da.Label,
+                plt.PlotScatter(da.X, da.Y, lineWidth: interpolate ? 0 : 1, markerSize: 3d, label: da.Label,
                     color: col);
 
                 // interpolated lines
@@ -156,16 +167,16 @@ namespace mcswbot2.Static
                 // get first point
                 var (fistX, firstY) = pd.Get(0);
                 var lastP = new SKPoint(
-                    (float) (plotXPos + plotWidth - plotWidth * (fistX - -allXMin) / xRange),
-                    (float) (plotYPos + plotHeight - plotHeight * (firstY - -allYMin) / yRange));
+                    (float)(plotXPos + plotWidth - plotWidth * (fistX - -allXMin) / xRange),
+                    (float)(plotYPos + plotHeight - plotHeight * (firstY - -allYMin) / yRange));
 
                 for (var i = 1; i < pd.Length; i++)
                 {
                     // get & translate origin
                     var (thisX, thisY) = pd.Get(i);
                     var thisP = new SKPoint(
-                        (float) (plotXPos + plotWidth - plotWidth * (thisX - -allXMin) / xRange),
-                        (float) (plotYPos + plotHeight - plotHeight * (thisY - -allYMin) / yRange));
+                        (float)(plotXPos + plotWidth - plotWidth * (thisX - -allXMin) / xRange),
+                        (float)(plotYPos + plotHeight - plotHeight * (thisY - -allYMin) / yRange));
                     // draw from Last to this point
                     canvas.DrawLine(lastP, thisP, linePaint);
                     // update Last point
@@ -193,11 +204,11 @@ namespace mcswbot2.Static
                 Style = SKPaintStyle.Stroke
             };
             // x
-            canvas.DrawLine(new SKPoint((float) plotXPos, (float) plotHeight),
-                new SKPoint((float) (plotXPos + plotWidth), (float) plotHeight), axisPaint);
+            canvas.DrawLine(new SKPoint((float)plotXPos, (float)plotHeight),
+                new SKPoint((float)(plotXPos + plotWidth), (float)plotHeight), axisPaint);
             // y
-            var drawYx = (float) (leftAxis ? 0d : plotWidth);
-            canvas.DrawLine(new SKPoint(drawYx, 0f), new SKPoint(drawYx, (float) plotHeight), axisPaint);
+            var drawYx = (float)(leftAxis ? 0d : plotWidth);
+            canvas.DrawLine(new SKPoint(drawYx, 0f), new SKPoint(drawYx, (float)plotHeight), axisPaint);
 
             // return
             canvas.Flush();

@@ -1,11 +1,11 @@
-﻿using System;
+﻿using mcswbot2.Event;
+using mcswbot2.Static;
+using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using mcswbot2.Event;
-using mcswbot2.Static;
-using Newtonsoft.Json;
 
 namespace mcswbot2.Minecraft
 {
@@ -169,7 +169,12 @@ namespace mcswbot2.Minecraft
                         InfoHistory.Remove(sib);
                     }
 
-                    InfoHistory.Add(new ServerInfoBasic(true, new DateTime((long) date), time, online, quInd + 1));
+                    InfoHistory.Add(new ServerInfoBasic(true, new DateTime((long)date), time, online, quInd + 1));
+                }
+                else if (quInd > InfoHistory.Max(ih => ih.QLevel))
+                {
+                    Logger.WriteLine("Cant compress further!");
+                    break;
                 }
                 else
                 {

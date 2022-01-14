@@ -12,10 +12,10 @@
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <AssemblyVersion>2.1.0.0</AssemblyVersion>
     <RepositoryUrl>http://github.com/Hexxonite/mcswbot2</RepositoryUrl>
+    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="BooruSharp" Version="3.0.2" />
     <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
     <PackageReference Include="ScottPlot" Version="4.0.48" />
     <PackageReference Include="SkiaSharp" Version="2.80.2" />
@@ -26,12 +26,6 @@
 
   <ItemGroup>
     <None Include="..\.editorconfig" Link=".editorconfig" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Reference Include="ZufallSatz">
-      <HintPath>IncludeBuild\ZufallSatz.dll</HintPath>
-    </Reference>
   </ItemGroup>
 
   <ItemGroup>
