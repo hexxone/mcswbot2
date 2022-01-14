@@ -1,4 +1,8 @@
-﻿using System;
+﻿using mcswbot2.Event;
+using mcswbot2.Static;
+using Newtonsoft.Json;
+using SkiaSharp;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -7,10 +11,6 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using mcswbot2.Event;
-using mcswbot2.Static;
-using Newtonsoft.Json;
-using SkiaSharp;
 
 namespace mcswbot2.Minecraft
 {
@@ -156,9 +156,9 @@ namespace mcswbot2.Minecraft
             return new ServerInfoExtended(dt,
                 sw.ElapsedMilliseconds / 2,
                 GetDescription(ping.description),
-                (int) ping.players.max,
-                (int) ping.players.online,
-                (string) ping.version.name,
+                (int)ping.players.max,
+                (int)ping.players.online,
+                (string)ping.version.name,
                 GetImage(ping.favicon),
                 GetSample(ping.players, players));
         }
@@ -204,7 +204,7 @@ namespace mcswbot2.Minecraft
             if (string.IsNullOrEmpty(res))
                 try
                 {
-                    res = (string) desc.text;
+                    res = (string)desc.text;
                 }
                 catch (Exception e)
                 {
@@ -215,7 +215,7 @@ namespace mcswbot2.Minecraft
             if (string.IsNullOrEmpty(res))
                 try
                 {
-                    res = (string) desc;
+                    res = (string)desc;
                 }
                 catch (Exception ex)
                 {
@@ -236,7 +236,7 @@ namespace mcswbot2.Minecraft
             SKImage image = null;
             try
             {
-                var imgStr = (string) favicon;
+                var imgStr = (string)favicon;
                 if (!string.IsNullOrEmpty(imgStr))
                 {
                     if (!imgStr.StartsWith(Header)) throw new Exception("Unknown Format");
@@ -271,7 +271,7 @@ namespace mcswbot2.Minecraft
                         // searrch for existing player sample by id
                         var exists = source.Find(s => s.Id == id);
                         // Add new global playerPayload
-                        if (exists == null) source.Add(exists = new PlayerPayLoad {Id = id, RawName = name});
+                        if (exists == null) source.Add(exists = new PlayerPayLoad { Id = id, RawName = name });
                         else exists.Online = true;
                         // add it to sample
                         sample.Add(exists);
@@ -336,11 +336,11 @@ namespace mcswbot2.Minecraft
         {
             while ((value & 128) != 0)
             {
-                buffer.Add((byte) ((value & 127) | 128));
-                value = (int) (uint) value >> 7;
+                buffer.Add((byte)((value & 127) | 128));
+                value = (int)(uint)value >> 7;
             }
 
-            buffer.Add((byte) value);
+            buffer.Add((byte)value);
         }
 
         private static void WriteShort(List<byte> buffer, short value)
@@ -366,7 +366,7 @@ namespace mcswbot2.Minecraft
             buffer.Clear();
 
             var add = 0;
-            var packetData = new[] {(byte) 0x00};
+            var packetData = new[] { (byte)0x00 };
             if (id >= 0)
             {
                 WriteVarInt(buffer, id);

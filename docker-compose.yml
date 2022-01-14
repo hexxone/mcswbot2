@@ -1,0 +1,8 @@
+version: '3.4'
+
+services:
+  mcswbot2:
+    image: ${DOCKER_REGISTRY-}mcswbot2
+    build:
+      context: .
+      dockerfile: mcswbot2/Dockerfile

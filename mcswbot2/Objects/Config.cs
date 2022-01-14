@@ -1,5 +1,5 @@
-﻿using System;
-using mcswbot2.Static;
+﻿using mcswbot2.Static;
+using System;
 
 namespace mcswbot2.Objects
 {
