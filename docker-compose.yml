@@ -1,0 +1,13 @@
+version: '3.4'
+
+services:
+  mcswbot2:
+    container_name: mcswbot2
+    hostname: mcswbot2
+    image: ${DOCKER_REGISTRY-}mcswbot2
+    build:
+      context: .
+      dockerfile: mcswbot2/Dockerfile
+    volumes:
+      - ./fonts:/app/fonts
+      - ./config.json:/app/config.json
