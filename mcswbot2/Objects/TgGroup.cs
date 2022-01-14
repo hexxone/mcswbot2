@@ -319,10 +319,8 @@ namespace mcswbot2.Objects
         {
             var msg = "";
             var plots = new List<SkiaPlotter.PlottableData>();
-
-            // Time scaling
-            var minDate = Servers.Min(srv => srv.Watcher.InfoHistory.Min(ih => ih.RequestDate));
-            var op = (minDate - DateTime.Now).TotalMinutes;
+            var dn = DateTime.Now;
+            var scaleTxt = SkiaPlotter.GetTimeScale(Servers, out double minuteRange);
 
             foreach (var item in Servers)
             {
@@ -333,7 +331,7 @@ namespace mcswbot2.Objects
                 else msg += status.CurrentPlayerCount + " / " + status.MaxPlayerCount;
 
                 // Draw Plots
-                var ud = SkiaPlotter.GetUserData(item, op);
+                var ud = SkiaPlotter.GetUserData(item, minuteRange);
                 if (ud.Length > 0) plots.Add(ud);
 
                 // add player names or continue
@@ -341,7 +339,7 @@ namespace mcswbot2.Objects
                 var n = "";
                 foreach (var plr in status.OnlinePlayers)
                 {
-                    var span = DateTime.Now - plr.LastSeen;
+                    var span = dn - plr.LastSeen;
                     n += $"\r\n  + {plr.Name} ({span.TotalHours:0.00} hrs)";
                 }
 
@@ -352,13 +350,8 @@ namespace mcswbot2.Objects
             //if (!MCSWBot.Conf.DrawPlots || plots.Count <= 0)
             //return SendMsg(msg, null, ParseMode.Html, 0, false, editMessage);
 
-
-            var timeScale = "Minutes  /  " + DateTime.Now;
-            if (op > 60) timeScale = "Hours Ago";
-            else if (op > 360) timeScale = "Days Ago";
-
             // Send text on image
-            using var bm = SkiaPlotter.PlotData(plots, timeScale, "Player Online");
+            using var bm = SkiaPlotter.PlotData(plots, scaleTxt, "Player Online");
             return SendMsg(msg, bm, ParseMode.Html, 0, false, editMessage);
         }
     }
