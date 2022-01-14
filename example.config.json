@@ -1,0 +1,11 @@
+{
+  "ApiKey": "1234:xyzxyzyxzyzxxz",
+  "DeveloperId": 1234567890,
+  "HistoryHours": 168,
+  "LogLevel": 20,
+  "QRatio": 6,
+  "QThreshold": 36,
+  "Retries": 3,
+  "RetryMs": 3000,
+  "SleepTime": 60000
+}
