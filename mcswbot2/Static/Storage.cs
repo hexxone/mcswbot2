@@ -8,6 +8,10 @@ namespace mcswbot2.Static
 {
     internal static class Storage
     {
+        private const string CON = "config.json";
+        private const string USR = "data/users.json";
+        private const string GRP = "data/groups.json";
+
         /// <summary>
         ///     Load & Json Decode the user & group settings
         /// </summary>
@@ -18,9 +22,9 @@ namespace mcswbot2.Static
                 var set = new JsonSerializerSettings();
 
                 // load config
-                if (File.Exists("config.json"))
+                if (File.Exists(CON))
                 {
-                    var json = File.ReadAllText("config.json");
+                    var json = File.ReadAllText(CON);
                     MCSWBot.Conf = JsonConvert.DeserializeObject<Config>(json, set);
                 }
                 else
@@ -31,18 +35,22 @@ namespace mcswbot2.Static
                     Environment.Exit(0);
                 }
 
+                // make data dir
+                if(!Directory.Exists("data"))
+                    Directory.CreateDirectory("data");
+
                 // load users objects if file exists
-                if (File.Exists("users.json"))
+                if (File.Exists(USR))
                 {
-                    var json = File.ReadAllText("users.json");
+                    var json = File.ReadAllText(USR);
                     MCSWBot.TgUsers.AddRange(
                         JsonConvert.DeserializeObject<TgUser[]>(json, set) ?? Array.Empty<TgUser>());
                 }
 
                 // load group objects if file exists
-                if (File.Exists("groups.json"))
+                if (File.Exists(GRP))
                 {
-                    var json = File.ReadAllText("groups.json");
+                    var json = File.ReadAllText(GRP);
                     MCSWBot.TgGroups.AddRange(JsonConvert.DeserializeObject<TgGroup[]>(json, set) ??
                                               Array.Empty<TgGroup>());
                 }
@@ -68,19 +76,19 @@ namespace mcswbot2.Static
                 // write config
                 var str = JsonConvert.SerializeObject(MCSWBot.Conf, Formatting.None, set);
                 str = JToken.Parse(str).ToString(Formatting.Indented);
-                File.WriteAllText("config.json", str);
+                File.WriteAllText(CON, str);
                 // write user if any
                 if (MCSWBot.TgUsers.Count > 0)
                 {
                     str = JsonConvert.SerializeObject(MCSWBot.TgUsers, Formatting.None, set);
-                    File.WriteAllText("users.json", str);
+                    File.WriteAllText(USR, str);
                 }
 
                 // write groups if any
                 if (MCSWBot.TgGroups.Count > 0)
                 {
                     str = JsonConvert.SerializeObject(MCSWBot.TgGroups, Formatting.None, set);
-                    File.WriteAllText("groups.json", str);
+                    File.WriteAllText(GRP, str);
                 }
 
                 // done
