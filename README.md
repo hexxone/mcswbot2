@@ -1,6 +1,6 @@
 # [mcswbot2](https://github.com/Hexxonite/mcswbot2)
 
-### MinecraftServerWatchBotV2 (.NET Core 2.1)
+### Minecraft Server Watch Bot V2
 
 [Use this bot](https://t.me/mcsw_bot) to frequently request the server list information from minecraft servers and detect changes (server offline, player change).
 
@@ -19,20 +19,20 @@ For newer versions, the Server List info may also contain a sample list of onlin
 
 - Clone the repo
 - Restore Nuget Packages
-- Add missing references from `./Include/`
 
 ### Deploy:
 
-- For windows first build, then copy all binaries from `./Include/` to your publish folder that are missing
-
-- For Linux, do the same excpet for `libwebp.dll` 
-- Install the package system-wide instead by using: `apt-get install libwebp-dev -y`
+- Install docker && docker-compose
+- Clone the repo
+- Copy `example.config.json` to `config.json` and customize it
+- `docker-compose up -d`
 
 ### Dependencies:
-- [.NET Core 2.1](https://dotnet.microsoft.com/)
-- [mcswlib](https://github.com/Hexxonite/mcswlib) my own library for minecraft-server pinging
-- [ScottPlot](https://github.com/swharden/ScottPlot) for plotting Data over time (See `/player` and `/ping` command).
-- [Newtonsoft.JSON](https://github.com/JamesNK/Newtonsoft.Json) for (de-)serializing the server info and settings
-- [Telegram.Bot](https://github.com/TelegramBots/telegram.bot) for the actual Bot part
+- [Docker](https://docker.com/) cross-platform
+- [.NET 5](https://dotnet.microsoft.com/) runtime
+- [SkiaSharp](https://github.com/mono/SkiaSharp) status image & sticker processing
+- [ScottPlot](https://github.com/swharden/ScottPlot) time-data plotting (See `/player` and `/ping` command).
+- [Newtonsoft.JSON](https://github.com/JamesNK/Newtonsoft.Json) (de-)serializing server-info and settings
+- [Telegram.Bot](https://github.com/TelegramBots/telegram.bot) telegram bot part
 
 
