@@ -11,3 +11,5 @@ services:
     volumes:
       - ./fonts:/app/fonts
       - ./config.json:/app/config.json
+      - ./groups.json:/app/groups.json
+      - ./users.json:/app/users.json
