@@ -1,12 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using mcswbot2.Event;
+﻿using mcswbot2.Event;
 using mcswbot2.Minecraft;
 using mcswbot2.Static;
 using Newtonsoft.Json;
 using SkiaSharp;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.InputFiles;
@@ -16,14 +16,10 @@ namespace mcswbot2.Objects
     [Serializable]
     public class TgGroup
     {
-        public List<TahnosInfo> ImagingData = new();
-
         public int LivePlayerMsgId;
 
         // Identity
         public List<ServerStatus> Servers = new();
-
-        public bool Tahnos;
 
         /// <summary>
         ///     Normal contructing
@@ -43,15 +39,13 @@ namespace mcswbot2.Objects
         /// <param name="imagingData"></param>
         /// <param name="livePlayerMsgId"></param>
         [JsonConstructor]
-        public TgGroup(List<ServerStatus> servers, Chat Base, bool tahnos, List<TahnosInfo> imagingData,
+        public TgGroup(List<ServerStatus> servers, Chat Base,
             int livePlayerMsgId)
         {
             Servers = servers;
             // register Events
             Servers.ForEach(srv => { srv.ChangedEvent += StatusChanged; });
             this.Base = Base;
-            Tahnos = tahnos;
-            ImagingData = imagingData;
             LivePlayerMsgId = livePlayerMsgId;
         }
 
@@ -85,28 +79,14 @@ namespace mcswbot2.Objects
 
                 // get & scale server image or use empty
                 var sent = false;
-                if (srv.Sticker)
+                if (srv.Sticker && srv.Last.FavIcon != null)
                 {
-                    TahnosInfo t = null;
-                    if (srv.Last.FavIcon != null)
+                    using (var txtBmp = Imaging.MakeSticker(srv.Last.FavIcon, updateMsg))
                     {
-                        using (var txtBmp = Imaging.MakeSticker(srv.Last.FavIcon, updateMsg))
-                        {
-                            SendMsg(null, txtBmp, ParseMode.Default, 0, true);
-                        }
+                        SendMsg(null, txtBmp, ParseMode.Default, 0, true);
+                    }
 
-                        sent = true;
-                    }
-                    else if (Tahnos && (t = TahnosInfo.Get()) != null)
-                    {
-                        using var txtBmp = Imaging.MakeSticker(t.Bmap, updateMsg);
-                        var msg = SendMsg(null, txtBmp, ParseMode.Default, 0, true);
-                        t.RelatedMsgID = msg.MessageId;
-                        t.Bmap.Dispose();
-                        t.Bmap = null;
-                        ImagingData.Add(t);
-                        sent = true;
-                    }
+                    sent = true;
                 }
 
                 // send message if sticker disabled or failed
@@ -182,7 +162,7 @@ namespace mcswbot2.Objects
         private void StatusChanged(object? sender, EventBase[] e)
         {
             // get the sending status
-            var status = (ServerStatus) sender;
+            var status = (ServerStatus)sender;
 
             // do the updating
             if (e.Length > 0) Update(status, e);
@@ -190,7 +170,7 @@ namespace mcswbot2.Objects
             UpdateLivePlayer();
 
             // free resources
-            CleanData();
+            GC.Collect();
         }
 
         /// <summary>
@@ -269,7 +249,7 @@ namespace mcswbot2.Objects
                             ? MCSWBot.Client.EditMessageMediaAsync(new ChatId(Base.Id),
                                 editMsg,
                                 new InputMediaPhoto(new InputMedia(imgStream, "updated.png"))
-                                    {Caption = text, ParseMode = pm}).Result
+                                { Caption = text, ParseMode = pm }).Result
                             :
                             // Send new Image
                             MCSWBot.Client.SendPhotoAsync(Base.Id,
@@ -309,6 +289,9 @@ namespace mcswbot2.Objects
             }
             catch (Exception ex)
             {
+#if DEBUG
+                throw ex;
+#endif
                 if (ex.StackTrace.Contains("chat not found")) MCSWBot.DestroyGroup(this);
                 else
                     Program.WriteLine("Send Exception: " + ex + "\r\nGroup: " + Base.Id + "\r\nStack: " +
@@ -334,8 +317,13 @@ namespace mcswbot2.Objects
         /// <returns></returns>
         internal Message SendPlayerMessage(int editMessage = 0)
         {
-            var msg = "Player Online:";
+            var msg = "";
             var plots = new List<SkiaPlotter.PlottableData>();
+
+            // Time scaling
+            var minDate = Servers.Min(srv => srv.Watcher.InfoHistory.Min(ih => ih.RequestDate));
+            var op = (minDate - DateTime.Now).TotalMinutes;
+
             foreach (var item in Servers)
             {
                 var status = item.Last;
@@ -344,10 +332,9 @@ namespace mcswbot2.Objects
                 if (!status?.HadSuccess ?? true) msg += " Offline";
                 else msg += status.CurrentPlayerCount + " / " + status.MaxPlayerCount;
 
-                //if (MCSWBot.Conf.DrawPlots) {
-                var ud = SkiaPlotter.GetUserData(item);
+                // Draw Plots
+                var ud = SkiaPlotter.GetUserData(item, op);
                 if (ud.Length > 0) plots.Add(ud);
-                //}
 
                 // add player names or continue
                 if ((status?.OnlinePlayers?.Count ?? 0) <= 0) continue;
@@ -365,31 +352,14 @@ namespace mcswbot2.Objects
             //if (!MCSWBot.Conf.DrawPlots || plots.Count <= 0)
             //return SendMsg(msg, null, ParseMode.Html, 0, false, editMessage);
 
-            if (editMessage != 0)
-                msg += "\r\n\r\n Change:  <code>" + DateTime.Now.ToString("dd.MM.yy hh:mm:ss") + "</code>";
+
+            var timeScale = "Minutes  /  " + DateTime.Now;
+            if (op > 60) timeScale = "Hours Ago";
+            else if (op > 360) timeScale = "Days Ago";
 
             // Send text on image
-            using var bm = SkiaPlotter.PlotData(plots, "Days Ago", "Player Online");
+            using var bm = SkiaPlotter.PlotData(plots, timeScale, "Player Online");
             return SendMsg(msg, bm, ParseMode.Html, 0, false, editMessage);
-        }
-
-
-        /// <summary>
-        ///     Clean-up Imaging & InfoHistory Data
-        /// </summary>
-        private void CleanData()
-        {
-            // clear old elements > 3 days
-            ImagingData.FindAll(id => id.Acquired < DateTime.Now - TimeSpan.FromHours(MCSWBot.Conf.HistoryHours))
-                .ForEach(id => { ImagingData.Remove(id); });
-
-            // clear old elements if count > 30
-            ImagingData.OrderBy(id => id.Acquired.Ticks).Where((a, i) => i > 30).ToList().ForEach(id =>
-            {
-                ImagingData.Remove(id);
-            });
-
-            GC.Collect();
         }
     }
 }

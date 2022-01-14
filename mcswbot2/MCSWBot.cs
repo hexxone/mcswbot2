@@ -1,16 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using mcswbot2.Commands;
+﻿using mcswbot2.Commands;
 using mcswbot2.Minecraft;
 using mcswbot2.Objects;
 using mcswbot2.Static;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Args;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
-using ZufallSatz;
 
 namespace mcswbot2
 {
@@ -33,8 +32,6 @@ namespace mcswbot2
             Program.WriteLine("MineCraftServerWatchBotV2 for Telegram");
             Program.WriteLine("starting...");
 
-            Generator.PreInit();
-
             // default config
             Conf = new Config();
 
@@ -47,7 +44,6 @@ namespace mcswbot2
             Commands.Add(new CmdRemove());
             Commands.Add(new CmdStart());
             Commands.Add(new CmdStats());
-            Commands.Add(new CmdTahnos());
 
             // Load users, groups & settings
             Storage.Load();
@@ -59,7 +55,7 @@ namespace mcswbot2
 
 
             var enumValues = Enum.GetValues(typeof(Types.LogLevel)).Cast<int>().ToList();
-            if (enumValues.Contains(Conf.LogLevel)) Logger.LogLevel = (Types.LogLevel) Conf.LogLevel;
+            if (enumValues.Contains(Conf.LogLevel)) Logger.LogLevel = (Types.LogLevel)Conf.LogLevel;
             else Logger.WriteLine("Invalid LogLevel: " + Conf.LogLevel, Types.LogLevel.Error);
 
             // Start the telegram bot
@@ -95,7 +91,7 @@ namespace mcswbot2
         {
             Client = new TelegramBotClient(Conf.ApiKey);
             TgBotUser = await Client.GetMeAsync();
-            Program.WriteLine("I am Robot: " + TgBotUser.Username);
+            Program.WriteLine("Watashi wa Gandamudesu! " + TgBotUser.Username);
             Client.OnMessage += Client_OnMessage;
 
             // start taking requests
@@ -153,7 +149,7 @@ namespace mcswbot2
 
             // build text/command arguments
             var text = msg.Text;
-            var args = new[] {text};
+            var args = new[] { text };
             if (text.Contains(" "))
                 args = text.Split(' ');
 

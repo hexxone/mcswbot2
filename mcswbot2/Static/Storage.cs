@@ -1,8 +1,8 @@
-﻿using System;
-using System.IO;
-using mcswbot2.Objects;
+﻿using mcswbot2.Objects;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System;
+using System.IO;
 
 namespace mcswbot2.Static
 {

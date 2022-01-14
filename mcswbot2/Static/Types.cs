@@ -15,7 +15,7 @@ namespace mcswbot2.Static
             Debug = 30
         }
 
-        public static ParallelOptions POptions = new() {MaxDegreeOfParallelism = 10};
+        public static ParallelOptions POptions = new() { MaxDegreeOfParallelism = 10 };
 
         /// <summary>
         ///     removes Minecraft Chat Syle informations
