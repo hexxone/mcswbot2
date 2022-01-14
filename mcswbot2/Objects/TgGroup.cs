@@ -351,7 +351,7 @@ namespace mcswbot2.Objects
             //return SendMsg(msg, null, ParseMode.Html, 0, false, editMessage);
 
             // Send text on image
-            using var bm = SkiaPlotter.PlotData(plots, scaleTxt, "Player Online");
+            using var bm = SkiaPlotter.PlotData(plots, scaleTxt, "Players online");
             return SendMsg(msg, bm, ParseMode.Html, 0, false, editMessage);
         }
     }
