@@ -25,23 +25,21 @@ namespace mcswbot2.Static
         /// </summary>
         /// <param name="source"></param>
         /// <returns></returns>
-        internal static string GetTimeScale(List<ServerStatus> source, out double op)
+        internal static string GetTimeScale(List<ServerStatus> source, out double minRange)
         {
             var dn = DateTime.Now;
+            minRange = source.Max(s =>
+            {
+                if (s.Watcher.InfoHistory.Count < 1) return 0;
+                return (dn - s.Watcher.InfoHistory.Min(ih => ih.RequestDate)).TotalMinutes;
+            });
 
             // Time scaling
-            op = (source.Min(srv =>
-                (srv.Watcher.InfoHistory.Count < 1) ?
-                    dn :
-                    srv.Watcher.InfoHistory.Min(ih => ih.RequestDate)
-                ) - DateTime.Now).TotalMinutes;
-
-
             var timeScale = "Minutes";
-            if (op > HourVal) timeScale = "Hours";
-            else if (op > DaysVal) timeScale = "Days";
+            if (minRange > HourVal) timeScale = "Hours";
+            else if (minRange > DaysVal) timeScale = "Days";
 
-            return timeScale + " ago  /  " + dn;
+            return timeScale + "  @  " + dn;
         }
 
         /// <summary>
@@ -82,10 +80,9 @@ namespace mcswbot2.Static
             // Add all data points
             foreach (var sib in status.Watcher.InfoHistory.OrderByDescending(sib => sib.RequestDate))
             {
-
                 var diff = (sib.RequestDate - dt);
-                if (minuteRange > 60) res.Add(diff.TotalHours, sib.RequestTime);
-                else if (minuteRange > 360) res.Add(diff.TotalDays, sib.RequestTime);
+                if (minuteRange > HourVal) res.Add(diff.TotalHours, sib.RequestTime);
+                else if (minuteRange > DaysVal) res.Add(diff.TotalDays, sib.RequestTime);
                 else res.Add(diff.TotalMinutes, sib.RequestTime);
             }
 
