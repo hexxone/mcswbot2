@@ -4,11 +4,11 @@ using Telegram.Bot.Types.Enums;
 
 namespace mcswbot2.Commands
 {
-    internal class CmdList : ICommand
+    internal class CmdServers : ICommand
     {
         internal override string Command()
         {
-            return "list";
+            return "servers";
         }
 
         internal override void Call(Message m, TgGroup g, TgUser u, string[] args, bool dev)
