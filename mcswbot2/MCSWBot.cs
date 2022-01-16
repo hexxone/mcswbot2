@@ -43,11 +43,11 @@ namespace mcswbot2
 
             // Add Bot commands
             Commands.Add(new CmdAdd());
-            Commands.Add(new CmdList());
             Commands.Add(new CmdNotify());
             Commands.Add(new CmdPing());
-            Commands.Add(new CmdPlayer());
+            Commands.Add(new CmdPlayers());
             Commands.Add(new CmdRemove());
+            Commands.Add(new CmdServers());
             Commands.Add(new CmdStart());
             Commands.Add(new CmdStats());
 

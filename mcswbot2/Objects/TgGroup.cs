@@ -308,7 +308,7 @@ namespace mcswbot2.Objects
         private void UpdateLivePlayer()
         {
             if (LivePlayerMsgId == 0) return;
-            SendPlayerMessage(LivePlayerMsgId);
+            SendPlayersMessage(LivePlayerMsgId);
         }
 
         /// <summary>
@@ -316,7 +316,7 @@ namespace mcswbot2.Objects
         /// </summary>
         /// <param name="editMessage"></param>
         /// <returns></returns>
-        internal Message SendPlayerMessage(int editMessage = 0)
+        internal Message SendPlayersMessage(int editMessage = 0)
         {
             var msg = "";
             var plots = new List<SkiaPlotter.PlottableData>();
@@ -347,14 +347,14 @@ namespace mcswbot2.Objects
                 msg += "<code>" + n + "</code>";
             }
 
-            Program.WriteLine("Updating live Player msg in group: " + Base.Id);
+            Program.WriteLine("Updating live Players msg in group: " + Base.Id);
 
             // Send text only?
             if (plots.Count <= 0)
                 return SendMsg(msg, null, ParseMode.Html, 0, false, editMessage);
 
             // Send text on image
-            using var bm = SkiaPlotter.PlotData(plots, scaleTxt, "Players online");
+            using var bm = SkiaPlotter.PlotData(plots, scaleTxt, "Players");
             return SendMsg(msg, bm, ParseMode.Html, 0, false, editMessage);
         }
     }
