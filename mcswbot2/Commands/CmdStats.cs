@@ -73,7 +73,7 @@ namespace mcswbot2.Commands
                 msg += $"\r\n  watched servers:<code> {serverCount:0}</code>";
                 msg += $"\r\n  online MC users:<code> {userCount:0}</code>";
                 msg += $"\r\n  live ram usage:<code> {totalSize:0.00} MB</code>";
-                msg += "\r\n\r\nUse /stats <player> to search for Minecraft-Players.";
+                msg += "\r\n\r\nUse /stats [player] to search for Minecraft-Players.";
                 g.SendMsg(msg, null, ParseMode.Html);
             }
 
