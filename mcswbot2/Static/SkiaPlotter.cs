@@ -5,8 +5,6 @@ using SkiaSharp;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
-using System.Drawing.Imaging;
-using System.IO;
 using System.Linq;
 
 namespace mcswbot2.Static
@@ -17,8 +15,8 @@ namespace mcswbot2.Static
         private static readonly Random rnd = new(420 + 69 * 137);
 
         // determines the timescale depending on minutes
+        private const int DaysVal = 1440;
         private const int HourVal = 60;
-        private const int DaysVal = 360;
 
         /// <summary>
         ///     Get Time Scale for multiple Server plotting
@@ -36,8 +34,8 @@ namespace mcswbot2.Static
 
             // Time scaling
             var timeScale = "Minutes";
-            if (minRange > HourVal) timeScale = "Hours";
-            else if (minRange > DaysVal) timeScale = "Days";
+            if (minRange > DaysVal) timeScale = "Days";
+            else if (minRange > HourVal) timeScale = "Hours";
 
             return timeScale + "  @  " + dn;
         }
@@ -56,8 +54,8 @@ namespace mcswbot2.Static
             foreach (var sib in ordered)
             {
                 var diff = (sib.RequestDate - dt);
-                if (minuteRange > HourVal) res.Add(diff.TotalHours, sib.CurrentPlayerCount);
-                else if (minuteRange > DaysVal) res.Add(diff.TotalDays, sib.CurrentPlayerCount);
+                if (minuteRange > DaysVal) res.Add(diff.TotalDays, sib.CurrentPlayerCount);
+                else if (minuteRange > HourVal) res.Add(diff.TotalHours, sib.CurrentPlayerCount);
                 else res.Add(diff.TotalMinutes, sib.CurrentPlayerCount);
             }
 
@@ -81,8 +79,8 @@ namespace mcswbot2.Static
             foreach (var sib in status.Watcher.InfoHistory.OrderByDescending(sib => sib.RequestDate))
             {
                 var diff = (sib.RequestDate - dt);
-                if (minuteRange > HourVal) res.Add(diff.TotalHours, sib.RequestTime);
-                else if (minuteRange > DaysVal) res.Add(diff.TotalDays, sib.RequestTime);
+                if (minuteRange > DaysVal) res.Add(diff.TotalDays, sib.RequestTime);
+                else if (minuteRange > HourVal) res.Add(diff.TotalHours, sib.RequestTime);
                 else res.Add(diff.TotalMinutes, sib.RequestTime);
             }
 
@@ -107,10 +105,10 @@ namespace mcswbot2.Static
             var allXMin = dat.Min(s => s.XMin);
             var allYMin = dat.Min(s => s.YMin);
             var allYMax = dat.Max(s => s.YMax);
-            plt.Axis(allXMin * 1.1, 0, allYMin, allYMax * 1.2);
+            plt.SetAxisLimits(allXMin * 1.1, 0, allYMin, allYMax * 1.2);
 
             plt.Style(Style.Black);
-            plt.Ticks(useMultiplierNotation: false);
+            // plt.Ticks(useMultiplierNotation: false);
             plt.XLabel(xLbl);
             plt.YLabel(yLbl);
             plt.Legend();
@@ -122,21 +120,19 @@ namespace mcswbot2.Static
                 var col = ColorByIndx(colorCnt++);
 
                 // original points
-                plt.PlotScatter(da.X, da.Y, lineWidth: interpolate ? 0 : 1, markerSize: 3d, label: da.Label,
+                plt.AddScatter(da.X, da.Y, lineWidth: interpolate ? 0 : 1, markerSize: 3, label: da.Label,
                     color: col);
 
                 // interpolated lines
                 if (!interpolate || da.Length <= 5) continue;
                 var nsi = new NaturalSpline(da.X, da.Y, 30);
-                plt.PlotScatter(nsi.interpolatedXs, nsi.interpolatedYs, lineWidth: 1d, markerSize: 0d, label: null,
+                plt.AddScatter(nsi.interpolatedXs, nsi.interpolatedYs, lineWidth: 1, markerSize: 0, label: null,
                     color: col);
             }
 
-            using var bm = plt.GetBitmap();
-            using var stream = new MemoryStream();
-            DDoS(bm);
-            bm.Save(stream, ImageFormat.Bmp);
-            return SKImage.FromEncodedData(stream.ToArray());
+            // @TODO randomize some pixels so tg does not cry?
+
+            return SKImage.FromEncodedData(plt.GetImageBytes());
         }
 
         private static void DDoS(Bitmap bm)

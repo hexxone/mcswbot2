@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.InputFiles;
@@ -83,7 +84,7 @@ namespace mcswbot2.Objects
                 {
                     using (var txtBmp = Imaging.MakeSticker(srv.Last.FavIcon, updateMsg))
                     {
-                        SendMsg(null, txtBmp, ParseMode.Default, 0, true);
+                        SendMsg(null, txtBmp, ParseMode.Html, 0, true);
                     }
 
                     sent = true;
@@ -159,7 +160,7 @@ namespace mcswbot2.Objects
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void StatusChanged(object? sender, EventBase[] e)
+        private void StatusChanged(object sender, EventBase[] e)
         {
             // get the sending status
             var status = (ServerStatus)sender;
@@ -195,7 +196,7 @@ namespace mcswbot2.Objects
         /// <param name="pm"></param>
         /// <param name="replyMsg"></param>
         /// <param name="sticker"></param>
-        internal Message SendMsg(string text = null, SKImage bitmap = null, ParseMode pm = ParseMode.Default,
+        internal Message SendMsg(string text = null, SKImage bitmap = null, ParseMode pm = ParseMode.Markdown,
             int replyMsg = 0, bool sticker = false, int editMsg = 0)
         {
             if (bitmap == null) return SendMsgStream(text, null, pm, replyMsg, sticker);
@@ -213,7 +214,7 @@ namespace mcswbot2.Objects
         /// <param name="pm"></param>
         /// <param name="replyMsg"></param>
         /// <param name="sticker"></param>
-        private Message SendMsgStream(string text = null, Stream imgStream = null, ParseMode pm = ParseMode.Default,
+        private Message SendMsgStream(string text = null, Stream imgStream = null, ParseMode pm = ParseMode.Markdown,
             int replyMsg = 0, bool sticker = false, int editMsg = 0)
         {
             Message lMsg = null;
@@ -236,9 +237,9 @@ namespace mcswbot2.Objects
                             lMsg = MCSWBot.Client.SendTextMessageAsync(Base.Id,
                                 text,
                                 pm,
-                                true,
-                                false,
-                                replyMsg).Result;
+                                disableWebPagePreview: true,
+                                disableNotification: false,
+                                replyToMessageId: replyMsg).Result;
                         }
                     }
                     // send normal image
@@ -256,8 +257,8 @@ namespace mcswbot2.Objects
                                 new InputOnlineFile(imgStream),
                                 text,
                                 pm,
-                                false,
-                                replyMsg).Result;
+                                disableNotification: false,
+                                replyToMessageId: replyMsg).Result;
                     }
 
                     imgStream.Dispose();
@@ -271,15 +272,15 @@ namespace mcswbot2.Objects
                             editMsg,
                             text,
                             pm,
-                            true).Result
+                            disableWebPagePreview: true).Result
                         :
                         // Send New
                         MCSWBot.Client.SendTextMessageAsync(Base.Id,
                             text,
                             pm,
-                            true,
-                            false,
-                            replyMsg).Result;
+                            disableWebPagePreview: true,
+                            disableNotification: false,
+                            replyToMessageId: replyMsg).Result;
                 }
                 // uhoh?
                 else
@@ -346,9 +347,11 @@ namespace mcswbot2.Objects
                 msg += "<code>" + n + "</code>";
             }
 
+            Program.WriteLine("Updating live Player msg in group: " + Base.Id);
+
             // Send text only?
-            //if (!MCSWBot.Conf.DrawPlots || plots.Count <= 0)
-            //return SendMsg(msg, null, ParseMode.Html, 0, false, editMessage);
+            if (plots.Count <= 0)
+                return SendMsg(msg, null, ParseMode.Html, 0, false, editMessage);
 
             // Send text on image
             using var bm = SkiaPlotter.PlotData(plots, scaleTxt, "Players online");
