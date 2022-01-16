@@ -5,9 +5,10 @@ using mcswbot2.Static;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Telegram.Bot;
-using Telegram.Bot.Args;
+using Telegram.Bot.Extensions.Polling;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 
@@ -15,9 +16,14 @@ namespace mcswbot2
 {
     internal class MCSWBot
     {
+        internal const int TG_TRIES = 30;
+        internal const int TG_SLEEP = 30000;
+
         private static readonly List<ICommand> Commands = new();
         internal static readonly List<TgUser> TgUsers = new();
         internal static readonly List<TgGroup> TgGroups = new();
+
+        internal static CancellationTokenSource botCts;
 
         internal static Config Conf { get; set; }
 
@@ -59,11 +65,10 @@ namespace mcswbot2
             else Logger.WriteLine("Invalid LogLevel: " + Conf.LogLevel, Types.LogLevel.Error);
 
             // Start the telegram bot
-
-            _ = RunBotAsync();
+            StartTelegramBotClient();
 
             // Minecraft Update Lööp
-            while (true)
+            while (!botCts.IsCancellationRequested)
                 try
                 {
                     ServerStatus.UpdateAll();
@@ -84,32 +89,57 @@ namespace mcswbot2
         }
 
         /// <summary>
-        ///     Start receiving message updates on the Telegram Bot
+        ///     Auto (re-)Connect the Telegram bot
         /// </summary>
-        /// <returns></returns>
-        private static async Task RunBotAsync()
+        /// <param name="tries"></param>
+        private static async void StartTelegramBotClient(int tries = 0)
         {
-            Client = new TelegramBotClient(Conf.ApiKey);
-            TgBotUser = await Client.GetMeAsync();
-            Program.WriteLine("Watashi wa Gandamudesu! " + TgBotUser.Username);
-            Client.OnMessage += Client_OnMessage;
+            Program.WriteLine("Telegram bot connecting...");
+            Thread.Sleep(3000);
 
-            // start taking requests
-            Client.StartReceiving();
+            try
+            {
+                Client = new TelegramBotClient(Conf.ApiKey);
+
+                botCts = new CancellationTokenSource();
+
+                // receive all update types
+                var receiverOptions = new ReceiverOptions { AllowedUpdates = { } };
+
+                // StartReceiving does not block the caller thread. Receiving is done on the ThreadPool.
+                // from here on, we are running async events.
+                Client.StartReceiving(
+                    Client_OnMessage,
+                    Client_OnError,
+                    receiverOptions,
+                    cancellationToken: botCts.Token);
+
+                // get bot 
+                TgBotUser = await Client.GetMeAsync();
+            }
+            catch (Exception e)
+            {
+                Program.WriteLine("Was not able to connect.. (" + tries + ")\r\n" + e);
+                if (tries++ < TG_TRIES)
+                {
+                    Program.WriteLine($"Retry in {TG_SLEEP / 1000:0.0} s");
+                    Thread.Sleep(TG_SLEEP);
+                    StartTelegramBotClient(tries);
+                }
+                else
+                {
+                    Program.WriteLine("Unable to receive Telegram messages. Shutting down...");
+                    botCts.Cancel();
+                    Environment.Exit(0);
+                }
+            }
         }
 
-        /// <summary>
-        ///     Event Callback for Telegram Bot
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private static void Client_OnMessage(object? sender, MessageEventArgs e)
+        private static Task Client_OnMessage(ITelegramBotClient arg1, Update arg2, CancellationToken arg3)
         {
             try
             {
-                HandleMessage(e.Message);
-                // manually cleanup unreferenced objects
-                GC.Collect();
+                return HandleMessage(arg2.Message);
             }
             catch (Exception ex)
             {
@@ -117,14 +147,23 @@ namespace mcswbot2
 #if DEBUG
                 throw;
 #endif
+                return Task.FromException(ex);
             }
         }
+
+        private static Task Client_OnError(ITelegramBotClient arg1, Exception arg2, CancellationToken arg3)
+        {
+            Program.WriteLine("Telegram General Error:\r\n" + arg2);
+            StartTelegramBotClient();
+            return Task.CompletedTask;
+        }
+
 
         /// <summary>
         ///     Will handle all incoming bot messages
         /// </summary>
         /// <param name="msg"></param>
-        private static void HandleMessage(Message msg)
+        private static Task HandleMessage(Message msg)
         {
             // get sender
             var user = GetUser(msg.From);
@@ -138,14 +177,14 @@ namespace mcswbot2
                 Client.SendTextMessageAsync(msg.Chat.Id,
                     "This bot is intended for group use only.\r\n<a href=\"https://t.me/" + TgBotUser.Username +
                     "?startgroup=add\">Add me</a>", ParseMode.Html).Wait();
-                return;
+                return Task.CompletedTask;
             }
 
             // get group context
             var group = GetGroup(msg.Chat);
 
             // shouldn't usually happen in privacy mode (only commands)
-            if (msg.Text == null) return;
+            if (msg.Text == null) return Task.CompletedTask;
 
             // build text/command arguments
             var text = msg.Text;
@@ -154,14 +193,14 @@ namespace mcswbot2
                 args = text.Split(' ');
 
             // Process commands only
-            if (!args[0].StartsWith('/')) return;
+            if (!args[0].StartsWith('/')) return Task.CompletedTask;
 
             var usrCmd = args[0][1..].ToLower();
             if (usrCmd.Contains("@"))
             {
                 var spl = usrCmd.Split('@');
                 // this command is malformatted or meant for another bot
-                if (spl[1] != TgBotUser.Username.ToLower()) return;
+                if (spl[1] != TgBotUser.Username.ToLower()) return Task.CompletedTask;
                 // dont include botname in command
                 usrCmd = spl[0];
             }
@@ -170,9 +209,11 @@ namespace mcswbot2
             foreach (var cmd in Commands)
                 if (usrCmd == cmd.Command().ToLower())
                 {
-                    Program.WriteLine("Command: " + cmd.Command() + " by " + user.Base.Id);
+                    Program.WriteLine("Command: " + cmd.Command() + " by " + user.Base.Id + " in " + group.Base.Id);
                     cmd.Call(msg, group, user, args, isDev);
                 }
+
+            return Task.CompletedTask;
         }
 
         #region Helper

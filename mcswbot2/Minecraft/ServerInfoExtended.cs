@@ -14,14 +14,14 @@ namespace mcswbot2.Minecraft
         ///     => successful request
         /// </summary>
         /// <param name="dt">When did the request start?</param>
-        /// <param name="sp">How long did the request take?</param>
+        /// <param name="sp">How long did the request take in ms?</param>
         /// <param name="motd">Server's MOTD</param>
         /// <param name="maxPlayers">Server's max player count</param>
         /// <param name="playerCount">Server's current player count</param>
         /// <param name="version">Server's Minecraft version</param>
         /// <param name="favIco">Server's favicon object if given</param>
         /// <param name="players">Server's online players</param>
-        internal ServerInfoExtended(DateTime dt, long sp, string motd, int maxPlayers, int playerCount, string version,
+        internal ServerInfoExtended(DateTime dt, double sp, string motd, int maxPlayers, int playerCount, string version,
             SKImage favIco, List<PlayerPayLoad> players)
         {
             HadSuccess = true;

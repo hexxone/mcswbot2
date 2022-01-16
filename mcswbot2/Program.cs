@@ -15,7 +15,7 @@ namespace mcswbot2
         /// <param name="l"></param>
         internal static void WriteLine(string l)
         {
-            Console.WriteLine("[" + DateTime.Now.ToString("yyyy-MM-ss HH:mm:ss") + "] " + l);
+            Console.WriteLine("[" + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + "] " + l);
         }
     }
 }

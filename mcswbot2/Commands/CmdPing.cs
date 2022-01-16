@@ -22,8 +22,12 @@ namespace mcswbot2.Commands
 
                 var plots = g.Servers.Select(srv => GetPingData(srv, minuteRange)) /*.Where(pd => pd.Length > 0)*/.ToList();
 
-                using var bm = PlotData(plots, scaleTxt, "Response time (ms)");
-                g.SendMsg(null, bm);
+                if (plots.Count > 0)
+                {
+                    using var bm = PlotData(plots, scaleTxt, "Response time (ms)");
+                    g.SendMsg(null, bm);
+                }
+                else g.SendMsg("Not enough data. Please try again later.");
             }
             else
             {

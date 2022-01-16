@@ -97,8 +97,7 @@ namespace mcswbot2.Static
             var yPos = pos.Top + pos.Height / 2 - textBounds.MidY;
 
             // font stuffs
-            var ff = Fonts.GetCustomFont();
-            var fa = SKTypeface.FromFamilyName(ff.Name);
+            var fa = SKTypeface.FromFile("./fonts/segoe_ui.ttf");
             using var fo = new SKFont(fa, fSize);
             using var te = SKTextBlob.Create(txt, fo);
 
