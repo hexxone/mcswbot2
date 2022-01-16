@@ -6,7 +6,7 @@
     public static class EventMessages
     {
         internal static string ServerOnline =
-            "\r\nStatus: <code>  online </code> 🌐\r\nVersion: <code> <version></code>\r\nPlayers:  <code> <players></code>\r\nText:\r\n<code><text></code>";
+            "\r\nStatus: <code>  online </code> 🌐\r\nVersion: <code> <version></code>\r\nPlayers:  <code> <players></code>\r\nMOTD:\r\n<code><text></code>";
 
         internal static string ServerOffline = "\r\nStatus:  <code>  offline </code> ❓";
 

@@ -110,7 +110,7 @@ namespace mcswbot2.Minecraft
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void UpdatedEvent(object? sender, ServerInfoExtended e)
+        private void UpdatedEvent(object sender, ServerInfoExtended e)
         {
             var events = Update(e);
             ChangedEvent.Invoke(this, events);
@@ -188,9 +188,14 @@ namespace mcswbot2.Minecraft
                 // if user state still true, but he is not in online list => went offline
                 _userStates[k] = false;
 
-                // notify
+                // get && update player
                 var p = Watcher.AllPlayers.Find(p => p.Id == k);
-                p.LastSeen = DateTime.Now;
+                var now = DateTime.Now;
+                var played = now - p.LastSeen;
+                p.PlayTime += played;
+                p.LastSeen = now;
+
+                // notify
                 leaves--;
                 if (NotifyNames) queue.Add(new PlayerStateEvent(p, false));
             }
