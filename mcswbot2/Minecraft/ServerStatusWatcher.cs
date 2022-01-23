@@ -181,7 +181,7 @@ namespace mcswbot2.Minecraft
                         if (counter++ >= qRatio) break;
                         date += sib.RequestDate.Ticks / qRatio;
                         time += sib.RequestTime / qRatio;
-                        online += sib.CurrentPlayerCount;
+                        online = Math.Max(sib.CurrentPlayerCount, online);
                         InfoHistory.Remove(sib);
                     }
 
