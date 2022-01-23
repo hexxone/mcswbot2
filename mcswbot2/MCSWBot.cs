@@ -117,7 +117,7 @@ namespace mcswbot2
                 // get bot 
                 TgBotUser = await Client.GetMeAsync();
 
-                Program.WriteLine("Watashi wa: " + Newtonsoft.Json.JsonConvert.SerializeObject(TgBotUser));
+                Program.WriteLine("Watashi wa: " + TgBotUser.Username);
             }
             catch (Exception e)
             {
