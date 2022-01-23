@@ -1,6 +1,7 @@
 ﻿using mcswbot2.Event;
 using mcswbot2.Static;
 using Newtonsoft.Json;
+using SkiaSharp;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -54,6 +55,13 @@ namespace mcswbot2.Minecraft
         public int Port { get; set; }
 
 
+        /// <summary>
+        ///     The Icon for the Server
+        /// </summary>
+        [JsonIgnore]
+        public SKImage FavIcon { get; private set; }
+
+
         // List of past received Server Infos
         public List<ServerInfoBasic> InfoHistory { get; set; }
 
@@ -63,7 +71,8 @@ namespace mcswbot2.Minecraft
 
 
         // List of currently online players
-        [JsonIgnore] public List<PlayerPayLoad> OnlinePlayers => AllPlayers.Where(ap => ap.Online).ToList();
+        [JsonIgnore]
+        public List<PlayerPayLoad> OnlinePlayers => AllPlayers.Where(ap => ap.Online).ToList();
 
 
         /// <summary>
@@ -80,7 +89,7 @@ namespace mcswbot2.Minecraft
                 var token = tokenSource.Token;
                 var task = Task.Run(() => Execute(token));
                 task.Wait(token);
-                sie = task.Result ?? throw new Exception("null");
+                sie = task.Result ?? throw new Exception("null response");
 
                 // list of all "last-online" player ids
                 var oIds = from op in sie.OnlinePlayers select op.Id;
@@ -93,6 +102,14 @@ namespace mcswbot2.Minecraft
             {
                 Logger.WriteLine("Execute Error? [" + Address + ":" + Port + "]: " + e);
                 sie = new ServerInfoExtended(DateTime.Now, e);
+            }
+
+            // update server icon
+            if (sie.FavIcon != null)
+            {
+                // always dispose previous one -> avoid mem leak
+                FavIcon?.Dispose();
+                FavIcon = sie.FavIcon;
             }
 
             InfoHistory.Add(sie);
@@ -139,14 +156,13 @@ namespace mcswbot2.Minecraft
         }
 
 
-        // TODO
+        // Quantize, I don't even know...
         public void CleanData()
         {
             // Remove very old data
-            foreach (var hk in InfoHistory.Where(hk =>
-                hk.RequestDate < DateTime.Now - TimeSpan.FromHours(MCSWBot.Conf.HistoryHours))) InfoHistory.Remove(hk);
+            foreach (var hk in InfoHistory.Where(hk =>  hk.RequestDate < DateTime.Now - TimeSpan.FromHours(MCSWBot.Conf.HistoryHours)))
+                    InfoHistory.Remove(hk);
 
-            // Quantize, I don't even know...
             var qThreshold = MCSWBot.Conf.QThreshold;
             var qRatio = MCSWBot.Conf.QRatio;
 
@@ -165,7 +181,7 @@ namespace mcswbot2.Minecraft
                         if (counter++ >= qRatio) break;
                         date += sib.RequestDate.Ticks / qRatio;
                         time += sib.RequestTime / qRatio;
-                        online += sib.CurrentPlayerCount / qRatio;
+                        online += sib.CurrentPlayerCount;
                         InfoHistory.Remove(sib);
                     }
 
