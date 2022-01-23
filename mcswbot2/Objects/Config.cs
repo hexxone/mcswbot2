@@ -18,7 +18,7 @@ namespace mcswbot2.Objects
         /// <summary>
         ///     Amount of hours to keep historic data
         /// </summary>
-        public int HistoryHours = 24 * 7;
+        public int HistoryHours = 24 * 3;
 
         /// <summary>
         ///     Draw & send visual time graphs?

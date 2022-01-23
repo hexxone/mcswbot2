@@ -1,8 +1,5 @@
 ﻿using mcswbot2.Objects;
-using System;
-using System.Linq;
 using Telegram.Bot.Types;
-using Telegram.Bot.Types.Enums;
 
 namespace mcswbot2.Commands
 {
