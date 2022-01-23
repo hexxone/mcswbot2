@@ -139,6 +139,13 @@ namespace mcswbot2
         {
             try
             {
+                if(arg2 == null || arg2.Type != UpdateType.Message || 
+                   arg2.Message == null || arg2.Message.Type != MessageType.Text || arg2.Message.From == null)
+                {
+                    Program.WriteLine("Update was skipped: " + Newtonsoft.Json.JsonConvert.SerializeObject(arg2));
+                    return Task.CompletedTask;
+                }
+
                 return HandleMessage(arg2.Message);
             }
             catch (Exception ex)
