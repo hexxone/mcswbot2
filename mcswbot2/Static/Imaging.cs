@@ -33,18 +33,18 @@ internal static class Imaging
         canvas.DrawImage(blr, 0, 0);
 
         // Process all lines
-        var Lines = txt.Split("\r\n");
-        float LineHeight = blr.Height / Lines.Length;
-        for (var ln = 0; ln < Lines.Length; ln++)
+        var lines = txt.Split("\r\n");
+        var lineHeight = (float) blr.Height / lines.Length;
+        for (var ln = 0; ln < lines.Length; ln++)
         {
             // get & check line
-            var line = Lines[ln];
+            var line = lines[ln];
             if (string.IsNullOrWhiteSpace(line)) continue;
 
             // Calculate & draw text
-            var fSize = LineHeight * 0.4f;
-            var lineStart = ln * LineHeight;
-            CanvasDrawText(canvas, line, fSize, new SKRect(0, lineStart, blr.Width, lineStart + LineHeight));
+            var fSize = lineHeight * 0.4f;
+            var lineStart = ln * lineHeight;
+            CanvasDrawText(canvas, line, fSize, new SKRect(0, lineStart, blr.Width, lineStart + lineHeight));
         }
 
         // Done boii
@@ -84,7 +84,7 @@ internal static class Imaging
         // bounding box stuff
         var textBounds = new SKRect();
         shadowPain.MeasureText(txt, ref textBounds);
-        // adaptive downscaling
+        // adaptive down scaling
         if (textBounds.Width > pos.Width)
         {
             scale *= pos.Width / textBounds.Width;
@@ -97,8 +97,8 @@ internal static class Imaging
         var yPos = pos.Top + pos.Height / 2 - textBounds.MidY;
 
         // font stuffs
-        var fa = SKTypeface.FromFile("./fonts/segoe_ui.ttf");
-        using var fo = new SKFont(fa, fSize);
+        var defFont = SKTypeface.Default;
+        using var fo = new SKFont(defFont, fSize);
         using var te = SKTextBlob.Create(txt, fo);
 
         // draw shadow

@@ -5,10 +5,11 @@ services:
     container_name: mcswbot2
     hostname: mcswbot2
     image: ${DOCKER_REGISTRY-}mcswbot2
+    restart: unless-stopped
     build:
       context: .
       dockerfile: mcswbot2/Dockerfile
     volumes:
-      #- ./fonts:/app/fonts             # used to add custom fonts 
+      - ./fonts:/app/fonts              # used to add custom fonts 
       - ./data:/app/data                # used to persist data between restarts/crashes
       - ./config.json:/app/config.json  # used to provide access to Telegram-Api
