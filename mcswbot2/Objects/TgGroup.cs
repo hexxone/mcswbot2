@@ -225,7 +225,7 @@ public class TgGroup
 
                 if (editMsg != 0) Logger.WriteLine("Stickers cant be updated!");
 
-                lMsg = McswBot.Client?.SendStickerAsync(Base.Id, iof, false, replyMsg).Result;
+                lMsg = McswBot.Client?.SendStickerAsync(Base.Id, iof, false, replyToMessageId: replyMsg).Result;
                 // send text in response immediately afterwards ?
                 if (text != null && lMsg != null)
                 {
@@ -304,7 +304,7 @@ public class TgGroup
     internal Message? SendPlayersMessage(int editMessage = 0)
     {
         var msg = "";
-        var plots = new List<SkiaPlotter.PlottableData>();
+        var plots = new List<SkiaPlotter.CustomPlotData>();
         var dn = DateTime.Now;
         var scaleTxt = SkiaPlotter.GetTimeScale(Servers, out var minuteRange);
 
