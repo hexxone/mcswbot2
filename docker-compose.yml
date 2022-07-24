@@ -9,6 +9,6 @@ services:
       context: .
       dockerfile: mcswbot2/Dockerfile
     volumes:
-      - ./fonts:/app/fonts
-      - ./data:/app/data
-      - ./config.json:/app/config.json
+      #- ./fonts:/app/fonts             # used to add custom fonts 
+      - ./data:/app/data                # used to persist data between restarts/crashes
+      - ./config.json:/app/config.json  # used to provide access to Telegram-Api
