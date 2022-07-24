@@ -1,4 +1,4 @@
-name: telegram-ts3bot Docker Image CI
+name: mcswbot2 Docker Image CI
 
 on:
   push:
