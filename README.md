@@ -28,8 +28,8 @@ For newer versions, the Server List info may also contain a sample list of onlin
 - `docker-compose up -d`
 
 ### Dependencies:
-- [Docker](https://docker.com/) cross-platform
-- [.NET 5](https://dotnet.microsoft.com/) runtime
+- [Docker &-compose](https://docker.com/) cross-platform running
+- [.NET 6](https://dotnet.microsoft.com/) runtime
 - [SkiaSharp](https://github.com/mono/SkiaSharp) status image & sticker processing
 - [ScottPlot](https://github.com/swharden/ScottPlot) time-data plotting (See `/player` and `/ping` command).
 - [Newtonsoft.JSON](https://github.com/JamesNK/Newtonsoft.Json) (de-)serializing server-info and settings
