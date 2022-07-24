@@ -1,14 +1,13 @@
-﻿namespace mcswbot2.Event
-{
-    public class PlayerStateEvent : EventBase
-    {
-        internal PlayerStateEvent(PlayerPayLoad ppl, bool on)
-        {
-            Player = ppl;
-            Online = on;
-        }
+﻿namespace McswBot2.Event;
 
-        public PlayerPayLoad Player { get; }
-        public bool Online { get; }
+public class PlayerStateEvent : EventBase
+{
+    internal PlayerStateEvent(PlayerPayLoad ppl, bool on)
+    {
+        Player = ppl;
+        Online = on;
     }
+
+    public PlayerPayLoad Player { get; }
+    public bool Online { get; }
 }

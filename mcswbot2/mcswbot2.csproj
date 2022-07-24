@@ -2,17 +2,22 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net5.0</TargetFramework>
-    <StartupObject>mcswbot2.Program</StartupObject>
+    <TargetFramework>net6.0</TargetFramework>
+    <StartupObject>McswBot2.Program</StartupObject>
     <SignAssembly>false</SignAssembly>
     <AssemblyOriginatorKeyFile>hexxon_me_CA.pfx</AssemblyOriginatorKeyFile>
-    <Version>2.1.0</Version>
+    <Version>2.2.0</Version>
     <Description>MineCraftServerWatchBotV2</Description>
-    <Copyright></Copyright>
+    <Copyright>GPLv3</Copyright>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <AssemblyVersion>2.1.0.0</AssemblyVersion>
-    <RepositoryUrl>http://github.com/Hexxonite/mcswbot2</RepositoryUrl>
+    <AssemblyVersion>2.2.0.0</AssemblyVersion>
+    <RepositoryUrl>http://github.com/hexxone/mcswbot2</RepositoryUrl>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+    <Nullable>enable</Nullable>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>Minecraft;Minecraft Server;Minecraft Online;Minecraft Status</PackageTags>
+    <PackageProjectUrl>http://github.com/hexxone/mcswbot2</PackageProjectUrl>
+    <PackageReleaseNotes>Use .NET  6</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>
@@ -20,7 +25,6 @@
     <PackageReference Include="ScottPlot" Version="4.1.30" />
     <PackageReference Include="SkiaSharp" Version="2.80.3" />
     <PackageReference Include="SkiaSharp.NativeAssets.Linux" Version="2.80.3" />
-    <PackageReference Include="System.Drawing.Common" Version="5.0.3" />
     <PackageReference Include="Telegram.Bot" Version="17.0.0" />
     <PackageReference Include="Telegram.Bot.Extensions.Polling" Version="1.0.2" />
   </ItemGroup>

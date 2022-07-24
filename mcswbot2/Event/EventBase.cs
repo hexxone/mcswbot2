@@ -1,10 +1,9 @@
-﻿namespace mcswbot2.Event
+﻿namespace McswBot2.Event;
+
+public abstract class EventBase
 {
-    public abstract class EventBase
+    public override string? ToString()
     {
-        public override string ToString()
-        {
-            return GetType().FullName;
-        }
+        return GetType().FullName;
     }
 }
