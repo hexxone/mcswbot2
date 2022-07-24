@@ -95,13 +95,11 @@ public class ServerStatus
     private void RegisterWatcher(string address, int port, bool reuse = true)
     {
         // search for existing watchers
-        var res = Watchers.FindAll(wtch =>
-            string.Equals(wtch.Address, address, StringComparison.CurrentCultureIgnoreCase) && wtch.Port == port);
+        var res = Watchers.FindAll(watcher =>
+            string.Equals(watcher.Address, address, StringComparison.CurrentCultureIgnoreCase) && watcher.Port == port);
         // reuse existing watcher?
         if (reuse && res.Count > 0)
-        {
             Watcher = res.First();
-        }
         else
         {
             Watcher = new ServerStatusWatcher(address, port);
