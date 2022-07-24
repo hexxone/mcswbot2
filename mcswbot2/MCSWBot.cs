@@ -9,7 +9,7 @@ using McswBot2.Objects;
 using McswBot2.Static;
 using Newtonsoft.Json;
 using Telegram.Bot;
-using Telegram.Bot.Extensions.Polling;
+using Telegram.Bot.Polling;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 
@@ -214,7 +214,7 @@ internal class McswBot
         // build text/command arguments
         var text = msg.Text;
         var args = new[] { text };
-        if (text.Contains(" "))
+        if (text.Contains(' ' ))
             args = text.Split(' ');
 
         // Process commands only
@@ -223,7 +223,7 @@ internal class McswBot
 
 
         var usrCmd = args[0][1..].ToLower();
-        if (usrCmd.Contains("@"))
+        if (usrCmd.Contains('@'))
         {
             var spl = usrCmd.Split('@');
             // this command is malformed or meant for another bot

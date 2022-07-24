@@ -29,7 +29,7 @@ internal static class Imaging
         using var blr = BlurInternal(bmp);
         using var g = SKSurface.Create(new SKImageInfo(blr.Width, blr.Height));
         var canvas = g.Canvas;
-        // copy blurred iamge
+        // copy blurred image
         canvas.DrawImage(blr, 0, 0);
 
         // Process all lines
@@ -47,7 +47,7 @@ internal static class Imaging
             CanvasDrawText(canvas, line, fSize, new SKRect(0, lineStart, blr.Width, lineStart + lineHeight));
         }
 
-        // Done boii
+        // Done boi
         canvas.Flush();
         var result = g.Snapshot();
         g.Dispose();
@@ -124,9 +124,9 @@ internal static class Imaging
     {
         // calculate crop
         var minSide = Math.Min(rawImage.Width, rawImage.Height);
-        int off_x = 0, off_y = 0;
-        if (minSide < rawImage.Width) off_x = (rawImage.Width - minSide) / 2;
-        if (minSide < rawImage.Height) off_y = (rawImage.Height - minSide) / 2;
+        int offX = 0, offY = 0;
+        if (minSide < rawImage.Width) offX = (rawImage.Width - minSide) / 2;
+        if (minSide < rawImage.Height) offY = (rawImage.Height - minSide) / 2;
         // make new bitmap
 
 
@@ -137,7 +137,7 @@ internal static class Imaging
 
         // scale fill cropped image
         graph.DrawImage(rawImage,
-            new SKRect(off_x, off_y, minSide, minSide),
+            new SKRect(offX, offY, minSide, minSide),
             new SKRect(0, 0, size, size));
 
         graph.Flush();
@@ -169,10 +169,8 @@ internal static class Imaging
 
         // draw blurred image
         var dn = DateTime.Now;
-        var blurVal = dn.DayOfWeek != DayOfWeek.Saturday && dn.DayOfWeek != DayOfWeek.Sunday && dn.Hour > 6 &&
-                      dn.Hour < 18
-            ? 28
-            : 7;
+        // strength based on DateTime working hours
+        var blurVal = dn.DayOfWeek != DayOfWeek.Saturday && dn.DayOfWeek != DayOfWeek.Sunday && dn.Hour is > 6 and < 18 ? 28 : 7;
         using (var blurPain = new SKPaint())
         {
             blurPain.ImageFilter = SKImageFilter.CreateBlur(blurVal, blurVal);
