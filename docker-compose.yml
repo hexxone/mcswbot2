@@ -4,11 +4,13 @@ services:
   mcswbot2:
     container_name: mcswbot2
     hostname: mcswbot2
-    image: ${DOCKER_REGISTRY-}mcswbot2
-    restart: unless-stopped
+    image: ${DOCKER_REGISTRY-}mcswbot2:latest
+    # restart: unless-stopped
     build:
       context: .
       dockerfile: mcswbot2/Dockerfile
     volumes:
+      #- /etc/timezone:/etc/timezone:ro    # only works on linux host
+      #- /etc/localtime:/etc/localtime:ro  # only works on linux host
       - ./data:/app/data                # used to persist data between restarts/crashes
       - ./config.json:/app/config.json  # used to provide access to Telegram-Api

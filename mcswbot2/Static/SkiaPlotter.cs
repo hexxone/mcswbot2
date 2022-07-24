@@ -45,10 +45,10 @@ internal static class SkiaPlotter
     ///     returns all the time-plottable online player count data
     /// </summary>
     /// <returns></returns>
-    internal static PlottableData GetUserData(ServerStatus status, double minuteRange)
+    internal static CustomPlotData GetUserData(ServerStatus status, double minuteRange)
     {
         var dt = DateTime.Now;
-        var res = new PlottableData(status.Label);
+        var res = new CustomPlotData(status.Label);
 
         // Add all data points
         var ordered = status.Watcher?.InfoHistory.OrderByDescending(sib => sib.RequestDate);
@@ -81,10 +81,10 @@ internal static class SkiaPlotter
     ///     returns all the time-plottable ping data
     /// </summary>
     /// <returns></returns>
-    internal static PlottableData GetPingData(ServerStatus status, double minuteRange)
+    internal static CustomPlotData GetPingData(ServerStatus status, double minuteRange)
     {
         var dt = DateTime.Now;
-        var res = new PlottableData(status.Label);
+        var res = new CustomPlotData(status.Label);
 
         // Add all data points
         foreach (var sib in status.Watcher!.InfoHistory.OrderByDescending(sib => sib.RequestDate))
@@ -108,7 +108,12 @@ internal static class SkiaPlotter
     ///     Will Plot and save Data to a SKImage
     /// </summary>
     /// <param name="dat"></param>
-    internal static SKImage PlotData(IEnumerable<PlottableData> dat, string xLbl, string yLbl, int pxWidth = 690,
+    /// <param name="xLbl"></param>
+    /// <param name="yLbl"></param>
+    /// <param name="pxWidth"></param>
+    /// <param name="pxHeight">,</param>
+    /// <param name="interpolate"></param>
+    internal static SKImage PlotData(IEnumerable<CustomPlotData> dat, string xLbl, string yLbl, int pxWidth = 690,
         int pxHeight = 420, bool interpolate = false)
     {
         var plt = new Plot(pxWidth, pxHeight);
@@ -128,7 +133,7 @@ internal static class SkiaPlotter
         foreach (var da in dat)
         {
             if (da.Length < 2) continue;
-            var col = ColorByIndx(colorCnt++);
+            var col = ColorByIndex(colorCnt++);
 
             // original points
             plt.AddScatter(da.X, da.Y, lineWidth: interpolate ? 0 : 1, markerSize: 3, label: da.Label,
@@ -136,9 +141,8 @@ internal static class SkiaPlotter
 
             // interpolated lines
             if (!interpolate || da.Length <= 5) continue;
-            var nsi = new NaturalSpline(da.X, da.Y, 30);
-            plt.AddScatter(nsi.interpolatedXs, nsi.interpolatedYs, lineWidth: 1, markerSize: 0, label: null,
-                color: col);
+            var (xs, ys) = Cubic.InterpolateXY(da.X, da.Y, 30);
+            plt.AddScatter(xs, ys, lineWidth: 1, markerSize: 0, label: null, color: col);
         }
 
         // @TODO randomize some pixels so tg does not cry?
@@ -148,11 +152,11 @@ internal static class SkiaPlotter
 
 
     // TODO
-    /// <summary>
-    ///     Will Plot and save Data to a SKImage
-    /// </summary>
-    /// <param name="dat"></param>
-    //private static SKImage PlotData2(IEnumerable<PlottableData> dat, string xLbl, string yLbl, int pxWidth = 720,
+    ///// <summary>
+    /////     Will Plot and save Data to a SKImage
+    ///// </summary>
+    ///// <param name="dat"></param>
+    //private static SKImage PlotData2(IEnumerable<CustomPlotData> dat, string xLbl, string yLbl, int pxWidth = 720,
     //    int pxHeight = 480)
     //{
     //    var leftAxis = false;
@@ -169,7 +173,7 @@ internal static class SkiaPlotter
     //    using var g = SKSurface.Create(new SKImageInfo(pxWidth, pxHeight));
     //    var canvas = g.Canvas;
 
-    //    var pDat = dat as PlottableData[] ?? dat.ToArray();
+    //    var pDat = dat as CustomPlotData[] ?? dat.ToArray();
     //    var allXMin = pDat.OrderBy(d => d.XMin).Last().XMin;
     //    var allXMax = pDat.OrderBy(d => d.XMax).First().XMax;
     //    var allYMin = pDat.OrderBy(d => d.XMin).Last().YMin;
@@ -246,9 +250,9 @@ internal static class SkiaPlotter
     //    return image;
     //}
 
-    //private static SKColor SKColorByIndx(int indx)
+    //private static SKColor SKColorByIndx(int index)
     //{
-    //    return (indx % 7) switch
+    //    return (index % 7) switch
     //    {
     //        1 => SKColors.LawnGreen,
     //        2 => SKColors.CadetBlue,
@@ -258,9 +262,15 @@ internal static class SkiaPlotter
     //        _ => SKColors.IndianRed
     //    };
     //}
-    private static Color ColorByIndx(int indx)
+
+    /// <summary>
+    ///     Parse Mc Color
+    /// </summary>
+    /// <param name="index"></param>
+    /// <returns></returns>
+    private static Color ColorByIndex(int index)
     {
-        return (indx % 7) switch
+        return (index % 7) switch
         {
             1 => Color.LawnGreen,
             2 => Color.DodgerBlue,
@@ -271,7 +281,7 @@ internal static class SkiaPlotter
         };
     }
 
-    internal struct PlottableData
+    internal struct CustomPlotData
     {
         internal string Label { get; }
 
@@ -317,7 +327,7 @@ internal static class SkiaPlotter
             return new Tuple<double, double>(DataX[index], DataY[index]);
         }
 
-        internal PlottableData(string lbl)
+        internal CustomPlotData(string lbl)
         {
             Label = lbl;
             DataX = new List<double>();

@@ -35,4 +35,8 @@ For newer versions, the Server List info may also contain a sample list of onlin
 - [Newtonsoft.JSON](https://github.com/JamesNK/Newtonsoft.Json) (de-)serializing server-info and settings
 - [Telegram.Bot](https://github.com/TelegramBots/telegram.bot) telegram bot part
 
+#### Notice:
 
+Exactly System.Drawing.Common V="5.0.2" is required for ScottPlott to work on Linux....
+Dont update to newer versions! It will break.
+https://github.com/ScottPlot/ScottPlot/issues/1079
