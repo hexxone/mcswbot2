@@ -1,19 +1,20 @@
 ﻿using System;
 using Telegram.Bot.Types;
 
-namespace McswBot2.Objects;
-
-[Serializable]
-public class TgUser
+namespace McswBot2.Objects
 {
-    /// <summary>
-    ///     An object representing a Telegram user
-    /// </summary>
-    /// <param name="basis"></param>
-    public TgUser(User basis)
+    [Serializable]
+    public class TgUser
     {
-        Base = basis;
-    }
+        /// <summary>
+        ///     An object representing a Telegram user
+        /// </summary>
+        /// <param name="basis"></param>
+        public TgUser(User basis)
+        {
+            Base = basis;
+        }
 
-    public User Base { get; set; }
+        public User Base { get; set; }
+    }
 }
