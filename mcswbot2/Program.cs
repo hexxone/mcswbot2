@@ -1,20 +1,21 @@
 ﻿using System;
 
-namespace McswBot2;
-
-internal class Program
+namespace McswBot2
 {
-    private static void Main(string[] args)
+    internal class Program
     {
-        McswBot.Start();
-    }
+        private static void Main(string[] args)
+        {
+            McswBot.Start();
+        }
 
-    /// <summary>
-    ///     DateTime Wrapper for Console WriteLine
-    /// </summary>
-    /// <param name="l"></param>
-    internal static void WriteLine(string l)
-    {
-        Console.WriteLine("[" + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + "] " + l);
+        /// <summary>
+        ///     DateTime Wrapper for Console WriteLine
+        /// </summary>
+        /// <param name="l"></param>
+        internal static void WriteLine(string l)
+        {
+            Console.WriteLine("[" + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + "] " + l);
+        }
     }
 }
