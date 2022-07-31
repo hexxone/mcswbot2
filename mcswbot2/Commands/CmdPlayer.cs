@@ -31,8 +31,7 @@ namespace McswBot2.Commands
 
                 if (status is { HadSuccess: true })
                 {
-                    msg += $"🌐 " +
-                           $"\r\n  Player:<code> {status.CurrentPlayerCount} / {status.MaxPlayerCount}</code>";
+                    msg += $" <code>{status.CurrentPlayerCount} / {status.MaxPlayerCount}</code>";
 
                     msg = status.OnlinePlayers.Aggregate(msg,
                         (current, plr) => current + $"\r\n  # {plr.Name}");
