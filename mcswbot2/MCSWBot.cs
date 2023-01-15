@@ -73,11 +73,10 @@ namespace McswBot2
             {
                 try
                 {
-                    Program.WriteLine("Background Sleeping...");
+                    Program.WriteLine("Sleeping...");
                     Task.Delay(Conf.DataSaveInterval).Wait();
 
                     // save data
-                    Storage.Save(this);
                     GC.Collect();
                 }
                 catch (Exception e)
