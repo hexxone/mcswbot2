@@ -102,19 +102,28 @@ namespace McswBot2.Minecraft
             // IF an IOException arises here, this server is probably not a MineCraft-one
             // TODO test if "+ 3" is always the case because of fixed ints?
             var allLength = ReadVarInt(ref offset, readBuffer);
+            var maxWaits = 100;
+            var waitDelays = 0;
 
             // Read the rest of the announced data
-            while (readLen < allLength)
+            while (readLen < allLength && waitDelays < maxWaits)
             {
                 var read = stream.Read(batch, 0, batch.Length);
                 Logger.WriteLine("Read bytes: " + read, Types.LogLevel.Debug);
                 readBuffer.AddRange(batch.ToList().Where((a, x) => x < read));
                 readLen += read;
-                Task.Delay(10).Wait(ct);
+                Task.Delay(10, ct);
+                waitDelays++;
                 if (!stream.DataAvailable && readLen < allLength)
                 {
                     Logger.WriteLine("Missing bytes: " + (allLength - readLen), Types.LogLevel.Debug);
                 }
+            }
+
+            if(readLen < allLength)
+            {
+                return new ServerInfoExtended(dt,
+                    new IndexOutOfRangeException($"Network Stream @ '{_address}:{_port}' ended prematurely with '{allLength - readLen}' missing bytes."));
             }
 
             var packetNr = ReadVarInt(ref offset, readBuffer);
@@ -157,6 +166,8 @@ namespace McswBot2.Minecraft
             // done
             stream.Close();
             client.Close();
+            writeBuffer.Clear();
+            readBuffer.Clear();
 
             Logger.WriteLine("Json: " + json, Types.LogLevel.Debug);
 
