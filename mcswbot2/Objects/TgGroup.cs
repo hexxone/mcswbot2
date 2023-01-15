@@ -133,42 +133,5 @@ namespace McswBot2.Objects
 
             return lMsg;
         }
-
-        /// <summary>
-        ///     Send or Edit Online Player Message
-        /// </summary>
-        /// <returns></returns>
-        internal Message? SendPlayersMessage()
-        {
-            var msg = "";
-            var dn = DateTime.Now;
-
-            var pingResults = this.PingAllServers();
-
-            foreach (var item in pingResults)
-            {
-                var watcher = item.Item1;
-                var status = item.Item2;
-
-                msg += "\r\n[<code>" + watcher.Label + "</code>] ";
-                if (status is not { HadSuccess: true })
-                {
-                    msg += " Offline";
-                }
-                else
-                {
-                    msg += status.CurrentPlayerCount + " / " + status.MaxPlayerCount;
-                    // add player names
-                    var names = status.OnlinePlayers.Aggregate("",
-                        (current, plr) => current + $"\r\n  + {plr.Name}");
-                    msg += "<code>" + names + "</code>";
-                }
-            }
-
-            Program.WriteLine("Updating live Players msg in group: " + Base.Id);
-
-            // Send text only?
-            return SendMsg(msg, ParseMode.Html);
-        }
     }
 }

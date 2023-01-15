@@ -15,7 +15,7 @@ namespace McswBot2.Commands
 
         internal override void Call(Message m, TgGroup g, TgUser u, string[] args, bool dev)
         {
-            var use = "Usage: /add [label] [address] (port default 25565)";
+            var use = "Usage: /add [label] [address] ([port] default 25565)";
             try
             {
                 // verification
