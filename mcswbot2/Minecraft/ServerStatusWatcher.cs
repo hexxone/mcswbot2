@@ -1,15 +1,12 @@
-﻿using System;
+﻿using McswBot2.Static;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
-using McswBot2.Static;
 
 namespace McswBot2.Minecraft
 {
     public class ServerStatusWatcher
     {
-        // tries before a server is determined offline
-        internal static int Retries = 3;
-        internal static int RetryMs = 3000;
 
 
         /// <summary>
@@ -32,12 +29,12 @@ namespace McswBot2.Minecraft
         ///     This method will ping the server to request infos.
         ///     This is done in context of a task and 10 second timeout
         /// </summary>
-        public ServerInfoExtended? Execute(CancellationToken token)
+        public ServerInfoExtended? Execute(CancellationToken token, int retries, int retryMs)
         {
             ServerInfoExtended sie;
             try
             {
-                var task = Task.Run(() => InternalExecute(token), token);
+                var task = Task.Run(() => InternalExecute(token, retries, retryMs), token);
                 task.Wait(token);
                 sie = task.Result ?? throw new Exception("null response");
             }
@@ -51,7 +48,7 @@ namespace McswBot2.Minecraft
         }
 
 
-        private ServerInfoExtended? InternalExecute(CancellationToken ct)
+        private ServerInfoExtended? InternalExecute(CancellationToken ct, int retries, int retryMs)
         {
             var srv = "[" + Address + ":" + Port + "]";
             Logger.WriteLine("Pinging server " + srv);
@@ -62,7 +59,7 @@ namespace McswBot2.Minecraft
                 var dt = DateTime.Now;
                 ServerInfoExtended? current = null;
                 var si = new ServerInfo(Address, Port);
-                for (var r = 0; r < Retries; r++)
+                for (var r = 0; r < retries; r++)
                 {
                     current = si.GetAsync(ct, dt).Result;
                     if (current.HadSuccess || ct.IsCancellationRequested)
@@ -70,7 +67,7 @@ namespace McswBot2.Minecraft
                         break;
                     }
 
-                    Task.Delay(RetryMs, ct).Wait(ct);
+                    Task.Delay(retryMs, ct).Wait(ct);
                 }
 
                 // if the result is null, nothing to do here

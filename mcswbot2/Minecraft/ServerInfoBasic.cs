@@ -1,5 +1,4 @@
 ﻿using System;
-using Newtonsoft.Json;
 
 namespace McswBot2.Minecraft
 {
@@ -33,6 +32,6 @@ namespace McswBot2.Minecraft
         ///     Gets the server's current player count
         /// </summary>
         public int CurrentPlayerCount { get; set; }
-        
+
     }
 }

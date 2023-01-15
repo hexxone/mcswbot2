@@ -1,8 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using McswBot2.Event;
+﻿using McswBot2.Event;
 using McswBot2.Static;
 using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
 
 namespace McswBot2.Minecraft
 {

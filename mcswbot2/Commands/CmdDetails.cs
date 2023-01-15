@@ -5,11 +5,11 @@ using Telegram.Bot.Types.Enums;
 
 namespace McswBot2.Commands
 {
-    internal class CmdPlayer : ICommand
+    internal class CmdDetails : ICommand
     {
         internal override string Command()
         {
-            return "player";
+            return "details";
         }
 
         internal override void Call(ICommandArgs a)
@@ -23,14 +23,19 @@ namespace McswBot2.Commands
 
             var pingResults = bot.Conf.WatchedServers.PingAll(bot.Conf.TimeoutMs, bot.Conf.Retries, bot.Conf.RetryMs);
 
-            var txt = "Player:";
+            var txt = "Servers:<code> " + bot.Conf.WatchedServers.Count + "</code>";
             foreach (var (watcher, status) in pingResults)
             {
+                txt += "\r\n=== == = = = = = = == ===";
                 txt += $"\r\n[<a href=\"{watcher.Address}:{watcher.Port}\">{watcher.Label}</a>] ";
 
                 if (status is { HadSuccess: true })
                 {
-                    txt += $" <code>{status.CurrentPlayerCount}/{status.MaxPlayerCount}</code> ({status.RequestTime:##.##} ms)";
+                    txt += $"🌐 " +
+                           $"\r\n  Version:<code> {status.MinecraftVersion}</code>" +
+                           $"\r\n  Ping:<code> {status.RequestTime:0} ms</code>" +
+                           $"\r\n  MotD:<code> {status.FixedMotd?.Replace("\r\n", "\r\n  ")}</code>" +
+                           $"\r\n  Player:<code> {status.CurrentPlayerCount} / {status.MaxPlayerCount}</code>";
 
                     txt = status.OnlinePlayers.Aggregate(txt,
                         (current, plr) => current + $"\r\n  # {plr.Name}");
@@ -38,8 +43,7 @@ namespace McswBot2.Commands
                 else
                 {
                     txt += $"❌" +
-                           $"\r\n  Player: ? / ?" +
-                           $"\r\n  Error:<code> {status?.LastError?.ToString() ?? "Unknown"}</code>";
+                           $"\r\n  Offline: <code> Error {status?.LastError?.ToString() ?? "Unknown"}</code>";
                 }
             }
 

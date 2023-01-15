@@ -1,15 +1,14 @@
 version: '3.4'
 
 services:
-  mcswbot2:
-    container_name: mcswbot2
-    hostname: mcswbot2
-    image: ${DOCKER_REGISTRY-}mcswbot2:latest
+  mcswbot2_minimal:
+    container_name: mcswbot2_minimal
+    hostname: mcswbot2_minimal
+    image: ${DOCKER_REGISTRY-}mcswbot2_minimal:latest
     # restart: unless-stopped
     build:
       context: .
     volumes:
       #- /etc/timezone:/etc/timezone:ro    # only works on linux host
       #- /etc/localtime:/etc/localtime:ro  # only works on linux host
-      - ./data:/app/data                # used to persist data between restarts/crashes
       - ./config.json:/app/config.json  # used to provide access to Telegram-Api

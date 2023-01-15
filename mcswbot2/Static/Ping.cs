@@ -1,9 +1,9 @@
-﻿using System;
+﻿using McswBot2.Minecraft;
+using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using McswBot2.Minecraft;
-using McswBot2.Objects;
 
 namespace McswBot2.Static
 {
@@ -12,9 +12,9 @@ namespace McswBot2.Static
         /// <summary>
         ///     TODO test
         /// </summary>
-        /// <param name="g"></param>
+        /// <param name="servers"></param>
         /// <returns></returns>
-        internal static ConcurrentBag<Tuple<ServerStatusWatcher, ServerInfoExtended?>> PingAllServers(this TgGroup g)
+        internal static ConcurrentBag<Tuple<ServerStatusWatcher, ServerInfoExtended?>> PingAll(this IEnumerable<ServerStatusWatcher> servers, int timeOutMs, int retries, int retryMs)
         {
             var cts = new CancellationTokenSource();
             var pOptions = new ParallelOptions
@@ -24,22 +24,21 @@ namespace McswBot2.Static
             };
 
             var pingResults = new ConcurrentBag<Tuple<ServerStatusWatcher, ServerInfoExtended?>>();
-            var timeOut = McswBot.Conf.TimeoutMs;
 
             try
             {
                 // creating second thread to cancel Parallel.For loop
                 Task.Factory.StartNew(() =>
                 {
-                    Thread.Sleep(timeOut);
+                    Thread.Sleep(timeOutMs);
                     cts.Cancel();
                 });
                 // request info parallel
-                var res = Parallel.ForEach(g.WatchedServers, pOptions,
+                var res = Parallel.ForEach(servers, pOptions,
                     (watcher, state) =>
                     {
                         pingResults.Add(
-                            new Tuple<ServerStatusWatcher, ServerInfoExtended?>(watcher, watcher.Execute(cts.Token)));
+                            new Tuple<ServerStatusWatcher, ServerInfoExtended?>(watcher, watcher.Execute(cts.Token, retries, retryMs)));
                     });
             }
             catch (OperationCanceledException e)
