@@ -1,7 +1,4 @@
-﻿using McswBot2.Objects;
-using Telegram.Bot.Types;
-
-namespace McswBot2.Commands
+﻿namespace McswBot2.Commands
 {
     internal abstract class ICommand
     {
@@ -19,6 +16,6 @@ namespace McswBot2.Commands
         /// <param name="u">Bot-user equivalent of the command sender</param>
         /// <param name="args">command arguments splitted by space</param>
         /// <param name="dev">message was sent by developer</param>
-        internal abstract void Call(Message m, TgGroup g, TgUser u, string[] args, bool dev);
+        internal abstract void Call(ICommandArgs args);
     }
 }

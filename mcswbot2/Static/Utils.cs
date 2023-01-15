@@ -4,6 +4,9 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text.RegularExpressions;
+using Telegram.Bot;
+using Telegram.Bot.Types;
+using Telegram.Bot.Types.Enums;
 
 namespace McswBot2.Static
 {
@@ -142,15 +145,63 @@ namespace McswBot2.Static
             // all ok
         }
 
+
+
         /// <summary>
-        ///     Wrap Link Html Tag
+        ///     Send a message to this group with a given bitmap
         /// </summary>
-        /// <param name="l"></param>
-        /// <param name="t"></param>
-        /// <returns></returns>
-        internal static string WrapLink(string l, string t)
+        /// <param name="chat"></param>
+        /// <param name="client"></param>
+        /// <param name="text"></param>
+        /// <param name="pm"></param>
+        /// <param name="replyMsg"></param>
+        /// <param name="editMsg"></param>
+        internal static Message? SendMsg(this Chat chat, TelegramBotClient client, string? text = null, ParseMode pm = ParseMode.Markdown,
+            int replyMsg = 0, int editMsg = 0)
         {
-            return $"<a href='{l}'>{t}</a>";
+            return SendMsgStream(chat, client, text, pm, replyMsg, editMsg);
+        }
+
+
+        /// <summary>
+        ///     Send a message to this group with a given image stream?
+        /// </summary>
+        /// <param name="chat"></param>
+        /// <param name="client"></param>
+        /// <param name="text"></param>
+        /// <param name="pm"></param>
+        /// <param name="replyMsg"></param>
+        /// <param name="editMsg"></param>
+        private static Message? SendMsgStream(Chat chat, TelegramBotClient client, string? text = null, ParseMode pm = ParseMode.Markdown,
+            int replyMsg = 0, int editMsg = 0)
+        {
+            Message? lMsg;
+            // send normal text
+            if (text != null)
+            {
+                // Update existing message
+                lMsg = editMsg != 0
+                    ? client?.EditMessageTextAsync(new ChatId(chat.Id),
+                        editMsg,
+                        text,
+                        pm,
+                        disableWebPagePreview: true).Result
+                    :
+                    // Send New
+                    client?.SendTextMessageAsync(chat.Id,
+                        text,
+                        pm,
+                        disableWebPagePreview: true,
+                        disableNotification: false,
+                        replyToMessageId: replyMsg).Result;
+            }
+            // uhoh?
+            else
+            {
+                throw new Exception("Nothing to send!");
+            }
+
+            return lMsg;
         }
     }
 }

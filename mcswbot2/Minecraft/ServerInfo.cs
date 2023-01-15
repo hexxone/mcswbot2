@@ -1,4 +1,8 @@
-﻿using System;
+﻿using McswBot2.Event;
+using McswBot2.Objects;
+using McswBot2.Static;
+using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -7,10 +11,6 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using McswBot2.Event;
-using McswBot2.Objects;
-using McswBot2.Static;
-using Newtonsoft.Json;
 
 namespace McswBot2.Minecraft
 {
@@ -120,7 +120,7 @@ namespace McswBot2.Minecraft
                 }
             }
 
-            if(readLen < allLength)
+            if (readLen < allLength)
             {
                 return new ServerInfoExtended(dt,
                     new IndexOutOfRangeException($"Network Stream @ '{_address}:{_port}' ended prematurely with '{allLength - readLen}' missing bytes."));

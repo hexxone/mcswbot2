@@ -6,7 +6,7 @@ namespace McswBot2
     {
         private static void Main(string[] args)
         {
-            McswBot.Start();
+            new McswBot().Start();
         }
 
         /// <summary>

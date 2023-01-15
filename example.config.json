@@ -7,5 +7,12 @@
   "QThreshold": 36,
   "Retries": 3,
   "RetryMs": 3000,
-  "SleepTime": 60000
+  "SleepTime": 60000,
+  "WatchedServers": [
+    {
+      "Label": "e6e",
+      "Address": "server.de",
+      "Port": 25569
+    }
+  ]
 }
