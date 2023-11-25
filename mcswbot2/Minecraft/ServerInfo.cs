@@ -67,7 +67,7 @@ namespace McswBot2.Minecraft
             while (!task.IsCompleted && !ct.IsCancellationRequested)
             {
                 Debug.WriteLine("Connecting..");
-                Task.Delay(20).Wait(ct);
+                Task.Delay(10, ct).Wait(ct);
             }
 
             if (!client.Connected)

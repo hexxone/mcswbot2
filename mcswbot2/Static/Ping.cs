@@ -1,4 +1,5 @@
 ﻿using McswBot2.Minecraft;
+using McswBot2.Objects;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -24,22 +25,27 @@ namespace McswBot2.Static
             };
 
             var pingResults = new ConcurrentBag<Tuple<ServerStatusWatcher, ServerInfoExtended?>>();
+            var queueWorker = MultiThreadedQueueWorker.Instance;
 
             try
             {
-                // creating second thread to cancel Parallel.For loop
-                Task.Factory.StartNew(() =>
+                cts.CancelAfter(timeOutMs);
+
+                // request info in parallel
+                var allTasks = new List<Task>();
+                foreach (var serverStatusWatcher in servers)
                 {
-                    Thread.Sleep(timeOutMs);
-                    cts.Cancel();
-                });
-                // request info parallel
-                var res = Parallel.ForEach(servers, pOptions,
-                    (watcher, state) =>
+                    var pingTask = queueWorker.Execute(async () =>
                     {
-                        pingResults.Add(
-                            new Tuple<ServerStatusWatcher, ServerInfoExtended?>(watcher, watcher.Execute(cts.Token, retries, retryMs)));
+                        var executeResult = await serverStatusWatcher.Execute(cts.Token, retries, retryMs);
+                        var newItem = new Tuple<ServerStatusWatcher, ServerInfoExtended?>(serverStatusWatcher, executeResult);
+                        pingResults.Add(newItem);
+                        return Task.CompletedTask;
                     });
+                    allTasks.Add(pingTask);
+                }
+
+                Task.WaitAll(allTasks.ToArray());
             }
             catch (OperationCanceledException e)
             {

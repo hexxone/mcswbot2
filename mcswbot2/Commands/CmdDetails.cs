@@ -43,7 +43,7 @@ namespace McswBot2.Commands
                 else
                 {
                     txt += $"❌" +
-                           $"\r\n  Offline: <code> Error {status?.LastError?.ToString() ?? "Unknown"}</code>";
+                           $"\r\n  Error: <code>{status?.LastError?.Message ?? "Unknown"}</code>";
                 }
             }
 

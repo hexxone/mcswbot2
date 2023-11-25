@@ -190,7 +190,7 @@ namespace McswBot2.Static
                     // Send New
                     client?.SendTextMessageAsync(chat.Id,
                         text,
-                        pm,
+                        parseMode: pm,
                         disableWebPagePreview: true,
                         disableNotification: false,
                         replyToMessageId: replyMsg).Result;
