@@ -40,7 +40,7 @@ namespace McswBot2.Objects
         /// <summary>
         ///     How long will we wait between retries?
         /// </summary>
-        public int TimeoutMs { get; set; } = 10000;
+        public int TimeoutMs { get; set; } = 3000;
 
 
         // Identity

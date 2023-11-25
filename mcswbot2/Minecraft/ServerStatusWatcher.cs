@@ -29,14 +29,13 @@ namespace McswBot2.Minecraft
         ///     This method will ping the server to request infos.
         ///     This is done in context of a task and 10 second timeout
         /// </summary>
-        public ServerInfoExtended? Execute(CancellationToken token, int retries, int retryMs)
+        public async Task<ServerInfoExtended> Execute(CancellationToken token, int retries, int retryMs)
         {
             ServerInfoExtended sie;
             try
             {
-                var task = Task.Run(() => InternalExecute(token, retries, retryMs), token);
-                task.Wait(token);
-                sie = task.Result ?? throw new Exception("null response");
+                sie = await InternalExecute(token, retries, retryMs)
+                      ?? throw new Exception("Connection Timeout.");
             }
             catch (Exception e)
             {
@@ -48,7 +47,7 @@ namespace McswBot2.Minecraft
         }
 
 
-        private ServerInfoExtended? InternalExecute(CancellationToken ct, int retries, int retryMs)
+        private async Task<ServerInfoExtended?> InternalExecute(CancellationToken ct, int retries, int retryMs)
         {
             var srv = "[" + Address + ":" + Port + "]";
             Logger.WriteLine("Pinging server " + srv);
@@ -61,13 +60,13 @@ namespace McswBot2.Minecraft
                 var si = new ServerInfo(Address, Port);
                 for (var r = 0; r < retries; r++)
                 {
-                    current = si.GetAsync(ct, dt).Result;
+                    current = await si.GetAsync(ct, dt);
                     if (current.HadSuccess || ct.IsCancellationRequested)
                     {
                         break;
                     }
 
-                    Task.Delay(retryMs, ct).Wait(ct);
+                    await Task.Delay(retryMs, ct).WaitAsync(ct);
                 }
 
                 // if the result is null, nothing to do here
@@ -76,6 +75,7 @@ namespace McswBot2.Minecraft
                     Logger.WriteLine(
                         "Execute result: " + srv + " is: " + current.HadSuccess + " Err: " + current.LastError,
                         Types.LogLevel.Debug);
+
                     return current;
                 }
 

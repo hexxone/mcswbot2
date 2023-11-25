@@ -1,6 +1,7 @@
 ﻿using McswBot2.Static;
 using System;
 using System.Linq;
+using System.Text;
 using Telegram.Bot.Types.Enums;
 
 namespace McswBot2.Commands
@@ -23,27 +24,34 @@ namespace McswBot2.Commands
 
             var pingResults = bot.Conf.WatchedServers.PingAll(bot.Conf.TimeoutMs, bot.Conf.Retries, bot.Conf.RetryMs);
 
-            var txt = "Player:";
+            var sb = new StringBuilder();
             foreach (var (watcher, status) in pingResults)
             {
-                txt += $"\r\n[<a href=\"{watcher.Address}:{watcher.Port}\">{watcher.Label}</a>] ";
+                var serverPrefix = $"[<a href=\"{watcher.Address}:{watcher.Port}\">{watcher.Label}</a>] ";
+                sb.Append(serverPrefix);
 
                 if (status is { HadSuccess: true })
                 {
-                    txt += $" <code>{status.CurrentPlayerCount}/{status.MaxPlayerCount}</code> ({status.RequestTime:##.##} ms)";
+                    var successLine = $"🌐 <code>{status.CurrentPlayerCount}/{status.MaxPlayerCount}</code> ({status.RequestTime:##.##} ms)";
+                    sb.Append(successLine);
 
-                    txt = status.OnlinePlayers.Aggregate(txt,
-                        (current, plr) => current + $"\r\n  # {plr.Name}");
+                    foreach (var player in status.OnlinePlayers)
+                    {
+                        var playerLine = $"\r\n  # {player.Name}";
+                        sb.Append(playerLine);
+                    }
+
                 }
                 else
                 {
-                    txt += $"❌" +
-                           $"\r\n  Player: ? / ?" +
-                           $"\r\n  Error:<code> {status?.LastError?.ToString() ?? "Unknown"}</code>";
+                    var errorLine = $"❌ {status?.LastError?.Message ?? "Unknown"}";
+                    sb.Append(errorLine);
                 }
+
+                sb.Append("\r\n"); // next server
             }
 
-            group.SendMsg(bot.Client!, txt, ParseMode.Html);
+            group.SendMsg(bot.Client!, sb.ToString(), ParseMode.Html);
         }
     }
 }

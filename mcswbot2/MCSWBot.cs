@@ -201,7 +201,7 @@ namespace McswBot2
             {
                 Client!.SendTextMessageAsync(msg.Chat.Id,
                     "This bot is intended for group use only.\r\n<a href=\"https://t.me/" + TgBotUser!.Username +
-                    "?startgroup=add\">Add me</a>", ParseMode.Html).Wait();
+                    "?startgroup=add\">Add me</a>", parseMode: ParseMode.Html).Wait();
                 {
                     return false;
                 }
