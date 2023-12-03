@@ -175,10 +175,18 @@ namespace McswBot2
         /// <param name="msg"></param>
         private Task HandleMessage(Message msg)
         {
-            // get sender
-            if (msg.From != null)
+            try
             {
-                _ = HandleUserMessage(msg, msg.From);
+                // get sender
+                if (msg.From != null)
+                {
+                    _ = HandleUserMessage(msg, msg.From);
+                }
+            }
+            catch (Exception ex)
+            {
+                var name = $"Id=[{msg.From?.Id}] @{msg.From?.Username} ({msg.From?.FirstName} {msg.From?.LastName})";
+                Program.WriteLine($"User '{name}' fucked up: {ex.Message}");
             }
 
             return Task.CompletedTask;
