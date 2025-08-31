@@ -11,9 +11,10 @@ namespace McswBot2.Static
         public enum LogLevel
         {
             None = 0,
-            Error = 10,
-            Normal = 20,
-            Debug = 30
+            Error = 1,
+            Warning = 2,
+            Info = 4,
+            Debug = 8,
         }
 
         public static ParallelOptions POptions = new() { MaxDegreeOfParallelism = 10 };

@@ -5,16 +5,13 @@ using Telegram.Bot.Types.Enums;
 
 namespace McswBot2.Commands
 {
-    internal class CmdDetails : ICommand
+    internal class CmdDetails : Command
     {
-        internal override string Command()
-        {
-            return "details";
-        }
+        internal override string GetCommand() => "details";
 
-        internal override void Call(ICommandArgs a)
+        internal override void Call(CommandArgs a)
         {
-            var (bot, msg, group, user, args, isDev) = a;
+            var (bot, _, group, _, _, _) = a;
             if (!bot.Conf.WatchedServers.Any())
             {
                 group.SendMsg(bot.Client!, "No servers watched - Please adjust your config.");
@@ -23,7 +20,7 @@ namespace McswBot2.Commands
 
             var pingResults = bot.Conf.WatchedServers.PingAll(bot.Conf.TimeoutMs, bot.Conf.Retries, bot.Conf.RetryMs);
 
-            var txt = "Servers:<code> " + bot.Conf.WatchedServers.Count + "</code>";
+            var txt = $"Servers:<code> {bot.Conf.WatchedServers.Count}</code>";
             foreach (var (watcher, status) in pingResults)
             {
                 txt += "\r\n=== == = = = = = = == ===";
@@ -31,19 +28,15 @@ namespace McswBot2.Commands
 
                 if (status is { HadSuccess: true })
                 {
-                    txt += $"🌐 " +
-                           $"\r\n  Version:<code> {status.MinecraftVersion}</code>" +
-                           $"\r\n  Ping:<code> {status.RequestTime:0} ms</code>" +
-                           $"\r\n  MotD:<code> {status.FixedMotd?.Replace("\r\n", "\r\n  ")}</code>" +
-                           $"\r\n  Player:<code> {status.CurrentPlayerCount} / {status.MaxPlayerCount}</code>";
+                    txt +=
+                        $"🌐 \r\n  Version:<code> {status.MinecraftVersion}</code>\r\n  Ping:<code> {status.RequestTime:0} ms</code>\r\n  MotD:<code> {status.FixedMotd?.Replace("\r\n", "\r\n  ")}</code>\r\n  Player:<code> {status.CurrentPlayerCount} / {status.MaxPlayerCount}</code>";
 
                     txt = status.OnlinePlayers.Aggregate(txt,
-                        (current, plr) => current + $"\r\n  # {plr.Name}");
+                        (current, plr) => $"{current}\r\n  # {plr.Name}");
                 }
                 else
                 {
-                    txt += $"❌" +
-                           $"\r\n  Error: <code>{status?.LastError?.Message ?? "Unknown"}</code>";
+                    txt += $"❌\r\n  Error: <code>{status?.LastError?.Message ?? "Unknown"}</code>";
                 }
             }
 

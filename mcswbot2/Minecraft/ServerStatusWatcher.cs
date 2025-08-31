@@ -39,7 +39,7 @@ namespace McswBot2.Minecraft
             }
             catch (Exception e)
             {
-                Logger.WriteLine("Execute Error? [" + Address + ":" + Port + "]: " + e);
+                Logger.WriteLine($"Execute Error? [{Address}:{Port}]: {e}");
                 sie = new ServerInfoExtended(DateTime.Now, e);
             }
 
@@ -49,8 +49,8 @@ namespace McswBot2.Minecraft
 
         private async Task<ServerInfoExtended?> InternalExecute(CancellationToken ct, int retries, int retryMs)
         {
-            var srv = "[" + Address + ":" + Port + "]";
-            Logger.WriteLine("Pinging server " + srv);
+            var srv = $"[{Address}:{Port}]";
+            Logger.WriteLine($"Pinging server {srv}");
             // safety-wrapper
             try
             {
@@ -60,7 +60,7 @@ namespace McswBot2.Minecraft
                 var si = new ServerInfo(Address, Port);
                 for (var r = 0; r < retries; r++)
                 {
-                    current = await si.GetAsync(ct, dt);
+                    current = await si.GetAsync(dt, ct);
                     if (current.HadSuccess || ct.IsCancellationRequested)
                     {
                         break;
@@ -73,17 +73,17 @@ namespace McswBot2.Minecraft
                 if (current != null)
                 {
                     Logger.WriteLine(
-                        "Execute result: " + srv + " is: " + current.HadSuccess + " Err: " + current.LastError,
+                        $"Execute result: {srv} is: {current.HadSuccess} Err: {current.LastError}",
                         Types.LogLevel.Debug);
 
                     return current;
                 }
 
-                Logger.WriteLine("Execute result null: " + srv, Types.LogLevel.Debug);
+                Logger.WriteLine($"Execute result null: {srv}", Types.LogLevel.Debug);
             }
             catch (Exception ex)
             {
-                Logger.WriteLine("Fatal Error when Pinging... " + ex, Types.LogLevel.Error);
+                Logger.WriteLine($"Fatal Error when Pinging... {ex}", Types.LogLevel.Error);
             }
 
             return null;

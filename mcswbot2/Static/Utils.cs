@@ -117,8 +117,9 @@ namespace McswBot2.Static
                         resolved = host.AddressList.First(h => h.AddressFamily == AddressFamily.InterNetworkV6)
                             .ToString();
                     }
-                    catch
+                    catch(Exception e)
                     {
+                        Logger.WriteLine($"Failed to resolve hostname address for '{addr}': {e.Message}", Types.LogLevel.Error);
                     }
                 }
 
@@ -156,7 +157,7 @@ namespace McswBot2.Static
         /// <param name="pm"></param>
         /// <param name="replyMsg"></param>
         /// <param name="editMsg"></param>
-        internal static Message? SendMsg(this Chat chat, TelegramBotClient client, string? text = null, ParseMode pm = ParseMode.Markdown,
+        internal static Message SendMsg(this Chat chat, TelegramBotClient client, string? text = null, ParseMode pm = ParseMode.Markdown,
             int replyMsg = 0, int editMsg = 0)
         {
             return SendMsgStream(chat, client, text, pm, replyMsg, editMsg);
@@ -172,7 +173,7 @@ namespace McswBot2.Static
         /// <param name="pm"></param>
         /// <param name="replyMsg"></param>
         /// <param name="editMsg"></param>
-        private static Message? SendMsgStream(Chat chat, TelegramBotClient client, string? text = null, ParseMode pm = ParseMode.Markdown,
+        private static Message SendMsgStream(Chat chat, TelegramBotClient client, string? text = null, ParseMode pm = ParseMode.Markdown,
             int replyMsg = 0, int editMsg = 0)
         {
             Message? lMsg;
@@ -181,14 +182,14 @@ namespace McswBot2.Static
             {
                 // Update existing message
                 lMsg = editMsg != 0
-                    ? client?.EditMessageTextAsync(new ChatId(chat.Id),
+                    ? client.EditMessageTextAsync(new ChatId(chat.Id),
                         editMsg,
                         text,
                         pm,
                         disableWebPagePreview: true).Result
                     :
                     // Send New
-                    client?.SendTextMessageAsync(chat.Id,
+                    client.SendTextMessageAsync(chat.Id,
                         text,
                         parseMode: pm,
                         disableWebPagePreview: true,

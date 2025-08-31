@@ -1,6 +1,6 @@
 ﻿using McswBot2.Static;
 
-namespace McswBot2.Event
+namespace McswBot2.Objects
 {
     public class PlayerPayload
     {

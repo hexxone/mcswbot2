@@ -6,16 +6,13 @@ using Telegram.Bot.Types.Enums;
 
 namespace McswBot2.Commands
 {
-    internal class CmdPlayer : ICommand
+    internal class CmdPlayer : Command
     {
-        internal override string Command()
-        {
-            return "player";
-        }
+        internal override string GetCommand() => "player";
 
-        internal override void Call(ICommandArgs a)
+        internal override void Call(CommandArgs a)
         {
-            var (bot, msg, group, user, args, isDev) = a;
+            var (bot, _, group, _, _, _) = a;
             if (!bot.Conf.WatchedServers.Any())
             {
                 group.SendMsg(bot.Client!, "No servers watched - Please adjust your config.");

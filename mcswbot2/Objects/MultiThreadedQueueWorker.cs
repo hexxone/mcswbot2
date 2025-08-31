@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using McswBot2.Static;
 
 namespace McswBot2.Objects
 {
@@ -36,19 +37,27 @@ namespace McswBot2.Objects
         {
             for (var i = 0; i < _numberOfThreads; i++)
             {
-                var thread = new Thread(async () =>
+                var localI = i;
+                var thread = new Thread(async void () =>
                 {
-                    while (_runFlag)
+                    try
                     {
-                        _newTaskEvent.WaitOne(10);
-                        if (_taskQueue.TryDequeue(out var task))
+                        while (_runFlag)
                         {
-                            await task();
+                            _newTaskEvent.WaitOne(10);
+                            if (_taskQueue.TryDequeue(out var task))
+                            {
+                                await task();
+                            }
+                            if (_taskQueue.IsEmpty)
+                            {
+                                _newTaskEvent.Reset();
+                            }
                         }
-                        if (_taskQueue.IsEmpty)
-                        {
-                            _newTaskEvent.Reset();
-                        }
+                    }
+                    catch (Exception e)
+                    {
+                        Logger.WriteLine($"Worker Thread '{localI}' Exception: {e.Message}\r\n{e.StackTrace}",  Types.LogLevel.Error);
                     }
                 })
                 {

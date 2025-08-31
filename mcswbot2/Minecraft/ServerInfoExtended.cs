@@ -1,8 +1,8 @@
-﻿using McswBot2.Event;
-using McswBot2.Static;
+﻿using McswBot2.Static;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using McswBot2.Objects;
 
 namespace McswBot2.Minecraft
 {
@@ -33,6 +33,7 @@ namespace McswBot2.Minecraft
         ///     Creates a new instance of <see cref="ServerInfoExtended" /> with specified values
         ///     => failed request
         /// </summary>
+        /// <param name="dt">TimeStamp when the request was done</param>
         /// <param name="ex">the Last occurred Exception when determining Server status</param>
         internal ServerInfoExtended(DateTime dt, Exception ex)
             : base(false, dt, 1, 0)
@@ -55,7 +56,7 @@ namespace McswBot2.Minecraft
         public string RawMotd { get; }
 
         /// <summary>
-        ///     Gets the server's Message of the day as human readable Text
+        ///     Gets the server's Message of the day as human-readable Text
         /// </summary>
         [JsonIgnore]
         public string? FixedMotd => Types.FixMcChat(RawMotd);

@@ -3,16 +3,13 @@ using Telegram.Bot.Types.Enums;
 
 namespace McswBot2.Commands
 {
-    internal class CmdStart : ICommand
+    internal class CmdStart : Command
     {
-        internal override string Command()
-        {
-            return "start";
-        }
+        internal override string GetCommand() => "start";
 
-        internal override void Call(ICommandArgs a)
+        internal override void Call(CommandArgs a)
         {
-            var (b, m, g, u, args, isDev) = a;
+            var (b, _, g, _, _, _) = a;
 
             var txt =
                 "This bot keeps track of your MineCraft servers and the online users with the 'server list' information.";

@@ -4,17 +4,18 @@ namespace McswBot2.Static
 {
     public static class Logger
     {
-        public static Types.LogLevel LogLevel = Types.LogLevel.Normal;
+        public static Types.LogLevel LogLevel = Types.LogLevel.Info;
 
         /// <summary>
         ///     DateTime Wrapper for Console WriteLine
         /// </summary>
-        /// <param name="l"></param>
-        public static void WriteLine(string l, Types.LogLevel lv = Types.LogLevel.Normal)
+        /// <param name="line"></param>
+        /// <param name="logLevel"></param>
+        public static void WriteLine(string line, Types.LogLevel logLevel = Types.LogLevel.Info)
         {
-            if (LogLevel >= lv)
+            if (LogLevel >= logLevel)
             {
-                Console.WriteLine($"[{DateTime.Now.ToString("yyyy-MM-ss HH:mm:ss")}] {l}");
+                Console.WriteLine($"[{DateTime.Now.ToString("yyyy-MM-ss HH:mm:ss")}] {line}");
             }
         }
     }

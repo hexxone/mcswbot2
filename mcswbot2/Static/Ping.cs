@@ -13,16 +13,9 @@ namespace McswBot2.Static
         /// <summary>
         ///     TODO test
         /// </summary>
-        /// <param name="servers"></param>
-        /// <returns></returns>
         internal static ConcurrentBag<Tuple<ServerStatusWatcher, ServerInfoExtended?>> PingAll(this IEnumerable<ServerStatusWatcher> servers, int timeOutMs, int retries, int retryMs)
         {
             var cts = new CancellationTokenSource();
-            var pOptions = new ParallelOptions
-            {
-                CancellationToken = cts.Token,
-                MaxDegreeOfParallelism = 5
-            };
 
             var pingResults = new ConcurrentBag<Tuple<ServerStatusWatcher, ServerInfoExtended?>>();
             var queueWorker = MultiThreadedQueueWorker.Instance;
@@ -45,11 +38,11 @@ namespace McswBot2.Static
                     allTasks.Add(pingTask);
                 }
 
-                Task.WaitAll(allTasks.ToArray());
+                Task.WaitAll(allTasks.ToArray(), cts.Token);
             }
             catch (OperationCanceledException e)
             {
-                Console.WriteLine(e);
+                Logger.WriteLine($"Ping operation cancelled Exception: {e.Message}");
                 throw;
             }
 

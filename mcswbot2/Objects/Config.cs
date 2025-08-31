@@ -25,7 +25,7 @@ namespace McswBot2.Objects
         /// <summary>
         ///     Use debug Logging?
         /// </summary>
-        public int LogLevel { get; set; } = Convert.ToInt32(Types.LogLevel.Normal);
+        public int LogLevel { get; set; } = Convert.ToInt32(Types.LogLevel.Info);
 
         /// <summary>
         ///     How often will we retry if a status had no success?

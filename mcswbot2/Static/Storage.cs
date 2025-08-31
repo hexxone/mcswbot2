@@ -9,7 +9,6 @@ namespace McswBot2.Static
     internal static class Storage
     {
         private const string PathConf = "config.json";
-        private const string PathGrp = "data/groups.json";
 
         /// <summary>
         ///     Load & Json Decode the user & group settings
@@ -30,18 +29,18 @@ namespace McswBot2.Static
                 else
                 {
                     Save(bot);
-                    Program.WriteLine(
-                        "\r\n\r\n\tWARNING: CONFIG JUST GOT CREATED. PLEASE MODIFY IT BEFORE STARTING AGAIN.\r\n");
+                    Logger.WriteLine(
+                        "\r\n\r\n\tWARNING: CONFIG JUST GOT CREATED. PLEASE MODIFY IT BEFORE STARTING AGAIN.\r\n", Types.LogLevel.Error);
                     Environment.Exit(0);
                 }
 
 
                 // done
-                Program.WriteLine($"Loaded Config.");
+                Logger.WriteLine($"Loaded Config.");
             }
             catch (Exception e)
             {
-                Program.WriteLine("Error when loading Config: " + e);
+                Logger.WriteLine($"Error when loading Config: {e}",  Types.LogLevel.Error);
             }
         }
 
@@ -58,14 +57,12 @@ namespace McswBot2.Static
                 var str = JsonConvert.SerializeObject(bot.Conf, Formatting.None, set);
                 str = JToken.Parse(str).ToString(Formatting.Indented);
                 File.WriteAllText(PathConf, str);
-
-
-                // done
-                Program.WriteLine($"Saved Config.");
+                
+                Logger.WriteLine("Saved Config.");
             }
             catch (Exception e)
             {
-                Program.WriteLine("Error when saving data: " + e);
+                Logger.WriteLine($"Error when saving config: {e}",  Types.LogLevel.Error);
             }
         }
     }

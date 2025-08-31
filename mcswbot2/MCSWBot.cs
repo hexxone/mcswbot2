@@ -19,10 +19,10 @@ namespace McswBot2
         internal const int TgTries = 30;
         internal const int TgSleep = 30000;
 
-        private readonly List<ICommand> Commands = new();
+        private readonly List<Command> _commands = new();
 
 
-        internal CancellationTokenSource BotCts = default!;
+        internal CancellationTokenSource BotCts = null!;
 
         // default config
         internal Config Conf { get; set; } = new();
@@ -35,20 +35,20 @@ namespace McswBot2
         /// </summary>
         internal void Start()
         {
-            Program.WriteLine("MineCraftServerWatchBotV2 for Telegram by @hexxone");
-            Program.WriteLine("starting...");
+            Logger.WriteLine("MineCraftServerWatchBotV2 for Telegram by @hexxone");
+            Logger.WriteLine("starting...");
 
             // Add Bot commands
-            var assemblyCmds = typeof(ICommand).FindDerivedAssemblyTypes();
+            var assemblyCmds = typeof(Command).FindDerivedAssemblyTypes();
             foreach (var cmd in assemblyCmds)
             {
-                if (Activator.CreateInstance(cmd) is not ICommand cmdObj)
+                if (Activator.CreateInstance(cmd) is not Command cmdObj)
                 {
                     continue;
                 }
 
-                Commands.Add(cmdObj);
-                Program.WriteLine($"Registered Command: '{cmdObj.Command()}'");
+                _commands.Add(cmdObj);
+                Logger.WriteLine($"Registered Command: '{cmdObj.GetCommand()}'");
             }
 
             // Load users, groups & settings
@@ -62,7 +62,7 @@ namespace McswBot2
             }
             else
             {
-                Logger.WriteLine("Invalid LogLevel: " + Conf.LogLevel, Types.LogLevel.Error);
+                Logger.WriteLine($"Invalid LogLevel: {Conf.LogLevel}", Types.LogLevel.Error);
             }
 
             // Start the telegram bot
@@ -73,7 +73,7 @@ namespace McswBot2
             {
                 try
                 {
-                    Program.WriteLine("Sleeping...");
+                    Logger.WriteLine("Sleeping...");
                     Task.Delay(Conf.DataSaveInterval).Wait();
 
                     // save data
@@ -81,12 +81,11 @@ namespace McswBot2
                 }
                 catch (Exception e)
                 {
-                    Logger.WriteLine("MAIN LOOP EXCEPTION: " + e, Types.LogLevel.Error);
+                    Logger.WriteLine($"MAIN LOOP EXCEPTION: {e}", Types.LogLevel.Error);
                 }
             }
 
-            Console.WriteLine("Reached end of pr0gram! Auto updating stopped for some reason ???");
-            Console.ReadLine();
+            Logger.WriteLine("Reached end of pr0gram! Auto updating stopped for some reason ?");
         }
 
         /// <summary>
@@ -95,7 +94,7 @@ namespace McswBot2
         /// <param name="tries"></param>
         private async void StartTelegramBotClient(int tries = 0)
         {
-            Program.WriteLine("Telegram bot connecting...");
+            Logger.WriteLine("Telegram bot connecting...");
             Thread.Sleep(3000);
 
             try
@@ -118,20 +117,20 @@ namespace McswBot2
                 // get bot 
                 TgBotUser = await Client.GetMeAsync();
 
-                Program.WriteLine("Watashi wa: " + TgBotUser.Username);
+                Logger.WriteLine($"Watashi wa: {TgBotUser.Username}");
             }
             catch (Exception e)
             {
-                Program.WriteLine("Unable to connect.. (" + tries + ")\r\n" + e);
+                Logger.WriteLine($"Unable to connect.. ({tries})\r\n{e}");
                 if (tries++ < TgTries)
                 {
-                    Program.WriteLine($"Retry in {TgSleep / 1000:0.0} s");
+                    Logger.WriteLine($"Retry in {TgSleep / 1000:0.0} s");
                     Thread.Sleep(TgSleep);
                     StartTelegramBotClient(tries);
                 }
                 else
                 {
-                    Program.WriteLine("Unable to receive Telegram messages. Shutting down...");
+                    Logger.WriteLine("Unable to receive Telegram messages. Shutting down...");
                     BotCts.Cancel();
                     Environment.Exit(0);
                 }
@@ -147,12 +146,12 @@ namespace McswBot2
                     return HandleMessage(arg2.Message);
                 }
 
-                Program.WriteLine("Update was skipped: " + JsonConvert.SerializeObject(arg2));
+                Logger.WriteLine($"Update was skipped: {JsonConvert.SerializeObject(arg2)}");
                 return Task.CompletedTask;
             }
             catch (Exception ex)
             {
-                Program.WriteLine(ex.ToString());
+                Logger.WriteLine(ex.ToString());
 #if DEBUG
                 throw;
 #else
@@ -163,7 +162,7 @@ namespace McswBot2
 
         private Task Client_OnError(ITelegramBotClient arg1, Exception arg2, CancellationToken arg3)
         {
-            Program.WriteLine("Telegram General Error:\r\n" + arg2);
+            Logger.WriteLine($"Telegram General Error:\r\n{arg2}", Types.LogLevel.Error);
             StartTelegramBotClient();
             return Task.CompletedTask;
         }
@@ -186,7 +185,7 @@ namespace McswBot2
             catch (Exception ex)
             {
                 var name = $"Id=[{msg.From?.Id}] @{msg.From?.Username} ({msg.From?.FirstName} {msg.From?.LastName})";
-                Program.WriteLine($"User '{name}' fucked up: {ex.Message}");
+                Logger.WriteLine($"User '{name}' fucked up: {ex.Message}", Types.LogLevel.Error);
             }
 
             return Task.CompletedTask;
@@ -208,8 +207,7 @@ namespace McswBot2
             if (!isGroup)
             {
                 Client!.SendTextMessageAsync(msg.Chat.Id,
-                    "This bot is intended for group use only.\r\n<a href=\"https://t.me/" + TgBotUser!.Username +
-                    "?startgroup=add\">Add me</a>", parseMode: ParseMode.Html).Wait();
+                    $"This bot is intended for group use only.\r\n<a href=\"https://t.me/{TgBotUser!.Username}?startgroup=add\">Add me</a>", parseMode: ParseMode.Html).Wait();
                 {
                     return false;
                 }
@@ -254,10 +252,10 @@ namespace McswBot2
             }
 
             // check all registered command modules for a matching command
-            foreach (var cmd in Commands.Where(cmd => usrCmd == cmd.Command().ToLower()))
+            foreach (var cmd in _commands.Where(cmd => usrCmd == cmd.GetCommand().ToLower()))
             {
-                Program.WriteLine("Command: " + cmd.Command() + " by " + user.Id + " in " + group.Id);
-                cmd.Call(new ICommandArgs()
+                Logger.WriteLine($"Command: {cmd.GetCommand()} by {user.Id} in {group.Id}");
+                cmd.Call(new CommandArgs()
                 {
                     Bot = this,
                     Group = group,

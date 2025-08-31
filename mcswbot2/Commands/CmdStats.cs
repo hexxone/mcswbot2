@@ -4,16 +4,11 @@ using Telegram.Bot.Types.Enums;
 
 namespace McswBot2.Commands
 {
-    internal class CmdStats : ICommand
+    internal class CmdStats : Command
     {
-        private const string PlaceHolder = "--------------------";
+        internal override string GetCommand() => "stats";
 
-        internal override string Command()
-        {
-            return "stats";
-        }
-
-        internal override void Call(ICommandArgs a)
+        internal override void Call(CommandArgs a)
         {
             var (bot, _, group, _, _, _) = a;
 

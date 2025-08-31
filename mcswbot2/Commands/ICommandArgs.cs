@@ -2,19 +2,19 @@
 
 namespace McswBot2.Commands
 {
-    internal class ICommandArgs
+    internal class CommandArgs
     {
-        internal McswBot Bot { get; set; } = default!;
+        internal required McswBot Bot { get; init; }
 
-        internal Message Msg { get; set; } = default!;
+        internal required Message Msg { get; init; } 
 
-        internal Chat Group { get; set; } = default!;
+        internal required Chat Group { get; init; }
 
-        internal User User { get; set; } = default!;
+        internal required User User { get; init; }
 
-        internal string[] Args { get; set; } = default!;
+        internal required string[] Args { get; init; }
 
-        internal bool IsDev { get; set; }
+        internal bool IsDev { get; init; }
 
 
         // Return the first and last name.

@@ -1,5 +1,4 @@
-﻿using McswBot2.Event;
-using McswBot2.Objects;
+﻿using McswBot2.Objects;
 using McswBot2.Static;
 using Newtonsoft.Json;
 using System;
@@ -20,7 +19,6 @@ namespace McswBot2.Minecraft
         // doesn't really matter, server will return its own version independently
         // for detailed protocol version codes see here: https://wiki.vg/Protocol_version_numbers
         private const int Proto = 753;
-        private const string Header = "data:image/png;base64,";
         private readonly string _address;
         private readonly int _port;
 
@@ -31,27 +29,33 @@ namespace McswBot2.Minecraft
         /// <param name="port"></param>
         internal ServerInfo(string address, int port = 25565)
         {
+            if (port is < 0 or > 65535)
+            {
+                throw new ArgumentOutOfRangeException(nameof(port), "Port must be 0..65535");
+            }
+            
             _address = address;
             _port = port;
         }
 
         /// <summary>
-        ///     Calls the Async connect method and afterwards the specific overwritten
+        ///     Calls the Async connect method and afterward the specific overwritten
         ///     stream sending, reading & parsing method
         /// </summary>
+        /// <param name="startTime"></param>
         /// <param name="ct"></param>
         /// <returns></returns>
-        public async Task<ServerInfoExtended> GetAsync(CancellationToken ct, DateTime dt)
+        public async Task<ServerInfoExtended> GetAsync(DateTime startTime, CancellationToken ct)
         {
             try
             {
                 using var client = new TcpClient();
                 await using var stream = ConnectWrap(ct, client);
-                return Get(ct, dt, client, stream);
+                return await Get(startTime, client, stream, ct);
             }
             catch (Exception e)
             {
-                return new ServerInfoExtended(dt, e);
+                return new ServerInfoExtended(startTime, e);
             }
         }
 
@@ -79,24 +83,24 @@ namespace McswBot2.Minecraft
         }
 
 
-        private ServerInfoExtended Get(CancellationToken ct, DateTime dt, TcpClient client, NetworkStream stream)
+        private async Task<ServerInfoExtended> Get(DateTime startTime, TcpClient client, NetworkStream stream, CancellationToken ct)
         {
             var offset = 0;
             var writeBuffer = new List<byte>();
 
             WriteVarInt(writeBuffer, Proto);
             WriteString(writeBuffer, _address);
-            WriteShort(writeBuffer, Convert.ToInt16(_port));
+            WriteUShortBe(writeBuffer, (ushort)_port);
             WriteVarInt(writeBuffer, 1); // we want to know status, not login
 
-            Flush(writeBuffer, stream, 0, ct);
-            Flush(writeBuffer, stream, 0, ct);
+            await Flush(writeBuffer, stream, 0, ct);
+            await Flush(writeBuffer, stream, 0, ct);
 
             var batch = new byte[1024];
             var readBuffer = new List<byte>();
 
             // Read the first data
-            var readLen = stream.Read(batch, 0, batch.Length);
+            var readLen = await stream.ReadAsync(batch, ct);
             readBuffer.AddRange(batch);
 
             // IF an IOException arises here, this server is probably not a MineCraft-one
@@ -108,21 +112,21 @@ namespace McswBot2.Minecraft
             // Read the rest of the announced data
             while (readLen < allLength && waitDelays < maxWaits)
             {
-                var read = stream.Read(batch, 0, batch.Length);
-                Logger.WriteLine("Read bytes: " + read, Types.LogLevel.Debug);
-                readBuffer.AddRange(batch.ToList().Where((a, x) => x < read));
+                var read = await stream.ReadAsync(batch, ct);
+                Logger.WriteLine($"Read bytes: {read}", Types.LogLevel.Debug);
+                readBuffer.AddRange(batch.ToList().Where((_, x) => x < read));
                 readLen += read;
-                Task.Delay(10, ct);
+                await Task.Delay(10, ct);
                 waitDelays++;
                 if (!stream.DataAvailable && readLen < allLength)
                 {
-                    Logger.WriteLine("Missing bytes: " + (allLength - readLen), Types.LogLevel.Debug);
+                    Logger.WriteLine($"Missing bytes: {(allLength - readLen)}", Types.LogLevel.Debug);
                 }
             }
 
             if (readLen < allLength)
             {
-                return new ServerInfoExtended(dt,
+                return new ServerInfoExtended(startTime,
                     new IndexOutOfRangeException($"Network Stream @ '{_address}:{_port}' ended prematurely with '{allLength - readLen}' missing bytes."));
             }
 
@@ -130,7 +134,7 @@ namespace McswBot2.Minecraft
             var jsonLength = ReadVarInt(ref offset, readBuffer);
             var json = ReadString(ref offset, readBuffer, jsonLength);
 
-            // now lets calculate the real ping
+            // now let's calculate the real ping
 
             writeBuffer.Clear();
             readBuffer.Clear();
@@ -142,10 +146,10 @@ namespace McswBot2.Minecraft
             // send off
             var sw = new Stopwatch();
             sw.Start();
-            Flush(writeBuffer, stream, 1, ct);
+            await Flush(writeBuffer, stream, 1, ct);
 
             // wait for data
-            readLen = stream.Read(batch, 0, batch.Length);
+            readLen = await stream.ReadAsync(batch, ct);
             readBuffer.AddRange(batch);
 
             allLength = ReadVarInt(ref offset, readBuffer) - 1;
@@ -160,7 +164,7 @@ namespace McswBot2.Minecraft
             }
             else
             {
-                Logger.WriteLine("Ping Data mismatch: " + sentRnd + " => " + pingRndResponse);
+                Logger.WriteLine($"Ping Data mismatch: {sentRnd} => {pingRndResponse}");
             }
 
             // done
@@ -169,11 +173,11 @@ namespace McswBot2.Minecraft
             writeBuffer.Clear();
             readBuffer.Clear();
 
-            Logger.WriteLine("Json: " + json, Types.LogLevel.Debug);
+            Logger.WriteLine($"Json: {json}", Types.LogLevel.Debug);
 
             dynamic ping = JsonConvert.DeserializeObject(json)!;
 
-            return new ServerInfoExtended(dt,
+            return new ServerInfoExtended(startTime,
                 sw.ElapsedMilliseconds / 2d,
                 GetDescription(ping.description),
                 (int)ping.players.max,
@@ -221,7 +225,7 @@ namespace McswBot2.Minecraft
             }
             catch (Exception e)
             {
-                Logger.WriteLine("Error description.extra.text: " + e, Types.LogLevel.Debug);
+                Logger.WriteLine($"Error description.extra.text: {e}", Types.LogLevel.Debug);
             }
 
             // try .text
@@ -233,7 +237,7 @@ namespace McswBot2.Minecraft
                 }
                 catch (Exception e)
                 {
-                    Logger.WriteLine("Error description.text: " + e, Types.LogLevel.Debug);
+                    Logger.WriteLine($"Error description.text: {e}", Types.LogLevel.Debug);
                 }
             }
 
@@ -246,7 +250,7 @@ namespace McswBot2.Minecraft
                 }
                 catch (Exception ex)
                 {
-                    Logger.WriteLine("Error description: " + ex, Types.LogLevel.Debug);
+                    Logger.WriteLine($"Error description: {ex}", Types.LogLevel.Debug);
                 }
             }
 
@@ -283,7 +287,7 @@ namespace McswBot2.Minecraft
             }
             catch (Exception e)
             {
-                Logger.WriteLine("Error when processing sample: " + e, Types.LogLevel.Debug);
+                Logger.WriteLine($"Error when processing sample: {e}", Types.LogLevel.Debug);
             }
 
             return sample;
@@ -350,15 +354,21 @@ namespace McswBot2.Minecraft
             buffer.Add((byte)value);
         }
 
-        private static void WriteShort(List<byte> buffer, short value)
+        // private static void WriteShort(List<byte> buffer, short value)
+        // {
+        //     buffer.AddRange(BitConverter.GetBytes(value));
+        // }
+        
+        private static void WriteUShortBe(List<byte> buffer, ushort value)
         {
-            buffer.AddRange(BitConverter.GetBytes(value));
+            buffer.Add((byte)((value >> 8) & 0xFF)); // high byte first (big-endian)
+            buffer.Add((byte)(value & 0xFF));        // low byte
         }
 
-        private static void WriteLong(List<byte> buffer, long value)
-        {
-            buffer.AddRange(BitConverter.GetBytes(value));
-        }
+        // private static void WriteLong(List<byte> buffer, long value)
+        // {
+        //     buffer.AddRange(BitConverter.GetBytes(value));
+        // }
 
         private static void WriteString(List<byte> buffer, string data)
         {
@@ -367,7 +377,7 @@ namespace McswBot2.Minecraft
             buffer.AddRange(buff);
         }
 
-        private static async void Flush(List<byte> buffer, Stream stream, int id, CancellationToken ct)
+        private static async Task Flush(List<byte> buffer, Stream stream, int id, CancellationToken ct)
         {
             var buff = buffer.ToArray();
             buffer.Clear();
