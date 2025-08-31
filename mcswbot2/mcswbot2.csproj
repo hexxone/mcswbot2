@@ -17,7 +17,8 @@
     <RepositoryType>git</RepositoryType>
     <PackageTags>Minecraft;Minecraft Server;Minecraft Online;Minecraft Status</PackageTags>
     <PackageProjectUrl>http://github.com/hexxone/mcswbot2</PackageProjectUrl>
-    <PackageReleaseNotes>Use .NET  6</PackageReleaseNotes>
+    <PackageReleaseNotes>Use .NET  9</PackageReleaseNotes>
+    <LangVersion>latestmajor</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>
