@@ -5,7 +5,7 @@
     {
         private static void Main()
         {
-            new McswBot().Start();
+            new McswBot().StartAsync().GetAwaiter().GetResult();
         }
     }
 }

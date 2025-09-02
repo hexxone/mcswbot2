@@ -15,7 +15,7 @@ namespace McswBot2.Static
         {
             if (LogLevel >= logLevel)
             {
-                Console.WriteLine($"[{DateTime.Now.ToString("yyyy-MM-ss HH:mm:ss")}] {line}");
+                Console.WriteLine($"[{DateTime.Now:yyyy-MM-ss HH:mm:ss}] {line}");
             }
         }
     }

@@ -1,5 +1,4 @@
 ﻿using System.Linq;
-using System.Threading.Tasks;
 
 namespace McswBot2.Static
 {
@@ -13,12 +12,9 @@ namespace McswBot2.Static
             None = 0,
             Error = 1,
             Warning = 2,
-            Info = 4,
-            Debug = 8,
+            Info = 3,
+            Debug = 4,
         }
-
-        public static ParallelOptions POptions = new() { MaxDegreeOfParallelism = 10 };
-
 
         /// <summary>
         ///     removes Minecraft Chat Style information
